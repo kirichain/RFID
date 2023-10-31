@@ -4,9 +4,9 @@
 #include "peripherals.h"
 
 Peripherals::Peripherals() {
-    lastMenuSelectNavButton = 0;
-    lastLeftUpNavButton = 0;
-    lastRightDownNavButton = 0;
+    lastMenuSelectNavButtonState = 0;
+    lastLeftUpNavButtonState = 0;
+    lastRightDownNavButtonState = 0;
 }
 
 void Peripherals::init_navigation_buttons(byte _menuSelectNavButton, byte _leftUpNavButton, byte _rightDownNavButton) {
@@ -18,29 +18,51 @@ void Peripherals::init_navigation_buttons(byte _menuSelectNavButton, byte _leftU
 }
 
 void Peripherals::read_navigation_buttons(byte _menuSelectNavButton, byte _leftUpNavButton, byte _rightDownNavButton) {
-    lastMenuSelectNavButton = 0;
-    lastLeftUpNavButton = 0;
-    lastRightDownNavButton = 0;
+    lastMenuSelectNavButtonState = 0;
+    lastLeftUpNavButtonState = 0;
+    lastRightDownNavButtonState = 0;
 
-    lastMenuSelectNavButton = digitalRead(_menuSelectNavButton);
-    lastLeftUpNavButton = digitalRead(_leftUpNavButton);
-    lastRightDownNavButton = digitalRead(_rightDownNavButton);
+    lastMenuSelectNavButtonState = digitalRead(_menuSelectNavButton);
+    lastLeftUpNavButtonState = digitalRead(_leftUpNavButton);
+    lastRightDownNavButtonState = digitalRead(_rightDownNavButton);
 
     Serial.print("Naviation buttons state values: ");
-    Serial.print(lastMenuSelectNavButton);
+    Serial.print(lastMenuSelectNavButtonState);
     Serial.print(" ,");
-    Serial.print(lastLeftUpNavButton);
+    Serial.print(lastLeftUpNavButtonState);
     Serial.print(" ,");
-    Serial.print(lastRightDownNavButton);
+    Serial.print(lastRightDownNavButtonState);
     Serial.println(" .");
 
 }
 
-task Peripherals::retrieve_corresponding_task(task _currentTask) {
+void Peripherals::blink_led(byte ledPin) {
+    set_digital_output(ledPin);
+    digitalWrite(ledPin, HIGH);
+    delay(1000);
+    digitalWrite(ledPin, LOW);
+    delay(1000);
+}
+
+void Peripherals::set_digital_input(byte pin) {
+    pinMode(pin, INPUT);
+    Serial.print(F("Set pin "));
+    Serial.print(pin);
+    Serial.println(F(" as INPUT"));
+}
+
+void Peripherals::set_digital_output(byte pin) {
+    pinMode(pin, OUTPUT);
+    Serial.print(F("Set pin "));
+    Serial.print(pin);
+    Serial.println(F(" as OUTPUT"));
+}
+
+task_t Peripherals::retrieve_corresponding_task(task_t _currentTask) {
 
     return _currentTask;
 }
 
-feature Peripherals::retrieve_corresponding_feature(feature _currentFeature) {
+feature_t Peripherals::retrieve_corresponding_feature(feature_t _currentFeature) {
     return _currentFeature;
 }

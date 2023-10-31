@@ -6,10 +6,12 @@
 #define RFID_DATA_IMPORT_H
 
 #include "Arduino.h"
+#include "structs.h"
 
 class DataImport {
 public:
     DataImport();
 
 };
+
 #endif //RFID_DATA_IMPORT_H

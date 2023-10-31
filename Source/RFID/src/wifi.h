@@ -7,13 +7,15 @@
 
 #include "Arduino.h"
 
-extern char* currentAPWifiSSID;
-extern char* currentAPWifipassword;
-extern char* currentSTAWifiSSID;
-extern char* currentSTAWifipassword;
+
 
 class Wifi {
 public:
+    char* currentApWifiSSID;
+    char* currentApWifiPassword;
+    char* currentStaWifiSSID;
+    char* currentStaWifiPassword;
+
     Wifi();
 
     bool init_ap_mode();

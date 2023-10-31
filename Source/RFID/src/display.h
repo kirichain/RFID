@@ -12,7 +12,7 @@ class Display {
 public:
     Display();
 
-    void render_feature(feature _feature);
+    void render_feature(feature_t _feature);
 
 };
 

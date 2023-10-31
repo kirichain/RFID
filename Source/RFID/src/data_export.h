@@ -6,20 +6,14 @@
 #define RFID_DATA_EXPORT_H
 
 #include "Arduino.h"
+#include "structs.h"
 
-typedef struct data_row {
-    int timestamp;
-} data_row;
-
-typedef struct data_collection {
-    data_row _row;
-} data_collection;
-
-extern data_row dataRow;
-extern data_collection dataCollection;
 
 class DataExport {
 public:
+    data_row dataRow;
+    data_collection dataCollection;
+
     DataExport();
 
     void insert_row(data_row _row);
@@ -28,4 +22,5 @@ public:
 
     void delete_row(int timestamp);
 };
+
 #endif //RFID_DATA_EXPORT_H

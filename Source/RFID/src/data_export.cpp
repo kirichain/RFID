@@ -13,7 +13,7 @@ DataExport::DataExport() {
     Serial.println(F("Data Export Initialzed"));
 }
 
-void DataExport::insert_row(row _row) {
+void DataExport::insert_row(data_row _row) {
 
 }
 

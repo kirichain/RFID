@@ -12,7 +12,7 @@ DataImport dataImport;
 Request request;
 Conveyor conveyor;
 Display display;
-FS fs;
+FsEsp32 fsEsp32;
 User user;
 IAM iam;
 MeshNetwork meshNetwork;
@@ -26,7 +26,8 @@ SdCard sdCard;
 QrCodeScanner qrCodeScanner;
 QrCode qrCode;
 OTA ota;
-
+MessageQueue messageQueue;
+MQTT mqtt;
 
 Mediator::Mediator() {
     isTaskExecutable = false;
@@ -35,12 +36,16 @@ Mediator::Mediator() {
     taskArgs.feature = HOME_TERMINAL;
     taskArgs.task = IDLE;
 
-    dataRow.timestamp = NULL;
+    //dataRow.timestamp = NULL;
 }
 
 
-void Mediator::execute_task(task task) {
+void Mediator::execute_task(task_t task) {
     switch (task) {
+        case BLINK_LED:
+            Serial.println(F("Execute task BLINK_LED"));
+            peripherals.blink_led(2);
+            break;
         case INIT_MESSAGE_QUEUE:
             Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
             break;
@@ -56,8 +61,12 @@ void Mediator::execute_task(task task) {
         case RETRIEVE_MESSAGE:
             Serial.println(F("Execute task RETRIEVE_MESSAGE"));
             break;
-        case INIT_MQTT:
-            Serial.println(F("Execute task INIT_MQTT"));
+        case CONNECT_MQTT_BROKER:
+            Serial.println(F("Execute task CONNECT_MQTT_BROKER"));
+            mqtt.isBrokerConnected = false;
+            while (!mqtt.isBrokerConnected) {
+                mqtt.connect_to_broker(taskArgs.mqttBrokerUrl);
+            }
             break;
         case SUBSCRIBE_MQTT_TOPIC:
             Serial.println(F("Execute task SUBSCRIBE_MQTT_TOPIC"));
@@ -70,9 +79,6 @@ void Mediator::execute_task(task task) {
             break;
         case SAVE_CONFIG:
             Serial.println(F("Execute task SAVE_CONFIG"));
-            break;
-        case CHECK_FS:
-            Serial.println(F("Execute task CHECK_FS"));
             break;
         case LOAD_FS:
             Serial.println(F("Execute task LOAD_FS"));
@@ -106,7 +112,11 @@ void Mediator::execute_task(task task) {
             break;
         case RENDER_FEATURE:
             Serial.println(F("Execute task RENDER_FEATURE"));
-            display.render_feature(taskArgs.feature);
+            if (taskArgs.feature != taskResults.currentFeature) {
+                display.render_feature(taskArgs.feature);
+            } else {
+                Serial.println(F("Feature is not changed. Keep current rendering"));
+            }
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
@@ -115,6 +125,8 @@ void Mediator::execute_task(task task) {
         case READ_NAVIGATION_BUTTON:
             Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
             peripherals.read_navigation_buttons(menuSelectNavButton, leftUpNavButton, rightDownNavButton);
+            taskArgs.previousFeature = taskResults.currentFeature;
+            taskArgs.previousTask = taskResults.currentTask;
             taskResults.currentFeature = peripherals.retrieve_corresponding_feature(taskResults.currentFeature);
             taskResults.currentTask = peripherals.retrieve_corresponding_task(taskResults.currentTask);
             break;
@@ -124,7 +136,10 @@ void Mediator::execute_task(task task) {
             break;
         case SET_FEATURE:
             Serial.println(F("Execute task SET_FEATURE"));
-            taskResults.currentFeature = taskArgs.feature;
+            if (taskArgs.feature != taskResults.currentFeature) {
+                taskArgs.previousFeature = taskResults.currentFeature;
+                taskResults.currentFeature = taskArgs.feature;
+            }
             break;
         case SET_TASK:
             Serial.println(F("Execute task SET_TASK"));
@@ -180,6 +195,18 @@ void Mediator::execute_task(task task) {
             break;
         case LOAD_DATA_COLLECTION:
             Serial.println(F("Execute task LOAD_DATA_COLLECTION"));
+            break;
+        case READ_PERIPHERAL_INPUT:
+            Serial.println(F("Execute task READ_PERIPHERAL_INPUT"));
+            break;
+        case SEND_PERIPHERAL_OUTPUT:
+            Serial.println(F("Execute task SEND_PERIPHERAL_OUTPUT"));
+            break;
+        case START_CONVEYOR:
+            Serial.println(F("Execute task START_CONVEYOR"));
+            break;
+        case STOP_CONVEYOR:
+            Serial.println(F("Execute task STOP_CONVEYOR"));
             break;
     }
 }

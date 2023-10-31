@@ -6,7 +6,7 @@
 #define RFID_MEDIATOR_H
 
 #include "Arduino.h"
-#include "enums.h"
+#include "structs.h"
 #include "message_queue.h"
 #include "battery.h"
 #include "buzzer.h"
@@ -15,7 +15,7 @@
 #include "data_export.h"
 #include "data_import.h"
 #include "display.h"
-#include "fs.h"
+#include "fs_esp32.h"
 #include "iam.h"
 #include "json.h"
 #include "mesh_network.h"
@@ -37,29 +37,6 @@
 #include "web_page.h"
 #include "wifi.h"
 #include "ws2812b.h"
-#include "lvgl.h"
-#include "queue.h"
-
-typedef struct task_args {
-    task task;
-    feature feature;
-    operating_mode operatingMode;
-    char *wifi_ap_ssid;
-    char *wifi_ap_password;
-    char *wifi_sta_ssid;
-    char *wifi_sta_password;
-    data_row dataRow;
-    data_collection dataCollection;
-} task_args;
-
-typedef struct task_results {
-    bool isFsLoaded;
-    operating_mode savedOperatingModeInFs;
-    operating_mode currentOperatingMode;
-    feature currentFeature;
-    task currentTask;
-} task_results;
-
 
 class Mediator {
 public:
@@ -70,7 +47,7 @@ public:
 
     Mediator();
 
-    void execute_task(task task);
+    void execute_task(task_t task);
 };
 
 #endif //RFID_MEDIATOR_H

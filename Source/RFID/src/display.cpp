@@ -8,6 +8,6 @@ Display::Display() {
 
 }
 
-void Display::render_feature(feature _feature) {
+void Display::render_feature(feature_t _feature) {
 
 }

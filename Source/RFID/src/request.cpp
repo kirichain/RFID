@@ -9,9 +9,11 @@ Request::Request() {
 }
 
 response Request::get() {
-
+    response _response;
+    return _response;
 }
 
 response Request::post() {
-
+    response _response;
+    return _response;
 }

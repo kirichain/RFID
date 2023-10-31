@@ -10,9 +10,9 @@
 
 class Peripherals {
 public:
-    byte lastMenuSelectNavButton;
-    byte lastLeftUpNavButton;
-    byte lastRightDownNavButton;
+    byte lastMenuSelectNavButtonState;
+    byte lastLeftUpNavButtonState;
+    byte lastRightDownNavButtonState;
 
     Peripherals();
 
@@ -20,9 +20,15 @@ public:
 
     void read_navigation_buttons(byte _menuSelectNavButton, byte _leftUpNavButton, byte _rightDownNavButton);
 
-    task retrieve_corresponding_task(task _currentTask);
+    void blink_led(byte ledPin);
 
-    feature retrieve_corresponding_feature(feature _currentFeature);
+    void set_digital_input(byte pin);
+
+    void set_digital_output(byte pin);
+
+    task_t retrieve_corresponding_task(task_t _currentTask);
+
+    feature_t retrieve_corresponding_feature(feature_t _currentFeature);
 };
 
 #endif //RFID_PERIPHERALS_H
