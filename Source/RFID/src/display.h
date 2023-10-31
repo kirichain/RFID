@@ -5,4 +5,15 @@
 #ifndef RFID_DISPLAY_H
 #define RFID_DISPLAY_H
 
+#include "Arduino.h"
+#include "enums.h"
+
+class Display {
+public:
+    Display();
+
+    void render_feature(feature _feature);
+
+};
+
 #endif //RFID_DISPLAY_H

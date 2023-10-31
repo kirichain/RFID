@@ -5,4 +5,11 @@
 #ifndef RFID_IAM_H
 #define RFID_IAM_H
 
+#include "Arduino.h"
+
+class IAM {
+public:
+    IAM();
+
+};
 #endif //RFID_IAM_H

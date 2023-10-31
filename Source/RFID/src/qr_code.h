@@ -5,4 +5,11 @@
 #ifndef RFID_QR_CODE_H
 #define RFID_QR_CODE_H
 
+#include "Arduino.h"
+
+class QrCode {
+public:
+    QrCode();
+};
+
 #endif //RFID_QR_CODE_H

@@ -7,22 +7,22 @@
 
 #include "Arduino.h"
 
-typedef struct row {
+typedef struct data_row {
     int timestamp;
-} row;
+} data_row;
 
-typedef struct collection {
-    row _row;
-} collection;
+typedef struct data_collection {
+    data_row _row;
+} data_collection;
 
-extern row data_row;
-extern collection data_collection;
+extern data_row dataRow;
+extern data_collection dataCollection;
 
 class DataExport {
 public:
     DataExport();
 
-    void insert_row(row _row);
+    void insert_row(data_row _row);
 
     void update_row(int timestamp);
 

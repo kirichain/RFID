@@ -7,6 +7,11 @@
 
 #include "Arduino.h"
 
+extern char* currentAPWifiSSID;
+extern char* currentAPWifipassword;
+extern char* currentSTAWifiSSID;
+extern char* currentSTAWifipassword;
+
 class Wifi {
 public:
     Wifi();
@@ -19,6 +24,14 @@ public:
 
     void init_web_page();
 
-    void set_wifi_credential(char * ssid, char * password);
+    void set_ap_wifi_credential(char * ssid, char * password);
+
+    void set_sta_wifi_credential(char * ssid, char * password);
+
+    bool terminate_ap_mode();
+
+    bool terminate_sta_mode();
+
+    bool terminate_web_page();
 };
 #endif //RFID_WIFI_H

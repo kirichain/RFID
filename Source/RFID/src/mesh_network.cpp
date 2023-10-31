@@ -3,3 +3,7 @@
 //
 
 #include "mesh_network.h"
+
+MeshNetwork::MeshNetwork() {
+
+}

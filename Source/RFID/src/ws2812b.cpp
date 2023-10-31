@@ -2,7 +2,6 @@
 // Created by Tan on 25-Oct-23.
 //
 
-#include "Arduino.h"
 #include "ws2812b.h"
 
 Ws2812b::Ws2812b() {

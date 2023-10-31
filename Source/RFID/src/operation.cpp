@@ -3,3 +3,25 @@
 //
 
 #include "operation.h"
+
+//operating_mode currentOperatingMode;
+
+Operation::Operation() {
+}
+
+void Operation::set_operation_mode(operating_mode _operatingMode) {
+    currentOperatingMode = _operatingMode;
+}
+
+operating_mode Operation::get_operating_mode() {
+    switch (currentOperatingMode) {
+        case TERMINAL:
+            Serial.println(F("Current operating mode: Terminal"));
+            break;
+        case HANDHELD:
+            Serial.println(F("Current operating mode: Handheld"));
+            break;
+    }
+    return currentOperatingMode;
+}
+
