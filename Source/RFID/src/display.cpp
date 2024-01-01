@@ -87,10 +87,10 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
 
             // Draw Left/Back icon (left arrow)
             tft.setTextColor(TFT_WHITE);
-            tft.drawTriangle(leftIconX, iconCenterY, // Top vertex
+            tft.fillTriangle(leftIconX, iconCenterY, // Top vertex
                              leftIconX + iconSize, iconCenterY - iconSize / 2, // Bottom left vertex
                              leftIconX + iconSize, iconCenterY + iconSize / 2, // Bottom right vertex
-                             TFT_WHITE);
+                             TFT_BLUE);
 
             // Draw Cancel icon (character 'x')
             tft.setTextColor(TFT_RED);
@@ -103,10 +103,10 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
 
             // Draw Right/Next icon (right arrow)
             tft.setTextColor(TFT_WHITE);
-            tft.drawTriangle(rightIconX + iconSize, iconCenterY, // Top vertex
+            tft.fillTriangle(rightIconX + iconSize, iconCenterY, // Top vertex
                              rightIconX, iconCenterY - iconSize / 2, // Bottom left vertex
                              rightIconX, iconCenterY + iconSize / 2, // Bottom right vertex
-                             TFT_WHITE);
+                             TFT_BLUE);
             break;
 
         case LANDSCAPE:
@@ -229,27 +229,26 @@ void Display::render_feature(feature_t _feature) {
             // Code to handle BOOT feature
             break;
         case HOME_HANDHELD_1:
-            numColumns = 2;
-            numRows = 3;
+            // Refactored to use dynamic calculations
+            numIcons = 6; // Assuming 6 icons for this feature
+            numColumns = calculate_columns(numIcons);
+            numRows = calculate_rows(numIcons, numColumns);
 
-            // Put icons and menu texts on the screen
+            // Calculate horizontal and vertical spacing for the grid
             hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
             vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
                              / (numRows + 1));
-
-            // Initialize the starting positions for the icons
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
-
-            // Draw the icons in a 2x3 grid
+            // Draw the icons in a grid
             for (int row = 0; row < numRows; row++) {
+                menu_icon_y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
                 menu_icon_x = hSpacing;
                 for (int col = 0; col < numColumns; col++) {
                     iconIndex = row * numColumns + col;
-                    draw_icon_with_label(menu_icon_x, menu_icon_y, iconIndex, menu_icon_names, tft);
-                    menu_icon_x += iconWidth + hSpacing;
+                    if (iconIndex < numIcons) { // Ensure we don't draw more icons than we have
+                        draw_icon_with_label(menu_icon_x, menu_icon_y, iconIndex, menu_icon_names, tft);
+                        menu_icon_x += iconWidth + hSpacing; // Move to the next icon's horizontal position
+                    }
                 }
-                menu_icon_y += iconHeight + textHeight + vSpacing;
             }
             break;
         case HOME_HANDHELD_2:
@@ -260,24 +259,23 @@ void Display::render_feature(feature_t _feature) {
             // Code to handle HOME_TERMINAL feature
             break;
         case SETTING:
-            // Calculate horizontal and vertical spacing for a 2x1 grid
-            numColumns = 2;
-            numRows = 1;
+            // Refactored to use dynamic calculations
+            numIcons = 2; // WiFi settings and User
+            numColumns = calculate_columns(numIcons);
+            numRows = calculate_rows(numIcons, numColumns);
 
+            // Calculate horizontal and vertical spacing for the grid
             hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
             vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
                              / (numRows + 1));
 
-            // Initialize the starting positions for the icons
             menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT;
 
-            // Draw the WiFi settings icon (index 12 in menu_icon_names)
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 12, menu_icon_names, tft);
-
-            // Move to the next column to draw the User icon
+            // Assuming the icon indexes are 12 for WiFi and 13 for User
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 12, menu_icon_names, tft); // WiFi
             menu_icon_x += iconWidth + hSpacing;
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 13, menu_icon_names, tft);
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 13, menu_icon_names, tft); // User
             break;
         case SETTING_WIFI:
             // Code to handle SETUP_WIFI feature
@@ -343,7 +341,18 @@ void Display::render_feature(feature_t _feature) {
             // Code to handle RFID_MODIFY_TAG_DATA feature
             break;
         case PACKAGE:
-            // Code to handle PACKAGE feature
+            numIcons = 1; // Package details
+            numColumns = calculate_columns(numIcons);
+            numRows = calculate_rows(numIcons, numColumns);
+
+            // Logic similar to other cases with single icon
+            // Calculate horizontal and vertical spacing for the grid
+            menu_icon_x = round((SCREEN_WIDTH - iconWidth) / 2);
+            menu_icon_y = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - iconHeight - textHeight) / 2) +
+                          NAV_BAR_HEIGHT;
+
+            // Assuming the icon index for 'Package details' is 20
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 20, menu_icon_names, tft);
             break;
         case PACKAGE_DETAILS:
             // Code to handle PACKAGE_DETAILS feature
@@ -417,7 +426,23 @@ void Display::render_feature(feature_t _feature) {
             }
             break;
         case DATA_IMPORT:
-            // Code to handle DATA_IMPORT feature
+            numIcons = 2; // Import from SD card and Import from Server
+            numColumns = calculate_columns(numIcons);
+            numRows = calculate_rows(numIcons, numColumns);
+
+            // Logic similar to other cases with grid drawing
+            // Calculate horizontal and vertical spacing for the grid
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
+
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT;
+
+            // Assuming the icon index for 'Import from SD card' is 18 and 'Import from Server' is 19
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 18, menu_icon_names, tft); // SD Card
+            menu_icon_x += iconWidth + hSpacing;
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 19, menu_icon_names, tft); // Server
             break;
         case DATA_IMPORT_FROM_SD_CARD:
             // Code to handle DATA_IMPORT_FROM_SD_CARD feature

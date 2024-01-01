@@ -83,6 +83,7 @@ public:
     int rightIconX;
     int iconSpacing;
     int iconIndex;
+    int numIcons;
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[21] = {
