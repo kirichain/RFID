@@ -46,6 +46,7 @@ enum feature_t {
 enum task_t {
     IDLE,
     BLINK_LED,
+    BLINK_SCREEN,
     INIT_MESSAGE_QUEUE,
     CLEAR_MESSAGE_QUEUE,
     PUBLISH_MESSAGE,

@@ -7,6 +7,15 @@
 
 #include "Arduino.h"
 
+/*
+
+Header Type Command PL(MSB) PL(LSB) Parameter Checksum End
+  BB    00     07     00      01        01       09     7E
+                     param length
+
+*/
+
+
 typedef struct rfid_scan_result {
     int timestamp;
     int id;

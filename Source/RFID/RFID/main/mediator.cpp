@@ -49,6 +49,10 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task BLINK_LED"));
             peripherals.blink_led(taskArgs.blinkLedPin);
             break;
+        case BLINK_SCREEN:
+            Serial.println(F("Execute task BLINK_SCREEN"));
+            display.blink_screen();
+            break;
         case INIT_MESSAGE_QUEUE:
             Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
             break;
@@ -216,21 +220,21 @@ void Mediator::execute_task(task_t task) {
 
 void Mediator::set_current_task() {
     taskResults.currentTask = taskArgs.task;
-    Serial.println(F("Set current task successfuly to "));
+    Serial.println(F("Set current task successfully to "));
 
 }
 
 void Mediator::set_current_feature() {
     taskResults.currentFeature = taskArgs.feature;
-    Serial.println(F("Set current feature successfuly to "));
+    Serial.println(F("Set current feature successfully to "));
 
 }
 
 void Mediator::set_current_task_status(bool taskStatus) {
     if (taskStatus) {
-        Serial.println(F("Set task status successfuly to completed"));
+        Serial.println(F("Set task status successfully to completed"));
     } else {
-        Serial.println(F("Set task status successfuly to incompleted"));
+        Serial.println(F("Set task status successfully to incompleted"));
     }
     isTaskCompleted = taskStatus;
     isTaskExecutable = true;

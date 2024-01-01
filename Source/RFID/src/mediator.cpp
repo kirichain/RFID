@@ -4,7 +4,6 @@
 
 #include "mediator.h"
 
-
 Ws2812b ws2812b;
 Wifi wifi;
 DataExport dataExport;
@@ -36,18 +35,38 @@ Mediator::Mediator() {
     isTaskCompleted = true;
     isTaskQueueEmpty = true;
 
-    taskArgs.feature = HOME_TERMINAL;
+    taskResults.currentFeature = HOME_HANDHELD_1;
     taskArgs.task = IDLE;
 
+    Serial.println("Mediator initiated");
     //dataRow.timestamp = NULL;
 }
 
+void Mediator::init_services() {
+    if (taskArgs.feature == HOME_TERMINAL) {
+        display.init(LANDSCAPE);
+
+    } else {
+        display.init(PORTRAIT);
+    }
+}
 
 void Mediator::execute_task(task_t task) {
+    isTaskExecutable = true;
+    isTaskQueueEmpty = false;
     switch (task) {
+        case IDLE:
+            //Do nothing in idle mode until nav button is pressed
+            //isTaskCompleted = true;
+            break;
         case BLINK_LED:
             Serial.println(F("Execute task BLINK_LED"));
             peripherals.blink_led(taskArgs.blinkLedPin);
+            isTaskCompleted = true;
+            break;
+        case BLINK_SCREEN:
+            Serial.println(F("Execute task BLINK_SCREEN"));
+            display.blink_screen(isTaskCompleted);
             break;
         case INIT_MESSAGE_QUEUE:
             Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
@@ -58,7 +77,7 @@ void Mediator::execute_task(task_t task) {
         case PUBLISH_MESSAGE:
             Serial.println(F("Execute task PUBLISH_MESSAGE"));
             break;
-        case SUBSCRIBE_TOPIC:
+        case SUBSCRIBE_MQTT_TOPIC:
             Serial.println(F("Execute task SUBSCRIBE_TOPIC"));
             break;
         case RETRIEVE_MESSAGE:
@@ -71,8 +90,8 @@ void Mediator::execute_task(task_t task) {
                 mqtt.connect_to_broker(taskArgs.mqttBrokerUrl);
             }
             break;
-        case SUBSCRIBE_MQTT_TOPIC:
-            Serial.println(F("Execute task SUBSCRIBE_MQTT_TOPIC"));
+        case HANDLE_MQTT_MESSAGE:
+            Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
             break;
         case PUBLISH_MQTT_MESSAGE:
             Serial.println(F("Execute task PUBLISH_MQTT_MESSAGE"));
@@ -115,23 +134,24 @@ void Mediator::execute_task(task_t task) {
             break;
         case RENDER_FEATURE:
             Serial.println(F("Execute task RENDER_FEATURE"));
-            if (taskArgs.feature != taskResults.currentFeature) {
+            //if (taskArgs.feature != taskResults.currentFeature) {
                 display.render_feature(taskArgs.feature);
-            } else {
-                Serial.println(F("Feature is not changed. Keep current rendering"));
-            }
+            //} else {
+            //    Serial.println(F("Feature is not changed. Keep current rendering"));
+            //}
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
-            peripherals.init_navigation_buttons(menuSelectNavButton, leftUpNavButton, rightDownNavButton);
+            peripherals.init_navigation_buttons(menuSelectNavButtonPinDefinition,
+                                                leftUpNavButtonPinDefinition,
+                                                rightDownNavButtonPinDefinition,
+                                                backCancelNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON:
             Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
-            peripherals.read_navigation_buttons(menuSelectNavButton, leftUpNavButton, rightDownNavButton);
-            taskArgs.previousFeature = taskResults.currentFeature;
-            taskArgs.previousTask = taskResults.currentTask;
-            taskResults.currentFeature = peripherals.retrieve_corresponding_feature(taskResults.currentFeature);
-            taskResults.currentTask = peripherals.retrieve_corresponding_task(taskResults.currentTask);
+            peripherals.read_navigation_buttons();
+            peripherals.retrieve_corresponding_feature(taskArgs.previousFeature, taskResults.currentFeature);
+            peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
             break;
         case GET_FEATURE:
             Serial.println(F("Execute task GET_FEATURE"));
@@ -216,45 +236,51 @@ void Mediator::execute_task(task_t task) {
 
 void Mediator::set_current_task() {
     taskResults.currentTask = taskArgs.task;
-    Serial.println(F("Set current task successfuly to "));
-
+    Serial.print(F("Set current task to: "));
+    Serial.println(task_as_string(taskArgs.task));
 }
 
 void Mediator::set_current_feature() {
     taskResults.currentFeature = taskArgs.feature;
-    Serial.println(F("Set current feature successfuly to "));
+    Serial.println(F("Set current feature successfully to "));
 
 }
 
 void Mediator::set_current_task_status(bool taskStatus) {
     if (taskStatus) {
-        Serial.println(F("Set task status successfuly to completed"));
+        Serial.println(F("Set current task status to completed"));
     } else {
-        Serial.println(F("Set task status successfuly to incompleted"));
+        Serial.println(F("Set current task status to incomplete"));
     }
     isTaskCompleted = taskStatus;
-    isTaskExecutable = true;
-    //isTaskExecutable = !taskStatus;
+    isTaskExecutable = !taskStatus;
 }
 
 bool Mediator::get_current_task_status() {
+    if (isTaskCompleted) {
+        Serial.println(F("Current task status: completed"));
+    } else {
+        Serial.println(F("Current task status: incomplete"));
+    }
     return isTaskCompleted;
 }
 
 task_t Mediator::get_current_task() {
+    Serial.print(F("Current task is: "));
+    Serial.println(task_as_string(taskResults.currentTask));
     return taskResults.currentTask;
 }
 
 feature_t Mediator::get_current_feature() {
+    Serial.print(F("Current feature is: "));
+    Serial.println(feature_as_string(taskResults.currentFeature));
     return taskResults.currentFeature;
 }
 
-char* Mediator::task_as_string(task_t task) {
-    char* taskAsString = "";
-    return taskAsString;
+const char *Mediator::task_as_string(task_t task) {
+    return task_names[task];
 }
 
-char* Mediator::feature_as_string(feature_t feature) {
-    char* featureAsString = nullptr;
-    return featureAsString;
+const char *Mediator::feature_as_string(feature_t feature) {
+    return feature_names[feature];
 }

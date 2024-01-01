@@ -7,6 +7,23 @@
 
 #include "enums.h"
 
+#define WIFI_STATUS_MAX_LEN 50
+#define DATE_TIME_MAX_LEN   30
+#define SERVER_STATUS_MAX_LEN 50
+#define LOGIN_STATUS_MAX_LEN  50
+
+typedef struct {
+    const char* name;
+    const uint16_t* icon_data;
+} menu_icon;
+
+typedef struct {
+    char wifiStatus[WIFI_STATUS_MAX_LEN];
+    char dateTime[DATE_TIME_MAX_LEN];
+    char serverStatus[SERVER_STATUS_MAX_LEN];
+    char loginStatus[LOGIN_STATUS_MAX_LEN];
+} status_indicators;
+
 typedef struct data_row {
     int timestamp;
 } data_row;

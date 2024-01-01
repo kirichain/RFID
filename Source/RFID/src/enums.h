@@ -10,9 +10,15 @@ enum operating_mode_t {
     HANDHELD,
 };
 
+enum feature_layout_t {
+    PORTRAIT,
+    LANDSCAPE
+};
+
 enum feature_t {
     BOOT,
-    HOME_HANDHELD,
+    HOME_HANDHELD_1,
+    HOME_HANDHELD_2,
     HOME_TERMINAL,
     SETUP,
     SETUP_WIFI,
@@ -41,18 +47,20 @@ enum feature_t {
     DATA_SYNC,
     DATA_SYNC_TO_SERVER,
     DATA_SYNC_TO_DEVICE,
+    NUM_FEATURES
 };
 
 enum task_t {
     IDLE,
     BLINK_LED,
+    BLINK_SCREEN,
     INIT_MESSAGE_QUEUE,
     CLEAR_MESSAGE_QUEUE,
     PUBLISH_MESSAGE,
-    SUBSCRIBE_TOPIC,
+    SUBSCRIBE_MQTT_TOPIC,
     RETRIEVE_MESSAGE,
     CONNECT_MQTT_BROKER,
-    SUBSCRIBE_MQTT_TOPIC,
+    HANDLE_MQTT_MESSAGE,
     PUBLISH_MQTT_MESSAGE,
     LOAD_CONFIG,
     SAVE_CONFIG,
@@ -92,5 +100,6 @@ enum task_t {
     SEND_PERIPHERAL_OUTPUT,
     START_CONVEYOR,
     STOP_CONVEYOR,
+    NUM_TASKS
 };
 #endif //RFID_ENUMS_H
