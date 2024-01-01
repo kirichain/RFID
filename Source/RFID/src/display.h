@@ -19,6 +19,8 @@
 #include "icons/scan.h"
 #include "icons/scan-history.h"
 #include "icons/modify-rfid-tag.h"
+#include "icons/setting.h"
+#include "icons/wifi-setting.h"
 #include "icons/user.h"
 #include "icons/login.h"
 #include "icons/logout.h"
@@ -27,9 +29,7 @@
 #include "icons/import-from-server.h"
 #include "icons/package.h"
 #include "icons/sync-data.h"
-#include "icons/setting.h"
 #include "icons/database-setting.h"
-#include "icons/wifi-setting.h"
 #include "icons/package-details.h"
 
 class Display {
@@ -59,8 +59,8 @@ public:
     int offset = -15; // Add an offset to adjust text position if needed
 
     // Constants for the grid layout
-    const int numColumns = 2; // Number of columns in the grid
-    const int numRows = 3; // Number of rows in the grid
+    int numColumns = 2; // Number of columns in the grid
+    int numRows = 3; // Number of rows in the grid
     const int iconWidth = 96; // Width of the icon
     const int iconHeight = 96; // Height of the icon
     const int textHeight = 10; // Height of the text area under the icon
@@ -85,31 +85,53 @@ public:
     int iconIndex;
 
     // Define an array of menu icon names corresponding to the header files
-    const char *menu_icon_names[6] = {"setting_icon", "rfid_icon", "package_icon", "co-working_icon",
-                                "database-setting_icon", "sync-data_icon"};
-    // Define an array of menu icon structures
+    const char *menu_icon_names[21] = {
+            "setting_icon",
+            "rfid_icon",
+            "package_icon",
+            "co-working_icon",
+            "database-setting_icon",
+            "sync-data_icon",
+            "connect-to-device_icon",
+            "connect-to-server_icon",
+            "scan-nearby-devices_icon",
+            "scan_icon",
+            "scan-history_icon",
+            "modify-rfid-tag_icon",
+            "wifi-setting_icon",
+            "user_icon",
+            "login_icon",
+            "logout_icon",
+            "import_icon",
+            "export_icon",
+            "import-from-sd-card_icon",
+            "import-from-server_icon",
+            "package-details_icon"
+    };
+
+    // Map menu names to menu icon data arrays
     menu_icon icons[21] = {
+            {"co-working_icon",          co_working_icon},
             {"connect-to-device_icon",   connect_to_device_icon},
             {"connect-to-server_icon",   connect_to_server_icon},
-            {"co-working_icon",          co_working_icon},
             {"scan-nearby-devices_icon", scan_nearby_devices_icon},
-            {"export_icon",              export_icon},
             {"rfid_icon",                rfid_icon},
             {"scan_icon",                scan_icon},
             {"scan-history_icon",        scan_history_icon},
             {"modify-rfid-tag_icon",     modify_rfid_tag_icon},
+            {"setting_icon",             setting_icon},
+            {"wifi-setting_icon",        wifi_setting_icon},
             {"user_icon",                user_icon},
             {"login_icon",               login_icon},
             {"logout_icon",              logout_icon},
+            {"database-setting_icon",    database_setting_icon},
             {"import_icon",              import_icon},
             {"import-from-sd-card_icon", import_from_sd_card_icon},
             {"import-from-server_icon",  import_from_server_icon},
+            {"export_icon",              export_icon},
             {"package_icon",             package_icon},
+            {"package-details_icon",     package_details_icon},
             {"sync-data_icon",           sync_data_icon},
-            {"setting_icon",             setting_icon},
-            {"database-setting_icon",    database_setting_icon},
-            {"wifi-setting_icon",        wifi_setting_icon},
-            {"package-details_icon",     package_details_icon}
     };
 
     // Additional code for the page indicator
@@ -130,6 +152,12 @@ public:
     void put_icon(int x, int y, const char *icon_name);
 
     void put_text(int x, int y, const char *content);
+
+    void draw_icon_with_label(int x, int y, int iconIndex, const char *iconNames[], TFT_eSPI &tft);
+
+    int calculate_columns(int iconCount);
+
+    int calculate_rows(int iconCount, int numColumns);
 
     void render_feature(feature_t _feature);
 

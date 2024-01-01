@@ -27,6 +27,7 @@ void Display::init(feature_layout_t _feature_layout) {
         SCREEN_HEIGHT = 320;
     }
     tft.fillScreen(0xFFFF);
+    draw_layout(feature_layout);
 }
 
 void Display::draw_layout(feature_layout_t _feature_layout) {
@@ -148,7 +149,7 @@ int Display::get_string_width(const char *string) {
     return stringWidth;
 }
 
-const menu_icon* Display::get_icon_by_name(const char* icon_name) {
+const menu_icon *Display::get_icon_by_name(const char *icon_name) {
     for (uint16_t i = 0; i < 21; i++) {
         if (strcmp(icons[i].name, icon_name) == 0) {
             return &icons[i];
@@ -159,7 +160,7 @@ const menu_icon* Display::get_icon_by_name(const char* icon_name) {
 
 void Display::put_icon(int x, int y, const char *icon_name) {
     tft.setSwapBytes(true);
-    const menu_icon* icon = get_icon_by_name(icon_name);
+    const menu_icon *icon = get_icon_by_name(icon_name);
     if (icon != nullptr) {
         tft.pushImage(x, y, iconWidth, iconHeight, icon->icon_data);
     } else {
@@ -199,41 +200,57 @@ void Display::put_text(int x, int y, const char *content) {
 
 }
 
+void Display::draw_icon_with_label(int x, int y, int iconIndex, const char *iconNames[], TFT_eSPI &tft) {
+    put_icon(x, y, iconNames[iconIndex]);
+    put_text(x + iconWidth / 2, y + iconHeight, iconNames[iconIndex]);
+}
+
+int Display::calculate_columns(int iconCount) {
+    return (iconCount % 2 == 0) ? 2 : 1;
+}
+
+int Display::calculate_rows(int iconCount, int numColumns) {
+    // If there is only one column, the number of rows is equal to the number of icons
+    if (numColumns == 1) {
+        return iconCount;
+    } else {
+        // If there are two columns, the number of rows is half of the number of icons for even counts
+        // or half + 1 for odd counts
+        return (iconCount + 1) / numColumns;
+    }
+}
+
 void Display::render_feature(feature_t _feature) {
-    draw_layout(feature_layout);
+    // Clear the viewport
+    tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
+
     switch (_feature) {
         case BOOT:
             // Code to handle BOOT feature
             break;
         case HOME_HANDHELD_1:
+            numColumns = 2;
+            numRows = 3;
+
             // Put icons and menu texts on the screen
             hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
             vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
                              / (numRows + 1));
-            Serial.print("hSpacing: ");
-            Serial.println(hSpacing);
-            Serial.print("vSpacing: ");
-            Serial.println(vSpacing);
-            Serial.print("Display size");
-            Serial.println(SCREEN_WIDTH);
-            Serial.println(SCREEN_HEIGHT);
-            tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
+
+            // Initialize the starting positions for the icons
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
 
             // Draw the icons in a 2x3 grid
             for (int row = 0; row < numRows; row++) {
                 menu_icon_x = hSpacing;
                 for (int col = 0; col < numColumns; col++) {
                     iconIndex = row * numColumns + col;
-                    put_icon(menu_icon_x, menu_icon_y, menu_icon_names[iconIndex]);
-                    put_text(menu_icon_x + iconWidth / 2, menu_icon_y + iconHeight,
-                             menu_icon_names[iconIndex]); // Adjust x-coordinate for centered text
+                    draw_icon_with_label(menu_icon_x, menu_icon_y, iconIndex, menu_icon_names, tft);
                     menu_icon_x += iconWidth + hSpacing;
                 }
                 menu_icon_y += iconHeight + textHeight + vSpacing;
             }
-
-            // Center the page indicator horizontally, use `put_text` method to display it
-            //put_text(SCREEN_WIDTH / 2, y + pageIndicatorMargin, pageIndicator);
             break;
         case HOME_HANDHELD_2:
             // Code to handle HOME_HANDHELD feature
@@ -242,23 +259,76 @@ void Display::render_feature(feature_t _feature) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
-        case SETUP:
-            // Code to handle SETUP feature
+        case SETTING:
+            // Calculate horizontal and vertical spacing for a 2x1 grid
+            numColumns = 2;
+            numRows = 1;
+
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
+
+            // Initialize the starting positions for the icons
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
+
+            // Draw the WiFi settings icon (index 12 in menu_icon_names)
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 12, menu_icon_names, tft);
+
+            // Move to the next column to draw the User icon
+            menu_icon_x += iconWidth + hSpacing;
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 13, menu_icon_names, tft);
             break;
-        case SETUP_WIFI:
+        case SETTING_WIFI:
             // Code to handle SETUP_WIFI feature
             break;
-        case SETUP_USER_INFO:
-            // Code to handle SETUP_USER_INFO feature
+        case SETTING_USER_INFO:
+            // Calculate the horizontal starting position for the first icon
+            menu_icon_x = round((SCREEN_WIDTH - (2 * iconWidth)) / 3);
+            // Calculate the vertical starting position for the icons
+            menu_icon_y = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - iconHeight - textHeight) / 2) +
+                          NAV_BAR_HEIGHT;
+
+            // Draw the Login icon (assumed index 14 in menu_icon_names)
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 14, menu_icon_names, tft);
+
+            // Move to the next column to draw the Logout icon
+            menu_icon_x += iconWidth + hSpacing;
+            draw_icon_with_label(menu_icon_x, menu_icon_y, 15, menu_icon_names, tft);
             break;
-        case SETUP_USER_INFO_LOGIN:
+        case SETTING_USER_INFO_LOGIN:
             // Code to handle SETUP_USER_INFO_LOGIN feature
             break;
-        case SETUP_USER_INFO_LOGOUT:
+        case SETTING_USER_INFO_LOGOUT:
             // Code to handle SETUP_USER_INFO_LOGOUT feature
             break;
         case RFID:
-            // Code to handle RFID feature
+            // Assuming that the first RFID icon index is 9
+            numColumns = calculate_columns(3);
+            numRows = calculate_rows(3, numColumns);
+
+            // Calculate horizontal and vertical spacing for the grid
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
+
+            // Initialize the starting positions for the icons
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
+
+            // Draw the RFID icons in a grid
+            for (int row = 0; row < numRows; row++) {
+                for (int col = 0; col < numColumns; col++) {
+                    int iconIndex = row * numColumns + col;
+                    if (iconIndex < 3) { // Check to make sure the icon index is within the range of RFID icons
+                        draw_icon_with_label(menu_icon_x, menu_icon_y, 9 + iconIndex, menu_icon_names, tft);
+                        menu_icon_x += iconWidth + hSpacing;
+                    }
+                }
+                // Reset X to the starting position and increment Y for the next row
+                menu_icon_x = hSpacing;
+                menu_icon_y += iconHeight + textHeight + vSpacing;
+            }
             break;
         case RFID_SCAN:
             // Code to handle RFID_SCAN feature
@@ -279,7 +349,32 @@ void Display::render_feature(feature_t _feature) {
             // Code to handle PACKAGE_DETAILS feature
             break;
         case CO_WORKING:
-            // Code to handle CO_WORKING feature
+            // Assuming that the first CO_WORKING icon index is 6
+            numColumns = calculate_columns(3);
+            numRows = calculate_rows(3, numColumns);
+
+            // Calculate horizontal and vertical spacing for the grid
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
+
+            // Initialize the starting positions for the icons
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
+
+            // Draw the CO_WORKING icons in a grid
+            for (int row = 0; row < numRows; row++) {
+                for (int col = 0; col < numColumns; col++) {
+                    int iconIndex = row * numColumns + col;
+                    if (iconIndex < 3) { // Check to make sure the icon index is within the range of CO_WORKING icons
+                        draw_icon_with_label(menu_icon_x, menu_icon_y, 6 + iconIndex, menu_icon_names, tft);
+                        menu_icon_x += iconWidth + hSpacing;
+                    }
+                }
+                // Reset X to the starting position and increment Y for the next row
+                menu_icon_x = hSpacing;
+                menu_icon_y += iconHeight + textHeight + vSpacing;
+            }
             break;
         case CO_WORKING_SCAN_NEARBY_DEVICE:
             // Code to handle CO_WORKING_SCAN_NEARBY_DEVICE feature
@@ -294,7 +389,32 @@ void Display::render_feature(feature_t _feature) {
             // Code to handle CO_WORKING_RUNNING feature
             break;
         case DATABASE:
-            // Code to handle DATABASE feature
+            // Assuming that the first DATABASE icon index is 16
+            numColumns = calculate_columns(2); // Even number of icons, so 2 columns
+            numRows = calculate_rows(2, numColumns);
+
+            // Calculate horizontal and vertical spacing for the grid
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
+
+            // Initialize the starting positions for the icons
+            menu_icon_x = hSpacing;
+            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
+
+            // Draw the DATABASE icons in a grid
+            for (int row = 0; row < numRows; row++) {
+                for (int col = 0; col < numColumns; col++) {
+                    int iconIndex = row * numColumns + col;
+                    if (iconIndex < 2) { // Check to make sure the icon index is within the range of DATABASE icons
+                        draw_icon_with_label(menu_icon_x, menu_icon_y, 16 + iconIndex, menu_icon_names, tft);
+                        menu_icon_x += iconWidth + hSpacing;
+                    }
+                }
+                // Reset X to the starting position and increment Y for the next row
+                menu_icon_x = hSpacing;
+                menu_icon_y += iconHeight + textHeight + vSpacing;
+            }
             break;
         case DATA_IMPORT:
             // Code to handle DATA_IMPORT feature
