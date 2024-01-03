@@ -47,19 +47,25 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             // Set text color for the header
             tft.setTextColor(textColor, headerColor);
 
-            // Draw WiFi status at the top-left
+            // Draw header at the top
+            tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
+
+            // Set the color for the header text
+            tft.setTextColor(textColor, headerColor);
+
+            // Draw WiFi status aligned to the top-left of the header
+            tft.setTextDatum(TL_DATUM); // Align to the top-left
             tft.drawString(wifiStatus, 5, 5);
 
-            // Draw login status directly below WiFi status
+            // Draw login status aligned to the top-left of the header, below WiFi status
             tft.drawString(loginStatus, 5, 20);
 
-            // Draw date and time at the top-right
-            dateTimeWidth = get_string_width(dateTime);
-            tft.drawString(dateTime, SCREEN_WIDTH - dateTimeWidth - 22, 5);
+            // Draw date and time aligned to the top-right of the header
+            tft.setTextDatum(TR_DATUM); // Align to the top-right
+            tft.drawString(dateTime, SCREEN_WIDTH - 5, 5);
 
-            // Draw server status directly below date and time
-            serverStatusWidth = get_string_width(serverStatus);
-            tft.drawString(serverStatus, SCREEN_WIDTH - serverStatusWidth - 15, 20);
+            // Draw server status aligned to the top-right of the header, below date and time
+            tft.drawString(serverStatus, SCREEN_WIDTH - 5, 20);
 
             // Draw viewport below the header
             tft.drawRect(0, HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, borderColor);
@@ -148,7 +154,7 @@ byte Display::get_font_height() {
 }
 
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
-    for (uint16_t i = 0; i < 21; i++) {
+    for (uint16_t i = 0; i < 22; i++) {
         if (strcmp(icons[i].name, icon_name) == 0) {
             return &icons[i];
         }
@@ -181,6 +187,9 @@ void Display::put_text(int x, int y, const char *content) const {
 
     // Replace remaining underscores with spaces
     text.replace("_", " ");
+
+    // Replace hyphen with space
+    text.replace("-", " ");
 
     tft.setTextSize(1); // Set text size if needed
 
@@ -401,7 +410,7 @@ void Display::render_feature(feature_t _feature) {
             break;
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case
-            const byte packageIconIndices[] = {20};
+            const byte packageIconIndices[] = {21};
             // Call the new render_icons_grid function with the specific icons for PACKAGE
             render_icons_grid(packageIconIndices, 1);
             break;
@@ -437,9 +446,9 @@ void Display::render_feature(feature_t _feature) {
         }
         case DATA_IMPORT: {
             // Define which icons to display for the DATA IMPORT case
-            const byte dataImportIconIndices[] = {18, 19,};
+            const byte dataImportIconIndices[] = {18, 19, 20};
             // Call the new render_icons_grid function with the specific icons for DATA IMPORT
-            render_icons_grid(dataImportIconIndices, 2);
+            render_icons_grid(dataImportIconIndices, 3);
             break;
         }
         case DATA_IMPORT_FROM_SD_CARD:
@@ -509,7 +518,7 @@ void Display::draw_vertical_line() const {
 
 void Display::draw_grid() const {
     // Draw horizontal lines for the grid
-    for (byte i = 0; i <= SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT; i += ROW_HEIGHT) {
+    for (int i = 0; i <= SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT; i += ROW_HEIGHT) {
         tft.drawLine(0, HEADER_HEIGHT + i, SCREEN_WIDTH, HEADER_HEIGHT + i, TFT_WHITE);
     }
 
@@ -569,6 +578,6 @@ uint16_t Display::convert_to_565_color(uint32_t hex_color) {
 void Display::reset_display_setting() {
     tft.setTextFont(2);
     tft.setTextSize(1);
-    tft.setTextColor(TFT_WHITE);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
 }

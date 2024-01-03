@@ -28,6 +28,7 @@
 #include "icons/import.h"
 #include "icons/import-from-sd-card.h"
 #include "icons/import-from-server.h"
+#include "icons/import-from-computer.h"
 #include "icons/package.h"
 #include "icons/sync-data.h"
 #include "icons/database-setting.h"
@@ -127,7 +128,7 @@ public:
     int iconSpacing;
 
     // Define an array of menu icon names corresponding to the header files
-    const char *menu_icon_names[21] = {
+    const char *menu_icon_names[22] = {
             "setting_icon",
             "rfid_icon",
             "package_icon",
@@ -148,11 +149,12 @@ public:
             "export_icon",
             "import-from-sd-card_icon",
             "import-from-server_icon",
+            "import-from-computer_icon",
             "package-details_icon"
     };
 
     // Map menu names to menu icon data arrays
-    menu_icon icons[21] = {
+    menu_icon icons[22] = {
             {"co-working_icon",          co_working_icon},
             {"connect-to-device_icon",   connect_to_device_icon},
             {"connect-to-server_icon",   connect_to_server_icon},
@@ -170,6 +172,7 @@ public:
             {"import_icon",              import_icon},
             {"import-from-sd-card_icon", import_from_sd_card_icon},
             {"import-from-server_icon",  import_from_server_icon},
+            {"import-from-computer_icon", import_from_computer_icon},
             {"export_icon",              export_icon},
             {"package_icon",             package_icon},
             {"package-details_icon",     package_details_icon},
