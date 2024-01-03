@@ -114,7 +114,7 @@ public:
 
     // Initialize x and y coordinates of the first icon
     byte menu_icon_x = NAV_BAR_HEIGHT;
-    byte menu_icon_y = NAV_BAR_HEIGHT + 15;
+    byte menu_icon_y = NAV_BAR_HEIGHT + 30;
 
     // Calculate starting y-coordinate for the navigation bar
     int navBarStartY;
@@ -220,6 +220,8 @@ public:
     void update_status(status_indicators _status);
 
     uint16_t convert_to_565_color(uint32_t hex_color);
+
+    void reset_display_setting();
 };
 
 #endif //RFID_DISPLAY_H

@@ -137,15 +137,8 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
 }
 
 byte Display::get_string_width(const char *string) {
-    // For fixed-width font
-    int charWidth = 6; // Width of a character at text size 1
-    int textSize = 1;  // Current text size setting
-
-    // Calculate the width of the string
-    // strlen(str) gives the number of characters in the string
-    // The width of one character is multiplied by the number of characters and the text size
-    int stringWidth = strlen(string) * charWidth * textSize;
-
+    // The width of the string is now calculated based on the actual font
+    byte stringWidth = tft.textWidth(string);
     return stringWidth;
 }
 
@@ -189,43 +182,51 @@ void Display::put_text(int x, int y, const char *content) const {
     // Replace remaining underscores with spaces
     text.replace("_", " ");
 
+    tft.setTextSize(1); // Set text size if needed
+
     // Calculate the new width after modifications
-    int textWidth = get_string_width(text.c_str());
+    byte textWidth = get_string_width(text.c_str());
 
     // Set cursor to the new adjusted position to center the modified text
     tft.setCursor(x - (textWidth / 2), y);
 
-    // Set text color and size
+    // Set text color
     tft.setTextColor(textColor);
-    tft.setTextSize(1); // Set text size if needed
 
     // Print the modified text
     tft.print(text);
-
 }
 
 void Display::draw_icon_with_label(int x, int y, byte _iconIndex, const char *iconNames[]) {
     put_icon(x, y, iconNames[_iconIndex]);
-    put_text(x + iconWidth / 2, y + iconHeight, iconNames[_iconIndex]);
+    put_text(x + iconWidth / 2, y + iconHeight + 20, iconNames[_iconIndex]);
 }
 
 void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
+//    if (not isSmallFontUsed) {
+//        tft.setFreeFont(&FreeSans9pt7b);
+//    }
+    tft.setFreeFont(&FreeSans9pt7b);
     numColumns = calculate_columns(_numIcons);
     numRows = calculate_rows(_numIcons, numColumns);
     hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
     vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
                      / (numRows + 1));
+//    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + get_font_height())))
+//                     / (numRows + 1));
 
-    for (int row = 0; row < numRows; ++row) {
-        for (int col = 0; col < numColumns; ++col) {
-            int index = row * numColumns + col;
+    for (byte row = 0; row < numRows; ++row) {
+        for (byte col = 0; col < numColumns; ++col) {
+            byte index = row * numColumns + col;
             if (index < _numIcons) {
                 int x = hSpacing + col * (iconWidth + hSpacing);
+                //int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + get_font_height() + vSpacing);
                 int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
                 draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
             }
         }
     }
+    reset_display_setting();
 }
 
 byte Display::calculate_columns(byte iconCount) {
@@ -296,11 +297,12 @@ void Display::render_feature(feature_t _feature) {
             break;
         }
         case RFID_SCAN: {
-            int button_radius = 60;
-            int text_padding = 20;
+            byte button_radius = 60;
+            byte text_padding = 20;
             // Draw a blue circle button
             tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, button_radius, TFT_BLUE);
             // Draw the text below the button
+            tft.setFreeFont(&FreeSans12pt7b);
             tft.setTextColor(TFT_WHITE);
             // Assuming your library provides a way to set text alignment
             tft.setTextDatum(MC_DATUM); // MC_DATUM typically means Middle-Center datum point
@@ -314,6 +316,7 @@ void Display::render_feature(feature_t _feature) {
             // tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, BUTTON_RADIUS, TFT_GREEN);
             // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
             // tft.print("Press cancel to stop scanning");
+            reset_display_setting();
             break;
         }
         case RFID_SCAN_HISTORY: {
@@ -321,7 +324,7 @@ void Display::render_feature(feature_t _feature) {
             draw_grid();
             draw_titles();
             // Draw each item in the history
-            for (int i = 0; i < 14; i++) {
+            for (byte i = 0; i < 14; i++) {
                 draw_history_item(i, history[i]);
             }
             break;
@@ -341,7 +344,7 @@ void Display::render_feature(feature_t _feature) {
             int divider1Y = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT;
             tft.fillRect(0, divider1Y, SCREEN_WIDTH, 2, TFT_WHITE);
 
-            int leftPadding = 10;
+            byte leftPadding = 10;
             // Part 2: RFID Scan Result Product Info
             int productInfoStartY = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT + 2 + VERTICAL_SPACE;
             // Display product image/product image container
@@ -390,10 +393,7 @@ void Display::render_feature(feature_t _feature) {
             tft.setTextColor(TFT_RED); // Set text color to black with green background
             tft.print("Unassociated");
             // Reset text size and color for subsequent text
-            tft.setTextFont(2);
-            tft.setTextSize(2); // Reset text size to 2 for the rest of Part 3
-            tft.setTextColor(TFT_WHITE, TFT_BLACK); // Reset text color to white with black background
-            tft.setTextDatum(TL_DATUM); // Reset datum to top-left
+            reset_display_setting();
             break;
         }
         case RFID_MODIFY_TAG_DATA:
@@ -509,7 +509,7 @@ void Display::draw_vertical_line() const {
 
 void Display::draw_grid() const {
     // Draw horizontal lines for the grid
-    for (int i = 0; i <= SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT; i += ROW_HEIGHT) {
+    for (byte i = 0; i <= SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT; i += ROW_HEIGHT) {
         tft.drawLine(0, HEADER_HEIGHT + i, SCREEN_WIDTH, HEADER_HEIGHT + i, TFT_WHITE);
     }
 
@@ -564,4 +564,11 @@ uint16_t Display::convert_to_565_color(uint32_t hex_color) {
     // Convert to 5 bits for red, 6 bits for green, and 5 bits for blue.
     uint16_t color565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
     return color565;
+}
+
+void Display::reset_display_setting() {
+    tft.setTextFont(2);
+    tft.setTextSize(1);
+    tft.setTextColor(TFT_WHITE);
+    tft.setTextDatum(TL_DATUM);
 }
