@@ -13,8 +13,8 @@
 #define LOGIN_STATUS_MAX_LEN  50
 
 typedef struct {
-    const char* name;
-    const uint16_t* icon_data;
+    const char *name;
+    const uint16_t *icon_data;
 } menu_icon;
 
 typedef struct {
@@ -42,8 +42,8 @@ typedef struct task_args {
     char *wifi_sta_password;
     data_row dataRow;
     data_collection dataCollection;
-    char* mqttTopic;
-    char* mqttBrokerUrl;
+    char *mqttTopic;
+    char *mqttBrokerUrl;
     byte blinkLedPin;
 } task_args;
 
@@ -61,9 +61,30 @@ typedef struct message {
 } message;
 
 typedef struct device_config {
-    char* defaultApWifiSSID;
-    char* defaultApWifiPassword;
-    char* defaultStaWifiSSID;
-    char* defaultStaWifiPassword;
+    char *defaultApWifiSSID;
+    char *defaultApWifiPassword;
+    char *defaultStaWifiSSID;
+    char *defaultStaWifiPassword;
 } device_config;
+
+typedef struct rfid_tag {
+    String epc;
+//    String tag_id;
+//    String tag_type;
+//    String tag_data;
+} rfid_tag;
+
+typedef struct rfid_item {
+    String item_id;
+    String description;
+    rfid_tag rfid_data;
+} rfid_item;
+
+typedef struct rfid_scan_result {
+    bool success;
+    rfid_tag scan_data;
+    String timestamp;
+    int scan_count;
+} rfid_scan_result;
+
 #endif //RFID_STRUCTS_H

@@ -10,6 +10,7 @@
 #include "SPI.h"
 #include "TFT_eSPI.h"
 #include "structs.h"
+#include "icons/backpack.h"
 #include "icons/connect-to-device.h"
 #include "icons/connect-to-server.h"
 #include "icons/co-working.h"
@@ -34,13 +35,55 @@
 
 class Display {
 public:
+    // Example history array
+    rfid_scan_result history[14] = {
+            {true, "EPC123456789", "2024-01-02 10:00", 5},
+            {true, "EPC987654321", "2024-01-02 09:45", 5},
+            {true, "EPC564738291", "2024-01-02 09:30", 5},
+            {true, "EPC864213579", "2024-01-02 09:15", 5},
+            {true, "EPC975310864", "2024-01-02 09:00", 5},
+            {true, "EPC472859106", "2024-01-02 08:45", 5},
+            {true, "EPC582947015", "2024-01-02 08:30", 5},
+            {true, "EPC693840257", "2024-01-02 08:15", 5},
+            {true, "EPC204857396", "2024-01-02 08:00", 5},
+            {true, "EPC918273645", "2024-01-02 07:45", 5},
+            {true, "EPC918273645", "2024-01-02 07:45", 5},
+            {true, "EPC918273645", "2024-01-02 07:45", 5},
+            {true, "EPC918273645", "2024-01-02 07:45", 5},
+            {true, "EPC918273645", "2024-01-02 07:45", 5},
+    };
+
     feature_layout_t feature_layout;
     status_indicators status;
 
-    int SCREEN_WIDTH, SCREEN_HEIGHT;
+    int SCREEN_WIDTH = 320;
+    int SCREEN_HEIGHT = 480;
 
-    const int HEADER_HEIGHT = 40;
-    const int NAV_BAR_HEIGHT = HEADER_HEIGHT;
+    const byte HEADER_HEIGHT = 40;
+    const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
+    const byte ROW_HEIGHT = 25; // Height of each data row
+    const int BORDER_COLOR = TFT_WHITE; // Assuming TFT_WHITE is the color constant for white
+    const byte PAGE_INDICATOR_HEIGHT = 25;
+    const byte VIEWPORT_HEIGHT = HEADER_HEIGHT - NAV_BAR_HEIGHT;
+
+    // Column widths based on the content
+    const byte COL_WIDTH_NO = 40;
+    const byte COL_WIDTH_EPC = 110;
+    const byte COL_WIDTH_TIMESTAMP = 130;
+    const byte COL_WIDTH_COUNT = SCREEN_WIDTH - COL_WIDTH_NO - COL_WIDTH_EPC - COL_WIDTH_TIMESTAMP;
+    // Remaining width for the "Timestamp" column
+    const byte TEXT_PADDING = 5; // Padding for the text from the left side of the cell
+
+    // RFID scan result layout
+    const byte RFID_SCAN_RESULT_HEADER_HEIGHT = 80;
+    const byte RFID_SCAN_RESULT_PRODUCT_INFO_HEIGHT = 150;
+    const byte RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH = 100;
+    const byte RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT = 100;
+    const byte RFID_SCAN_RESULT_TAG_INFO_HEIGHT =
+            VIEWPORT_HEIGHT - RFID_SCAN_RESULT_HEADER_HEIGHT - RFID_SCAN_RESULT_PRODUCT_INFO_HEIGHT -
+            RFID_SCAN_RESULT_TAG_INFO_HEIGHT;
+    const byte VERTICAL_SPACE = 10; // Space between elements
+    const byte TEXT_SPACING = 30; // Additional vertical space between lines of text in Part 3
 
     // Define colors for different UI elements
     uint32_t headerColor = TFT_DARKGREY;
@@ -59,19 +102,19 @@ public:
     int offset = -15; // Add an offset to adjust text position if needed
 
     // Constants for the grid layout
-    int numColumns = 2; // Number of columns in the grid
-    int numRows = 3; // Number of rows in the grid
-    const int iconWidth = 96; // Width of the icon
-    const int iconHeight = 96; // Height of the icon
-    const int textHeight = 10; // Height of the text area under the icon
+    byte numColumns = 2; // Number of columns in the grid
+    byte numRows = 3; // Number of rows in the grid
+    const byte iconWidth = 96; // Width of the icon
+    const byte iconHeight = 96; // Height of the icon
+    const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
-    int hSpacing;
-    int vSpacing;
+    byte hSpacing;
+    byte vSpacing;
 
     // Initialize x and y coordinates of the first icon
-    int menu_icon_x = NAV_BAR_HEIGHT;
-    int menu_icon_y = NAV_BAR_HEIGHT + 15;
+    byte menu_icon_x = NAV_BAR_HEIGHT;
+    byte menu_icon_y = NAV_BAR_HEIGHT + 15;
 
     // Calculate starting y-coordinate for the navigation bar
     int navBarStartY;
@@ -82,8 +125,6 @@ public:
     int okIconX;
     int rightIconX;
     int iconSpacing;
-    int iconIndex;
-    int numIcons;
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[21] = {
@@ -137,8 +178,8 @@ public:
 
     // Additional code for the page indicator
     const char *pageIndicator = "1/2"; // This text represents the current page and the total number of pages
-    int footerHeight = 30; // Height of the footer area for page indicator, adjust as needed
-    int pageIndicatorMargin = 1; // Vertical position for the page indicator
+    byte footerHeight = 30; // Height of the footer area for page indicator, adjust as needed
+    byte pageIndicatorMargin = 1; // Vertical position for the page indicator
 
     Display();
 
@@ -146,25 +187,39 @@ public:
 
     void draw_layout(feature_layout_t _feature_layout);
 
-    int get_string_width(const char *string);
+    static byte get_string_width(const char *string);
+
+    static byte get_font_height();
 
     const menu_icon *get_icon_by_name(const char *icon_name);
 
     void put_icon(int x, int y, const char *icon_name);
 
-    void put_text(int x, int y, const char *content);
+    void put_text(int x, int y, const char *content) const;
 
-    void draw_icon_with_label(int x, int y, int iconIndex, const char *iconNames[], TFT_eSPI &tft);
+    void draw_icon_with_label(int x, int y, byte iconIndex, const char *iconNames[]);
 
-    int calculate_columns(int iconCount);
+    void render_icons_grid(const byte *iconIndices, byte _numIcons);
 
-    int calculate_rows(int iconCount, int numColumns);
+    static byte calculate_columns(byte iconCount);
+
+    static byte calculate_rows(byte iconCount, byte numColumns);
 
     void render_feature(feature_t _feature);
 
-    void blink_screen(bool &isTaskCompleted);
+    void draw_history_item(byte index, const rfid_scan_result &item) const;
+
+    void draw_vertical_line() const;
+
+    void draw_grid() const;
+
+    void draw_titles() const;
+
+    static void blink_screen(bool &isTaskCompleted);
 
     void update_status(status_indicators _status);
+
+    uint16_t convert_to_565_color(uint32_t hex_color);
 };
 
 #endif //RFID_DISPLAY_H

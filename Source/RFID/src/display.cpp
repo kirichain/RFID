@@ -8,13 +8,14 @@ TFT_eSPI tft = TFT_eSPI();
 
 Display::Display() {
 
-
 }
 
 void Display::init(feature_layout_t _feature_layout) {
     // Initialize display
     feature_layout = _feature_layout;
     tft.init();
+    tft.setTextFont(2);
+    tft.setSwapBytes(true);
     if (_feature_layout == PORTRAIT) {
         tft.setRotation(2);
         // Display resolution
@@ -35,7 +36,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
     tft.fillScreen(TFT_BLACK);
 
     // Set text font and size
-    tft.setTextFont(2);
     tft.setTextSize(1);
     tft.setTextDatum(TL_DATUM); // Top-Left datum
 
@@ -136,7 +136,7 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
     }
 }
 
-int Display::get_string_width(const char *string) {
+byte Display::get_string_width(const char *string) {
     // For fixed-width font
     int charWidth = 6; // Width of a character at text size 1
     int textSize = 1;  // Current text size setting
@@ -149,6 +149,11 @@ int Display::get_string_width(const char *string) {
     return stringWidth;
 }
 
+byte Display::get_font_height() {
+    // The height of the font
+    return tft.fontHeight();
+}
+
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
     for (uint16_t i = 0; i < 21; i++) {
         if (strcmp(icons[i].name, icon_name) == 0) {
@@ -159,7 +164,6 @@ const menu_icon *Display::get_icon_by_name(const char *icon_name) {
 }
 
 void Display::put_icon(int x, int y, const char *icon_name) {
-    tft.setSwapBytes(true);
     const menu_icon *icon = get_icon_by_name(icon_name);
     if (icon != nullptr) {
         tft.pushImage(x, y, iconWidth, iconHeight, icon->icon_data);
@@ -170,7 +174,7 @@ void Display::put_icon(int x, int y, const char *icon_name) {
     }
 }
 
-void Display::put_text(int x, int y, const char *content) {
+void Display::put_text(int x, int y, const char *content) const {
     // Create a mutable copy of the content
     String text(content);
 
@@ -200,23 +204,42 @@ void Display::put_text(int x, int y, const char *content) {
 
 }
 
-void Display::draw_icon_with_label(int x, int y, int iconIndex, const char *iconNames[], TFT_eSPI &tft) {
-    put_icon(x, y, iconNames[iconIndex]);
-    put_text(x + iconWidth / 2, y + iconHeight, iconNames[iconIndex]);
+void Display::draw_icon_with_label(int x, int y, byte _iconIndex, const char *iconNames[]) {
+    put_icon(x, y, iconNames[_iconIndex]);
+    put_text(x + iconWidth / 2, y + iconHeight, iconNames[_iconIndex]);
 }
 
-int Display::calculate_columns(int iconCount) {
+void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
+    numColumns = calculate_columns(_numIcons);
+    numRows = calculate_rows(_numIcons, numColumns);
+    hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                     / (numRows + 1));
+
+    for (int row = 0; row < numRows; ++row) {
+        for (int col = 0; col < numColumns; ++col) {
+            int index = row * numColumns + col;
+            if (index < _numIcons) {
+                int x = hSpacing + col * (iconWidth + hSpacing);
+                int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
+                draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
+            }
+        }
+    }
+}
+
+byte Display::calculate_columns(byte iconCount) {
     return (iconCount % 2 == 0) ? 2 : 1;
 }
 
-int Display::calculate_rows(int iconCount, int numColumns) {
+byte Display::calculate_rows(byte iconCount, byte _numColumns) {
     // If there is only one column, the number of rows is equal to the number of icons
-    if (numColumns == 1) {
+    if (_numColumns == 1) {
         return iconCount;
     } else {
         // If there are two columns, the number of rows is half of the number of icons for even counts
         // or half + 1 for odd counts
-        return (iconCount + 1) / numColumns;
+        return (iconCount + 1) / _numColumns;
     }
 }
 
@@ -228,29 +251,13 @@ void Display::render_feature(feature_t _feature) {
         case BOOT:
             // Code to handle BOOT feature
             break;
-        case HOME_HANDHELD_1:
-            // Refactored to use dynamic calculations
-            numIcons = 6; // Assuming 6 icons for this feature
-            numColumns = calculate_columns(numIcons);
-            numRows = calculate_rows(numIcons, numColumns);
-
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-            // Draw the icons in a grid
-            for (int row = 0; row < numRows; row++) {
-                menu_icon_y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
-                menu_icon_x = hSpacing;
-                for (int col = 0; col < numColumns; col++) {
-                    iconIndex = row * numColumns + col;
-                    if (iconIndex < numIcons) { // Ensure we don't draw more icons than we have
-                        draw_icon_with_label(menu_icon_x, menu_icon_y, iconIndex, menu_icon_names, tft);
-                        menu_icon_x += iconWidth + hSpacing; // Move to the next icon's horizontal position
-                    }
-                }
-            }
+        case HOME_HANDHELD_1: {
+            // Define which icons to display for the HOME HANDHELD 1 case
+            const byte homeHandheld1IconIndices[] = {0, 1, 2, 3, 4, 5};
+            // Call the new render_icons_grid function with the specific icons for HOME HANDHELD 1
+            render_icons_grid(homeHandheld1IconIndices, 6);
             break;
+        }
         case HOME_HANDHELD_2:
             // Code to handle HOME_HANDHELD feature
             // Put icons and menu texts on the screen
@@ -258,133 +265,157 @@ void Display::render_feature(feature_t _feature) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
-        case SETTING:
-            // Refactored to use dynamic calculations
-            numIcons = 2; // WiFi settings and User
-            numColumns = calculate_columns(numIcons);
-            numRows = calculate_rows(numIcons, numColumns);
-
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT;
-
-            // Assuming the icon indexes are 12 for WiFi and 13 for User
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 12, menu_icon_names, tft); // WiFi
-            menu_icon_x += iconWidth + hSpacing;
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 13, menu_icon_names, tft); // User
+        case SETTING: {
+            // Define which icons to display for the SETTING case
+            const byte settingIconIndices[] = {12, 13};
+            // Call the new render_icons_grid function with the specific icons for SETTING
+            render_icons_grid(settingIconIndices, 2);
             break;
+        }
         case SETTING_WIFI:
             // Code to handle SETUP_WIFI feature
             break;
-        case SETTING_USER_INFO:
-            // Calculate the horizontal starting position for the first icon
-            menu_icon_x = round((SCREEN_WIDTH - (2 * iconWidth)) / 3);
-            // Calculate the vertical starting position for the icons
-            menu_icon_y = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - iconHeight - textHeight) / 2) +
-                          NAV_BAR_HEIGHT;
-
-            // Draw the Login icon (assumed index 14 in menu_icon_names)
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 14, menu_icon_names, tft);
-
-            // Move to the next column to draw the Logout icon
-            menu_icon_x += iconWidth + hSpacing;
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 15, menu_icon_names, tft);
+        case SETTING_USER_INFO: {
+            // Define which icons to display for the SETTING_USER_INFO case
+            const byte settingUserInfoIconIndices[] = {14, 15};
+            // Call the new render_icons_grid function with the specific icons for SETTING_USER_INFO
+            render_icons_grid(settingUserInfoIconIndices, 2);
             break;
+        }
         case SETTING_USER_INFO_LOGIN:
             // Code to handle SETUP_USER_INFO_LOGIN feature
             break;
         case SETTING_USER_INFO_LOGOUT:
             // Code to handle SETUP_USER_INFO_LOGOUT feature
             break;
-        case RFID:
-            // Assuming that the first RFID icon index is 9
-            numColumns = calculate_columns(3);
-            numRows = calculate_rows(3, numColumns);
+        case RFID: {
+            // Define which icons to display for the RFID case
+            const byte rfidIconIndices[] = {9, 10, 11};
+            // Call the new render_icons_grid function with the specific icons for RFID
+            render_icons_grid(rfidIconIndices, 3);
+            break;
+        }
+        case RFID_SCAN: {
+            int button_radius = 60;
+            int text_padding = 20;
+            // Draw a blue circle button
+            tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, button_radius, TFT_BLUE);
+            // Draw the text below the button
+            tft.setTextColor(TFT_WHITE);
+            // Assuming your library provides a way to set text alignment
+            tft.setTextDatum(MC_DATUM); // MC_DATUM typically means Middle-Center datum point
+            // Draw the button text centered below the circle button
+            tft.drawString("Press select to start scanning", SCREEN_WIDTH / 2,
+                           SCREEN_HEIGHT / 2 + button_radius + text_padding);
 
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-
-            // Initialize the starting positions for the icons
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
-
-            // Draw the RFID icons in a grid
-            for (int row = 0; row < numRows; row++) {
-                for (int col = 0; col < numColumns; col++) {
-                    int iconIndex = row * numColumns + col;
-                    if (iconIndex < 3) { // Check to make sure the icon index is within the range of RFID icons
-                        draw_icon_with_label(menu_icon_x, menu_icon_y, 9 + iconIndex, menu_icon_names, tft);
-                        menu_icon_x += iconWidth + hSpacing;
-                    }
-                }
-                // Reset X to the starting position and increment Y for the next row
-                menu_icon_x = hSpacing;
-                menu_icon_y += iconHeight + textHeight + vSpacing;
+            // When the user presses the select button, change the circle to green
+            // and update the text (this part should be uncommented when implementing the interaction)
+            //
+            // tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, BUTTON_RADIUS, TFT_GREEN);
+            // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
+            // tft.print("Press cancel to stop scanning");
+            break;
+        }
+        case RFID_SCAN_HISTORY: {
+            // Draw the grid and column titles
+            draw_grid();
+            draw_titles();
+            // Draw each item in the history
+            for (int i = 0; i < 14; i++) {
+                draw_history_item(i, history[i]);
             }
             break;
-        case RFID_SCAN:
-            // Code to handle RFID_SCAN feature
+        }
+        case RFID_SCAN_RESULT: {
+            // Part 1: RFID Scan Result Header below the existing navigation bar
+            tft.fillRect(0, HEADER_HEIGHT, SCREEN_WIDTH, RFID_SCAN_RESULT_HEADER_HEIGHT,
+                         convert_to_565_color(0x2596be));
+            tft.setTextColor(TFT_WHITE);
+            tft.setFreeFont(&FreeSans18pt7b);
+            //tft.setTextSize(2);
+            tft.setTextDatum(MC_DATUM);
+            tft.drawString("Scan result", SCREEN_WIDTH / 2, HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT / 2);
+            tft.setTextDatum(TL_DATUM); // Resetting datum for subsequent text
+
+            // Divider line below the header
+            int divider1Y = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT;
+            tft.fillRect(0, divider1Y, SCREEN_WIDTH, 2, TFT_WHITE);
+
+            int leftPadding = 10;
+            // Part 2: RFID Scan Result Product Info
+            int productInfoStartY = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT + 2 + VERTICAL_SPACE;
+            // Display product image/product image container
+//            tft.drawRect(leftPadding, productInfoStartY, RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH,
+//                         RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT,
+//                         TFT_WHITE);
+            tft.pushImage(leftPadding, productInfoStartY, RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH,
+                          RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT, backpack);
+            // Adjusted text positions in Part 2 with TEXT_SPACING for vertical space between lines and text size 1
+            int textXOffset = RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH + 10 + leftPadding;
+            int textYOffset =
+                    productInfoStartY + VERTICAL_SPACE; // Start the text below the image with some vertical space
+            tft.setFreeFont(&FreeSans9pt7b);
+            //tft.setTextSize(1); // Set text size to 1 for Part 2
+            tft.setCursor(textXOffset, textYOffset);
+            tft.print("Product ID: XYZ");
+            tft.setCursor(textXOffset, textYOffset + TEXT_SPACING);
+            tft.print("Size: M");
+            tft.setCursor(textXOffset, textYOffset + 2 * TEXT_SPACING);
+            tft.print("Color: Red");
+
+            // Divider line below Part 2
+            int divider2Y = productInfoStartY + RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT + VERTICAL_SPACE;
+            tft.fillRect(0, divider2Y, SCREEN_WIDTH, 2, TFT_WHITE);
+
+            // Part 3: RFID Scan Result Tag Info with TEXT_SPACING between lines and text size 2
+            int tagInfoStartY = divider2Y + 2 + VERTICAL_SPACE + 20;
+
+            tft.setFreeFont(&FreeSans12pt7b);
+            //tft.setTextFont(2);
+            //tft.setTextSize(2); // Set text size to 2 for Part 3
+            tft.setCursor(leftPadding, tagInfoStartY);
+            tft.print("Brand: BrandName");
+            tft.setCursor(leftPadding, tagInfoStartY + TEXT_SPACING + 5);
+            tft.print("PO code: 12345");
+            tft.setCursor(leftPadding, tagInfoStartY + 2 * TEXT_SPACING + 10);
+            tft.print("EPC: 0987654321");
+            tft.setCursor(leftPadding, tagInfoStartY + 3 * TEXT_SPACING + 15);
+            tft.print("Shipped to ID: STID123");
+
+            // Special handling for "Tag status: Associated" with green background
+            tft.setCursor(leftPadding, tagInfoStartY + 4 * TEXT_SPACING + 20);
+            tft.print("Tag status: ");
+//            tft.setTextColor(TFT_GREEN); // Set text color to black with green background
+//            tft.print("Associated");
+            tft.setTextColor(TFT_RED); // Set text color to black with green background
+            tft.print("Unassociated");
+            // Reset text size and color for subsequent text
+            tft.setTextFont(2);
+            tft.setTextSize(2); // Reset text size to 2 for the rest of Part 3
+            tft.setTextColor(TFT_WHITE, TFT_BLACK); // Reset text color to white with black background
+            tft.setTextDatum(TL_DATUM); // Reset datum to top-left
             break;
-        case RFID_SCAN_HISTORY:
-            // Code to handle RFID_SCAN_HISTORY feature
-            break;
-        case RFID_SCAN_RESULT:
-            // Code to handle RFID_SCAN_RESULT feature
-            break;
+        }
         case RFID_MODIFY_TAG_DATA:
-            // Code to handle RFID_MODIFY_TAG_DATA feature
-            break;
-        case PACKAGE:
-            numIcons = 1; // Package details
-            numColumns = calculate_columns(numIcons);
-            numRows = calculate_rows(numIcons, numColumns);
 
-            // Logic similar to other cases with single icon
-            // Calculate horizontal and vertical spacing for the grid
-            menu_icon_x = round((SCREEN_WIDTH - iconWidth) / 2);
-            menu_icon_y = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - iconHeight - textHeight) / 2) +
-                          NAV_BAR_HEIGHT;
-
-            // Assuming the icon index for 'Package details' is 20
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 20, menu_icon_names, tft);
             break;
+        case PACKAGE: {
+            // Define which icons to display for the PACKAGE case
+            const byte packageIconIndices[] = {20};
+            // Call the new render_icons_grid function with the specific icons for PACKAGE
+            render_icons_grid(packageIconIndices, 1);
+            break;
+        }
         case PACKAGE_DETAILS:
             // Code to handle PACKAGE_DETAILS feature
             break;
-        case CO_WORKING:
-            // Assuming that the first CO_WORKING icon index is 6
-            numColumns = calculate_columns(3);
-            numRows = calculate_rows(3, numColumns);
-
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-
-            // Initialize the starting positions for the icons
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
-
-            // Draw the CO_WORKING icons in a grid
-            for (int row = 0; row < numRows; row++) {
-                for (int col = 0; col < numColumns; col++) {
-                    int iconIndex = row * numColumns + col;
-                    if (iconIndex < 3) { // Check to make sure the icon index is within the range of CO_WORKING icons
-                        draw_icon_with_label(menu_icon_x, menu_icon_y, 6 + iconIndex, menu_icon_names, tft);
-                        menu_icon_x += iconWidth + hSpacing;
-                    }
-                }
-                // Reset X to the starting position and increment Y for the next row
-                menu_icon_x = hSpacing;
-                menu_icon_y += iconHeight + textHeight + vSpacing;
-            }
+        case CO_WORKING: {
+            // Define which icons to display for the CO WORKING case
+            const byte coworkingIconIndices[] = {6, 7, 8};
+            // Call the new render_icons_grid function with the specific icons for CO WORKING
+            render_icons_grid(coworkingIconIndices, 3);
             break;
+        }
         case CO_WORKING_SCAN_NEARBY_DEVICE:
             // Code to handle CO_WORKING_SCAN_NEARBY_DEVICE feature
             break;
@@ -397,53 +428,20 @@ void Display::render_feature(feature_t _feature) {
         case CO_WORKING_RUNNING:
             // Code to handle CO_WORKING_RUNNING feature
             break;
-        case DATABASE:
-            // Assuming that the first DATABASE icon index is 16
-            numColumns = calculate_columns(2); // Even number of icons, so 2 columns
-            numRows = calculate_rows(2, numColumns);
-
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-
-            // Initialize the starting positions for the icons
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT; // Start after the navigation bar height
-
-            // Draw the DATABASE icons in a grid
-            for (int row = 0; row < numRows; row++) {
-                for (int col = 0; col < numColumns; col++) {
-                    int iconIndex = row * numColumns + col;
-                    if (iconIndex < 2) { // Check to make sure the icon index is within the range of DATABASE icons
-                        draw_icon_with_label(menu_icon_x, menu_icon_y, 16 + iconIndex, menu_icon_names, tft);
-                        menu_icon_x += iconWidth + hSpacing;
-                    }
-                }
-                // Reset X to the starting position and increment Y for the next row
-                menu_icon_x = hSpacing;
-                menu_icon_y += iconHeight + textHeight + vSpacing;
-            }
+        case DATABASE: {
+            // Define which icons to display for the DATABASE case
+            const byte databaseIconIndices[] = {16, 17,};
+            // Call the new render_icons_grid function with the specific icons for DATABASE
+            render_icons_grid(databaseIconIndices, 2);
             break;
-        case DATA_IMPORT:
-            numIcons = 2; // Import from SD card and Import from Server
-            numColumns = calculate_columns(numIcons);
-            numRows = calculate_rows(numIcons, numColumns);
-
-            // Logic similar to other cases with grid drawing
-            // Calculate horizontal and vertical spacing for the grid
-            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                             / (numRows + 1));
-
-            menu_icon_x = hSpacing;
-            menu_icon_y = vSpacing + NAV_BAR_HEIGHT;
-
-            // Assuming the icon index for 'Import from SD card' is 18 and 'Import from Server' is 19
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 18, menu_icon_names, tft); // SD Card
-            menu_icon_x += iconWidth + hSpacing;
-            draw_icon_with_label(menu_icon_x, menu_icon_y, 19, menu_icon_names, tft); // Server
+        }
+        case DATA_IMPORT: {
+            // Define which icons to display for the DATA IMPORT case
+            const byte dataImportIconIndices[] = {18, 19,};
+            // Call the new render_icons_grid function with the specific icons for DATA IMPORT
+            render_icons_grid(dataImportIconIndices, 2);
             break;
+        }
         case DATA_IMPORT_FROM_SD_CARD:
             // Code to handle DATA_IMPORT_FROM_SD_CARD feature
             break;
@@ -474,14 +472,78 @@ void Display::render_feature(feature_t _feature) {
     }
 }
 
+void Display::draw_history_item(byte index, const rfid_scan_result &item) const {
+    // Calculate the y position for the current row, taking into account the header bar
+    int y_position = HEADER_HEIGHT + ROW_HEIGHT + (index * ROW_HEIGHT);
+
+    tft.setTextColor(TFT_WHITE);
+    // Align text to the left
+    tft.setTextDatum(TL_DATUM);
+
+    // Draw the index (No.)
+    tft.drawString(String(index + 1), TEXT_PADDING, y_position);
+
+    // Draw the EPC
+    tft.drawString(item.scan_data.epc, COL_WIDTH_NO + TEXT_PADDING, y_position);
+
+    // Draw the Timestamp/ Last scan
+    tft.drawString(item.timestamp, COL_WIDTH_NO + COL_WIDTH_EPC + TEXT_PADDING, y_position);
+
+    // Draw the Count
+    tft.drawString(String(item.scan_count), COL_WIDTH_NO + COL_WIDTH_EPC + COL_WIDTH_TIMESTAMP + TEXT_PADDING,
+                   y_position);
+}
+
+void Display::draw_vertical_line() const {
+    // Calculate the height at which the vertical lines should stop
+    int vertical_line_stop = SCREEN_HEIGHT - NAV_BAR_HEIGHT - PAGE_INDICATOR_HEIGHT;
+
+    // Draw vertical lines between columns
+    tft.drawLine(COL_WIDTH_NO, HEADER_HEIGHT, COL_WIDTH_NO, vertical_line_stop, TFT_WHITE);
+    tft.drawLine(COL_WIDTH_NO + COL_WIDTH_EPC, HEADER_HEIGHT, COL_WIDTH_NO + COL_WIDTH_EPC, vertical_line_stop,
+                 TFT_WHITE);
+    tft.drawLine(COL_WIDTH_NO + COL_WIDTH_EPC + COL_WIDTH_TIMESTAMP, HEADER_HEIGHT,
+                 COL_WIDTH_NO + COL_WIDTH_EPC + COL_WIDTH_TIMESTAMP, vertical_line_stop, TFT_WHITE);
+    // No need to draw the last line as it would be the edge of the screen
+}
+
+void Display::draw_grid() const {
+    // Draw horizontal lines for the grid
+    for (int i = 0; i <= SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT; i += ROW_HEIGHT) {
+        tft.drawLine(0, HEADER_HEIGHT + i, SCREEN_WIDTH, HEADER_HEIGHT + i, TFT_WHITE);
+    }
+
+    // Draw the vertical lines for the grid
+    draw_vertical_line();
+}
+
+void Display::draw_titles() const {
+    tft.setTextColor(TFT_WHITE);
+    // Align text to the left
+    tft.setTextDatum(TL_DATUM);
+
+    // Draw title for "No." column
+    tft.drawString("No.", TEXT_PADDING, HEADER_HEIGHT + TEXT_PADDING);
+
+    // Draw title for "EPC" column
+    tft.drawString("EPC", COL_WIDTH_NO + TEXT_PADDING, HEADER_HEIGHT + TEXT_PADDING);
+
+    // Draw title for "Timestamp/Last scan" column
+    tft.drawString("Last scan", COL_WIDTH_NO + COL_WIDTH_EPC + TEXT_PADDING, HEADER_HEIGHT + TEXT_PADDING);
+
+    // Draw title for "Count" column
+    tft.drawString("Count", COL_WIDTH_NO + COL_WIDTH_EPC + COL_WIDTH_TIMESTAMP + TEXT_PADDING,
+                   HEADER_HEIGHT + TEXT_PADDING);
+}
+
 void Display::blink_screen(bool &isTaskCompleted) {
     static int blink_count = 0;
-    if (blink_count <= 5) {
+    if (blink_count <= 10) {
         Serial.print(F("Execute time: "));
         Serial.println(blink_count);
-        tft.fillScreen(random(0xFFFF));
+        tft.fillScreen(random(TFT_WHITE));
         delay(500);
-        tft.fillScreen(0xFFFF);
+        tft.fillScreen(TFT_BLACK);
         delay(500);
         blink_count++;
     } else {
@@ -491,4 +553,15 @@ void Display::blink_screen(bool &isTaskCompleted) {
 
 void Display::update_status(status_indicators _status) {
 
+}
+
+uint16_t Display::convert_to_565_color(uint32_t hex_color) {
+    // Convert the 24-bit RGB color to a 16-bit color.
+    uint16_t r = (hex_color >> 16) & 0xFF; // Extract the red component.
+    uint16_t g = (hex_color >> 8) & 0xFF;  // Extract the green component.
+    uint16_t b = hex_color & 0xFF;         // Extract the blue component.
+
+    // Convert to 5 bits for red, 6 bits for green, and 5 bits for blue.
+    uint16_t color565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+    return color565;
 }
