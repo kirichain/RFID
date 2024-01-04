@@ -42,10 +42,9 @@ Mediator::Mediator() {
     //dataRow.timestamp = NULL;
 }
 
-void Mediator::init_services() {
+void Mediator::init_services() const {
     if (taskArgs.feature == HOME_TERMINAL) {
         display.init(LANDSCAPE);
-
     } else {
         display.init(PORTRAIT);
     }
@@ -74,14 +73,14 @@ void Mediator::execute_task(task_t task) {
         case CLEAR_MESSAGE_QUEUE:
             Serial.println(F("Execute task CLEAR_MESSAGE_QUEUE"));
             break;
-        case PUBLISH_MESSAGE:
-            Serial.println(F("Execute task PUBLISH_MESSAGE"));
+        case PUBLISH_MQTT_MESSAGE:
+            Serial.println(F("Execute task PUBLISH_MQTT_MESSAGE"));
             break;
         case SUBSCRIBE_MQTT_TOPIC:
             Serial.println(F("Execute task SUBSCRIBE_TOPIC"));
             break;
-        case RETRIEVE_MESSAGE:
-            Serial.println(F("Execute task RETRIEVE_MESSAGE"));
+        case RETRIEVE_MQTT_MESSAGE:
+            Serial.println(F("Execute task RETRIEVE_MQTT_MESSAGE"));
             break;
         case CONNECT_MQTT_BROKER:
             Serial.println(F("Execute task CONNECT_MQTT_BROKER"));
@@ -92,9 +91,6 @@ void Mediator::execute_task(task_t task) {
             break;
         case HANDLE_MQTT_MESSAGE:
             Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
-            break;
-        case PUBLISH_MQTT_MESSAGE:
-            Serial.println(F("Execute task PUBLISH_MQTT_MESSAGE"));
             break;
         case LOAD_CONFIG:
             Serial.println(F("Execute task LOAD_CONFIG"));
@@ -113,15 +109,41 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_AP_WIFI:
             Serial.println(F("Execute task INIT_AP_WIFI"));
+            strncpy(taskArgs.wifi_ap_ssid, "RFID-001", sizeof(taskArgs.wifi_ap_ssid));
+            strncpy(taskArgs.wifi_ap_password, "rfid001x", sizeof(taskArgs.wifi_ap_password));
+            // Ensure null-termination if the string length equals the buffer size
+            taskArgs.wifi_ap_ssid[sizeof(taskArgs.wifi_ap_ssid) - 1] = '\0';
+            taskArgs.wifi_ap_password[sizeof(taskArgs.wifi_ap_password) - 1] = '\0';
+            wifi.set_ap_wifi_credential(taskArgs.wifi_ap_ssid, taskArgs.wifi_ap_password);
+            // Start to connect to Wi-Fi as AP credential
+            if (wifi.init_ap_mode()) {
+                Serial.println(F("Init ap wifi successfully"));
+            }
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
+            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
+            // Ensure null-termination if the string length equals the buffer size
+            taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
+            taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
+            taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
+            wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password, taskArgs.wifi_hostname);
+            // Start to connect to Wi-Fi as STA credential
+            if (wifi.init_sta_mode()) {
+                Serial.println(F("Init sta wifi successfully"));
+            } else {
+                Serial.println(F("Init sta wifi failed"));
+            }
             break;
         case TERMINATE_AP_WIFI:
             Serial.println(F("Execute task TERMINATE_AP_WIFI"));
+            wifi.terminate_ap_mode();
             break;
         case TERMINATE_STA_WIFI:
             Serial.println(F("Execute task TERMINATE_STA_WIFI"));
+            wifi.terminate_sta_mode();
             break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
@@ -135,7 +157,7 @@ void Mediator::execute_task(task_t task) {
         case RENDER_FEATURE:
             Serial.println(F("Execute task RENDER_FEATURE"));
             //if (taskArgs.feature != taskResults.currentFeature) {
-                display.render_feature(taskArgs.feature);
+            display.render_feature(taskArgs.feature);
             //} else {
             //    Serial.println(F("Feature is not changed. Keep current rendering"));
             //}
@@ -256,7 +278,7 @@ void Mediator::set_current_task_status(bool taskStatus) {
     isTaskExecutable = !taskStatus;
 }
 
-bool Mediator::get_current_task_status() {
+bool Mediator::get_current_task_status() const {
     if (isTaskCompleted) {
         Serial.println(F("Current task status: completed"));
     } else {

@@ -36,4 +36,11 @@
 #define rightDownNavButtonPinDefinition 22
 #define backCancelNavButtonPinDefinition 23
 
+// Defined WiFi Configuration
+#define device_hostname "RFID-001-"
+#define default_wifi_ssid_1 "SFS OFFICE"
+#define default_wifi_password_1 "sfs#office!@"
+#define default_wifi_ssid_2 "ERP LTD"
+#define default_wifi_password_2 "erp@@2020"
+
 #endif //RFID_CONFIG_H

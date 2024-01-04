@@ -36,10 +36,11 @@ typedef struct task_args {
     task_t task, previousTask;
     feature_t feature, previousFeature;
     operating_mode_t operatingMode;
-    char *wifi_ap_ssid;
-    char *wifi_ap_password;
-    char *wifi_sta_ssid;
-    char *wifi_sta_password;
+    char wifi_ap_ssid[32];
+    char wifi_ap_password[32];
+    char wifi_sta_ssid[32];
+    char wifi_sta_password[32];
+    char wifi_hostname[32];
     data_row dataRow;
     data_collection dataCollection;
     char *mqttTopic;
@@ -69,9 +70,14 @@ typedef struct device_config {
 
 typedef struct rfid_tag {
     String epc;
-//    String tag_id;
-//    String tag_type;
-//    String tag_data;
+    String productId;
+    String productSize;
+    String productColor;
+    String productImgUrl;
+    String shippedToId;
+    String brandName;
+    String poCode;
+    rfid_tag_status_t tagStatus;
 } rfid_tag;
 
 typedef struct rfid_item {
@@ -83,8 +89,9 @@ typedef struct rfid_item {
 typedef struct rfid_scan_result {
     bool success;
     rfid_tag scan_data;
+    //String epc;
     String timestamp;
-    int scan_count;
+    byte scan_count;
 } rfid_scan_result;
 
 #endif //RFID_STRUCTS_H

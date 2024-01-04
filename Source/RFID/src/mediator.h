@@ -35,19 +35,18 @@
 #include "user.h"
 #include "warehouse.h"
 #include "web_server.h"
-#include "wifi.h"
+#include "wifi_esp32.h"
 #include "ws2812b.h"
 
 class Mediator {
 private:
     const char *task_names[NUM_TASKS] = {
             "IDLE", "BLINK_LED", "BLINK_SCREEN", "INIT_MESSAGE_QUEUE", "CLEAR_MESSAGE_QUEUE",
-            "PUBLISH_MESSAGE", "SUBSCRIBE_MQTT_TOPIC", "RETRIEVE_MESSAGE", "CONNECT_MQTT_BROKER",
-            "HANDLE_MQTT_MESSAGE", "PUBLISH_MQTT_MESSAGE", "LOAD_CONFIG", "SAVE_CONFIG", "LOAD_FS",
-            "SAVE_FS", "CHECK_CONNECTION", "INIT_AP_WIFI", "INIT_STA_WIFI", "TERMINATE_AP_WIFI",
-            "TERMINATE_STA_WIFI", "GET_OPERATING_MODE", "SET_OPERATING_MODE", "RENDER_FEATURE",
-            "GET_FEATURE", "READ_NAVIGATION_BUTTON", "INIT_NAVIGATION_BUTTON", "SET_FEATURE",
-            "SET_TASK", "SET_TASK_STATUS", "GET_TASK_STATUS", "GET_RFID_SCAN_DATA",
+            "PUBLISH_MQTT_MESSAGE", "SUBSCRIBE_MQTT_TOPIC", "RETRIEVE_MQTT_MESSAGE", "CONNECT_MQTT_BROKER",
+            "HANDLE_MQTT_MESSAGE", "LOAD_CONFIG", "SAVE_CONFIG", "LOAD_FS", "SAVE_FS", "CHECK_CONNECTION",
+            "INIT_AP_WIFI", "INIT_STA_WIFI", "TERMINATE_AP_WIFI", "TERMINATE_STA_WIFI", "GET_OPERATING_MODE",
+            "SET_OPERATING_MODE", "RENDER_FEATURE", "GET_FEATURE", "READ_NAVIGATION_BUTTON", "INIT_NAVIGATION_BUTTON",
+            "SET_FEATURE", "SET_TASK", "SET_TASK_STATUS", "GET_TASK_STATUS", "GET_RFID_SCAN_DATA",
             "IMPORT_DATA_FROM_SD_CARD", "IMPORT_DATA_FROM_SERVER", "EXPORT_DATA_TO_SD_CARD",
             "EXPORT_DATA_TO_SERVER", "SYNC_DATA_TO_SERVER", "SYNC_DATA_TO_DEVICE", "READ_RFID_TAG",
             "WRITE_RFID_TAG", "INSERT_DATA_ROW", "UPDATE_DATA_ROW", "DELETE_DATA_ROW",
@@ -72,7 +71,7 @@ public:
 
     Mediator();
 
-    void init_services();
+    void init_services() const;
 
     void execute_task(task_t task);
 
@@ -82,7 +81,7 @@ public:
 
     void set_current_task_status(bool taskStatus);
 
-    bool get_current_task_status();
+    bool get_current_task_status() const;
 
     task_t get_current_task();
 

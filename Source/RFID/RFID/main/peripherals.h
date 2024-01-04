@@ -9,16 +9,16 @@
 #include "enums.h"
 
 class Peripherals {
+private:
+    byte menuSelectNavButtonPin, leftUpNavButtonPin, rightDownNavButtonPin, backCancelNavButtonPin;
+    byte lastMenuSelectNavButtonState, lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
 public:
-    byte lastMenuSelectNavButtonState;
-    byte lastLeftUpNavButtonState;
-    byte lastRightDownNavButtonState;
-
     Peripherals();
 
-    void init_navigation_buttons(byte _menuSelectNavButton, byte _leftUpNavButton, byte _rightDownNavButton);
+    void init_navigation_buttons(byte _menuSelectNavButtonPin, byte _leftUpNavButtonPin, byte _rightDownNavButtonPin,
+                                 byte _backCancelNavButtonPin);
 
-    void read_navigation_buttons(byte _menuSelectNavButton, byte _leftUpNavButton, byte _rightDownNavButton);
+    void read_navigation_buttons();
 
     void blink_led(byte ledPin);
 
@@ -26,9 +26,9 @@ public:
 
     void set_digital_output(byte pin);
 
-    task_t retrieve_corresponding_task(task_t _currentTask);
+    void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
 
-    feature_t retrieve_corresponding_feature(feature_t _currentFeature);
+    void retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature);
 };
 
 #endif //RFID_PERIPHERALS_H

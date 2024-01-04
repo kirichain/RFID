@@ -1,13 +1,14 @@
 //
 // Created by Tan on 25-Oct-23.
 //
-//#include "Arduino.h"
-//#include "mediator.h"
+#include "Arduino.h"
+#include "mediator.h"
 
-//Mediator mediator;
+Mediator mediator;
 
 void setup() {
-  Serial.begin(115200);
+    Serial.begin(115200);
+    mediator.init_services();
 //    mediator.taskArgs.feature = BOOT;
 //    mediator.set_current_feature();
 //    mediator.execute_task(RENDER_FEATURE);
@@ -19,18 +20,89 @@ void setup() {
 //        } else {
 //            mediator.taskArgs.feature = HOME_TERMINAL;
 //        }
-//        mediator.set_current_feature();
 //    } else {
 //        mediator.taskArgs.operatingMode = HANDHELD;
 //    }
-//    mediator.execute_task(SET_OPERATING_MODE);
+//    mediator.set_current_feature();
+//    mediator.execute_task(RENDER_FEATURE);
+
+    mediator.taskArgs.operatingMode = HANDHELD;
+    mediator.execute_task(SET_OPERATING_MODE);
+    mediator.taskArgs.feature = HOME_HANDHELD_1;
+    mediator.execute_task(RENDER_FEATURE);
+    mediator.set_current_feature();
+    delay(4000);
+//    mediator.taskArgs.feature = SETTING;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = SETTING_USER_INFO;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = HOME_HANDHELD_1;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = RFID;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = RFID_SCAN_RESULT;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = RFID_SCAN;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = RFID_SCAN_HISTORY;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = CO_WORKING;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = HOME_HANDHELD_1;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = DATABASE;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = DATA_IMPORT;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = HOME_HANDHELD_1;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = PACKAGE;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
+//    mediator.taskArgs.feature = HOME_HANDHELD_1;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
 //    mediator.execute_task(CHECK_CONNECTION);
 //    mediator.execute_task(INIT_AP_WIFI);
 //    mediator.execute_task(INIT_STA_WIFI);
+
+//For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
+//    mediator.taskArgs.task = BLINK_SCREEN;
+//    mediator.set_current_task();
+//    mediator.set_current_task_status(false);
+//    mediator.execute_task(mediator.taskArgs.task);
+    mediator.taskArgs.task = INIT_STA_WIFI;
+    mediator.set_current_task();
+    mediator.set_current_task_status(false);
+    mediator.execute_task(mediator.taskArgs.task);
 }
 
 void loop() {
-  Serial.println("test");
 //    mediator.get_current_feature();
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.execute_task(READ_NAVIGATION_BUTTON);
@@ -38,13 +110,6 @@ void loop() {
 //    mediator.set_current_feature();
 //    mediator.taskArgs.task = mediator.taskResults.currentTask;
 //    mediator.set_current_task();
-    //For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
-    //mediator.taskArgs.blinkLedPin = 2;
-    //mediator.taskArgs.task = BLINK_LED;
-    //mediator.taskArgs.task = BLINK_SCREEN;
-    //mediator.set_current_task();
-    //mediator.set_current_task_status(false);
-    //mediator.execute_task(BLINK_SCREEN);
 //    if (mediator.isTaskExecutable) {
 //        while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
 //            mediator.taskArgs.task = mediator.taskResults.currentTask;
@@ -56,8 +121,9 @@ void loop() {
 //        }
 //
 //        Serial.println(F("Task executed completely"));
-//////        taskArgs.taskName = IDLE;
-//////        mediator.execute_task(SET_TASK);
+//        mediator.set_current_task_status(true);
+//        mediator.taskArgs.task = IDLE;
+//        mediator.set_current_task();
+//        mediator.set_current_task_status(false);
 //    }
-    //yield();
 }
