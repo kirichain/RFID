@@ -77,7 +77,7 @@ typedef struct rfid_tag {
     String shippedToId;
     String brandName;
     String poCode;
-    rfid_tag_status_t tagStatus;
+    rfid_tag_status_t tag_status;
 } rfid_tag;
 
 typedef struct rfid_item {
@@ -89,7 +89,6 @@ typedef struct rfid_item {
 typedef struct rfid_scan_result {
     bool success;
     rfid_tag scan_data;
-    //String epc;
     String timestamp;
     byte scan_count;
 } rfid_scan_result;

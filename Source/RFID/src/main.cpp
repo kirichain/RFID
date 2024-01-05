@@ -103,27 +103,27 @@ void setup() {
 }
 
 void loop() {
-//    mediator.get_current_feature();
-//    mediator.execute_task(RENDER_FEATURE);
-//    mediator.execute_task(READ_NAVIGATION_BUTTON);
-//    mediator.taskArgs.feature = mediator.taskResults.currentFeature;
-//    mediator.set_current_feature();
-//    mediator.taskArgs.task = mediator.taskResults.currentTask;
-//    mediator.set_current_task();
-//    if (mediator.isTaskExecutable) {
-//        while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
-//            mediator.taskArgs.task = mediator.taskResults.currentTask;
-//            mediator.execute_task(mediator.taskArgs.task);
-//            mediator.execute_task(READ_NAVIGATION_BUTTON);
-//            mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
-//            mediator.get_current_task_status();
-//            yield();
-//        }
-//
-//        Serial.println(F("Task executed completely"));
-//        mediator.set_current_task_status(true);
-//        mediator.taskArgs.task = IDLE;
-//        mediator.set_current_task();
-//        mediator.set_current_task_status(false);
-//    }
+    mediator.get_current_feature();
+    mediator.execute_task(RENDER_FEATURE);
+    mediator.execute_task(READ_NAVIGATION_BUTTON);
+    mediator.taskArgs.feature = mediator.taskResults.currentFeature;
+    mediator.set_current_feature();
+    mediator.taskArgs.task = mediator.taskResults.currentTask;
+    mediator.set_current_task();
+    if (mediator.isTaskExecutable) {
+        while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
+            mediator.taskArgs.task = mediator.taskResults.currentTask;
+            mediator.execute_task(mediator.taskArgs.task);
+            mediator.execute_task(READ_NAVIGATION_BUTTON);
+            mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
+            mediator.get_current_task_status();
+            yield();
+        }
+
+        Serial.println(F("Task executed completely"));
+        mediator.set_current_task_status(true);
+        mediator.taskArgs.task = IDLE;
+        mediator.set_current_task();
+        mediator.set_current_task_status(false);
+    }
 }

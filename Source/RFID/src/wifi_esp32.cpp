@@ -11,7 +11,7 @@ Wifi::Wifi() {
     currentStaWifiPassword = nullptr;
 }
 
-bool Wifi::init_ap_mode() {
+bool Wifi::init_ap_mode() const {
     // Code to initialize the device in AP mode
     WiFi.mode(WIFI_AP);
     WiFi.softAP(currentApWifiSSID, currentApWifiPassword);

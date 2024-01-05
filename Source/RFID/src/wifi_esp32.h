@@ -18,7 +18,7 @@ public:
 
     Wifi();
 
-    bool init_ap_mode();
+    bool init_ap_mode() const;
 
     bool init_sta_mode() const;
 
@@ -30,9 +30,9 @@ public:
 
     void set_sta_wifi_credential(char *ssid, char *password, char *hostname);
 
-    void terminate_ap_mode();
+    static void terminate_ap_mode();
 
-    void terminate_sta_mode();
+    static void terminate_sta_mode();
 
     void terminate_web_page();
 };
