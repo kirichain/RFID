@@ -34,7 +34,7 @@ void setup() {
     mediator.taskArgs.feature = HOME_HANDHELD_1;
     mediator.execute_task(RENDER_FEATURE);
     mediator.set_current_feature();
-    delay(4000);
+//    delay(4000);
 //    mediator.taskArgs.feature = SETTING;
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
@@ -47,10 +47,10 @@ void setup() {
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
 //    delay(4000);
-    mediator.taskArgs.feature = RFID;
-    mediator.execute_task(RENDER_FEATURE);
-    mediator.set_current_feature();
-    delay(4000);
+//    mediator.taskArgs.feature = RFID;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
 //    mediator.taskArgs.feature = RFID_SCAN_RESULT;
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
@@ -67,10 +67,10 @@ void setup() {
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
 //    delay(4000);
-    mediator.taskArgs.feature = HOME_HANDHELD_1;
-    mediator.execute_task(RENDER_FEATURE);
-    mediator.set_current_feature();
-    delay(4000);
+//    mediator.taskArgs.feature = HOME_HANDHELD_1;
+//    mediator.execute_task(RENDER_FEATURE);
+//    mediator.set_current_feature();
+//    delay(4000);
 //    mediator.taskArgs.feature = DATABASE;
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
@@ -113,9 +113,8 @@ void setup() {
 void loop() {
     mediator.get_current_feature();
     mediator.execute_task(RENDER_FEATURE);
+    mediator.set_current_feature();
     mediator.execute_task(READ_NAVIGATION_BUTTON);
-//    mediator.taskArgs.feature = mediator.taskResults.currentFeature;
-//    mediator.set_current_feature();
 //    mediator.taskArgs.task = mediator.taskResults.currentTask;
 //    mediator.set_current_task();
 //    if (mediator.isTaskExecutable) {

@@ -18,8 +18,8 @@ public:
     void init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCancelNavButtonPin, byte _menuSelectNavButtonPin,
                                  byte _rightDownNavButtonPin);
 
-    bool read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
-                                 feature_item_type_t &feature_item_type);
+    button_type_t read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
+                                          feature_item_type_t &feature_item_type);
 
     static void blink_led(byte ledPin);
 
@@ -27,9 +27,10 @@ public:
 
     static void set_digital_output(byte pin);
 
-    void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
+    static void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
 
-    void retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature);
+    static void retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
+                                        byte &screenItemIndex, feature_t (&screenFeatures)[10]);
 };
 
 #endif //RFID_PERIPHERALS_H

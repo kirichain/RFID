@@ -159,12 +159,25 @@ void Mediator::execute_task(task_t task) {
             break;
         case RENDER_FEATURE:
             if (taskArgs.feature != taskResults.currentFeature) {
-                Serial.println(F("Execute task RENDER_FEATURE"));
+                Serial.print(F("Execute task RENDER_FEATURE :"));
+                Serial.println(feature_as_string(taskArgs.feature));
                 display.render_feature(taskArgs.feature);
                 // Update screen item index for screen selector
                 taskResults.currentScreenItemIndex = 0;
                 // Update screen item count for screen selector
                 taskResults.screenItemCount = display.screen_item_count;
+                // Update type of items on the screen
+                taskResults.feature_item_type = display.current_feature_item_type;
+                // Update list of features/tasks of items on the screen
+                switch (taskResults.feature_item_type) {
+                    case MENU_ICON:
+                        for (int i = 0; i < 10; ++i) {
+                            taskResults.screenFeatures[i] = display.current_screen_features[i];
+                        }
+                        break;
+                    case LIST_ITEM:
+                        break;
+                }
                 // Print screen item count of this feature (screen)
                 Serial.print(F("Feature has : "));
                 Serial.print(taskResults.screenItemCount);
@@ -184,15 +197,29 @@ void Mediator::execute_task(task_t task) {
         case READ_NAVIGATION_BUTTON: {
             //Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
             // Get navigation direction
-            bool is_nav_button_pressed = peripherals.read_navigation_buttons(taskResults.currentScreenItemIndex,
-                                                                             taskResults.screenItemCount,
-                                                                             taskResults.feature_item_type);
+            button_type_t is_nav_button_pressed = peripherals.read_navigation_buttons(
+                    taskResults.currentScreenItemIndex,
+                    taskResults.screenItemCount,
+                    taskResults.feature_item_type);
             //  Clear current screen selector and update to new position from button state
-            if (is_nav_button_pressed) {
+            if ((is_nav_button_pressed == LEFT_UP) or (is_nav_button_pressed == RIGHT_DOWN)) {
                 display.clear_screen_selector();
                 display.update_screen_selector(taskResults.currentScreenItemIndex);
-                peripherals.retrieve_corresponding_feature(taskArgs.previousFeature, taskResults.currentFeature);
-                peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+            } else if (is_nav_button_pressed == SELECT) {
+                switch (taskResults.feature_item_type) {
+                    case MENU_ICON:
+                        Serial.println(F("Retrieving corresponding feature now"));
+                        Serial.print(F("Current screen item index: "));
+                        Serial.println(taskResults.currentScreenItemIndex);
+                        peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                   taskResults.currentFeature, taskArgs.feature,
+                                                                   taskResults.currentScreenItemIndex,
+                                                                   taskResults.screenFeatures);
+                        break;
+                    case LIST_ITEM:
+                        Peripherals::retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+                        break;
+                }
             }
             break;
         }
@@ -289,10 +316,11 @@ void Mediator::set_current_task() {
 }
 
 void Mediator::set_current_feature() {
-    taskResults.currentFeature = taskArgs.feature;
-    Serial.print(F("Set current feature successfully to "));
-    Serial.println(F(feature_as_string(taskResults.currentFeature)));
-
+    if (taskResults.currentFeature != taskArgs.feature) {
+        taskResults.currentFeature = taskArgs.feature;
+        Serial.print(F("Set current feature successfully to "));
+        Serial.println(F(feature_as_string(taskResults.currentFeature)));
+    }
 }
 
 void Mediator::set_current_task_status(bool taskStatus) {
@@ -320,9 +348,9 @@ task_t Mediator::get_current_task() {
     return taskResults.currentTask;
 }
 
-feature_t Mediator::get_current_feature() const {
-    //Serial.print(F("Current feature is: "));
-    //Serial.println(feature_as_string(taskResults.currentFeature));
+feature_t Mediator::get_current_feature() {
+//    Serial.print(F("Current feature is: "));
+//    Serial.println(F(feature_as_string(taskResults.currentFeature)));
     return taskResults.currentFeature;
 }
 

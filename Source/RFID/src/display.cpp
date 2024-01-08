@@ -278,6 +278,15 @@ void Display::render_feature(feature_t _feature) {
             const byte homeHandheld1IconIndices[] = {0, 1, 2, 3, 4, 5};
             // Call the new render_icons_grid function with the specific icons for HOME HANDHELD 1
             render_icons_grid(homeHandheld1IconIndices, 6);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, 0, 10);
+            current_screen_features[0] = SETTING;
+            current_screen_features[1] = RFID;
+            current_screen_features[2] = PACKAGE;
+            current_screen_features[3] = CO_WORKING;
+            current_screen_features[4] = DATABASE;
+            current_screen_features[5] = DATA_SYNC;
             break;
         }
         case HOME_HANDHELD_2:
@@ -292,6 +301,11 @@ void Display::render_feature(feature_t _feature) {
             const byte settingIconIndices[] = {12, 13};
             // Call the new render_icons_grid function with the specific icons for SETTING
             render_icons_grid(settingIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, 0, 10);
+            current_screen_features[0] = SETTING_WIFI;
+            current_screen_features[1] = SETTING_USER_INFO;
             break;
         }
         case SETTING_WIFI:
@@ -315,6 +329,12 @@ void Display::render_feature(feature_t _feature) {
             const byte rfidIconIndices[] = {9, 10, 11};
             // Call the new render_icons_grid function with the specific icons for RFID
             render_icons_grid(rfidIconIndices, 3);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, 0, 10);
+            current_screen_features[0] = RFID_SCAN;
+            current_screen_features[1] = RFID_SCAN_HISTORY;
+            current_screen_features[2] = RFID_MODIFY_TAG_DATA;
             break;
         }
         case RFID_SCAN: {
@@ -338,6 +358,7 @@ void Display::render_feature(feature_t _feature) {
             // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
             // tft.print("Press cancel to stop scanning");
             reset_display_setting();
+            current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_SCAN_HISTORY: {
@@ -348,6 +369,7 @@ void Display::render_feature(feature_t _feature) {
             for (byte i = 0; i < 14; i++) {
                 draw_history_item(i, history[i]);
             }
+            current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_SCAN_RESULT: {
@@ -418,7 +440,7 @@ void Display::render_feature(feature_t _feature) {
             break;
         }
         case RFID_MODIFY_TAG_DATA:
-
+            current_feature_item_type = LIST_ITEM;
             break;
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case

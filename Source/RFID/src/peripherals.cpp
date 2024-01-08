@@ -29,8 +29,10 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     Serial.println("Initialized navigation buttons");
 }
 
-bool Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
-                                          feature_item_type_t &feature_item_type) {
+button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
+                                                   feature_item_type_t &feature_item_type) {
+    button_type_t button_type = NOT_PRESSED;
+
     byte currentLeftUpNavButtonState = digitalRead(leftUpNavButtonPin);
     byte currentBackCancelNavButtonState = digitalRead(backCancelNavButtonPin);
     byte currentMenuSelectNavButtonState = digitalRead(menuSelectNavButtonPin);
@@ -47,30 +49,33 @@ bool Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &sc
             }
             Serial.print(F("Current screen item index changed to : "));
             Serial.println(currentScreenItemIndex);
+
+            button_type = LEFT_UP;
         }
         lastLeftUpNavButtonState = currentLeftUpNavButtonState;
         delay(50); // Delay for debouncing
-        return true;
     }
 
     // Check for back cancel navigation button press
     if (currentBackCancelNavButtonState != lastBackCancelNavButtonState) {
         if (currentBackCancelNavButtonState == LOW) {
             Serial.println(F("Back Cancel Navigation Button Pressed"));
+
+            button_type = BACK_CANCEL;
         }
         lastBackCancelNavButtonState = currentBackCancelNavButtonState;
         delay(50); // Delay for debouncing
-        return true;
     }
 
     // Check for menu select navigation button press
     if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
         if (currentMenuSelectNavButtonState == LOW) {
             Serial.println(F("Menu Select Navigation Button Pressed"));
+
+            button_type = SELECT;
         }
         lastMenuSelectNavButtonState = currentMenuSelectNavButtonState;
         delay(50); // Delay for debouncing
-        return true;
     }
 
     // Check for right down navigation button press
@@ -84,12 +89,13 @@ bool Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &sc
             }
             Serial.print(F("Current screen item index changed to : "));
             Serial.println(currentScreenItemIndex);
+
+            button_type = RIGHT_DOWN;
         }
         lastRightDownNavButtonState = currentRightDownNavButtonState;
         delay(50); // Delay for debouncing
-        return true;
     }
-    return false;
+    return button_type;
 }
 
 
@@ -119,6 +125,11 @@ void Peripherals::retrieve_corresponding_task(task_t &previousTask, task_t &curr
     previousTask = currentTask;
 }
 
-void Peripherals::retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature) {
+void Peripherals::retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature,
+                                                 feature_t &argsFeature, byte &screenItemIndex,
+                                                 feature_t (&screenFeatures)[10]) {
     previousFeature = currentFeature;
+    Serial.print(F("New screen feature index: "));
+    Serial.println(screenFeatures[screenItemIndex]);
+    argsFeature = screenFeatures[screenItemIndex];
 }

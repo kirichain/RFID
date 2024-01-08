@@ -47,6 +47,7 @@ enum feature_t {
     DATA_SYNC,
     DATA_SYNC_TO_SERVER,
     DATA_SYNC_TO_DEVICE,
+    NO_FEATURE,
     NUM_FEATURES
 };
 
@@ -107,6 +108,15 @@ enum feature_item_type_t {
     MENU_ICON,
     LIST_ITEM
 };
+
+enum button_type_t {
+    LEFT_UP,
+    BACK_CANCEL,
+    SELECT,
+    RIGHT_DOWN,
+    NOT_PRESSED
+};
+
 enum rfid_tag_status_t {
     ASSOCIATED,
     UNASSOCIATED

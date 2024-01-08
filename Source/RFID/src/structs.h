@@ -58,6 +58,8 @@ typedef struct task_results {
     byte currentScreenItemIndex;
     byte screenItemCount;
     feature_item_type_t feature_item_type;
+    feature_t screenFeatures[10];
+    task_t screenTasks[10];
 } task_results;
 
 typedef struct message {

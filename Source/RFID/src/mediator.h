@@ -61,7 +61,7 @@ private:
             "CO_WORKING_CONNECT_TO_DEVICE", "CO_WORKING_CONNECT_TO_SERVER", "CO_WORKING_RUNNING",
             "DATABASE", "DATA_IMPORT", "DATA_IMPORT_FROM_SD_CARD", "DATA_IMPORT_FROM_SERVER",
             "DATA_EXPORT", "DATA_EXPORT_TO_SERVER", "DATA_EXPORT_TO_SD_CARD", "DATA_SYNC",
-            "DATA_SYNC_TO_SERVER", "DATA_SYNC_TO_DEVICE"
+            "DATA_SYNC_TO_SERVER", "DATA_SYNC_TO_DEVICE", "NO_FEATURE"
     };
 public:
     bool isTaskExecutable, isTaskCompleted, isTaskQueueEmpty;
@@ -85,11 +85,11 @@ public:
 
     task_t get_current_task();
 
-    feature_t get_current_feature() const;
+    feature_t get_current_feature();
 
-    const char *task_as_string(task_t task);
+    const char *task_as_string(task_t _task);
 
-    const char *feature_as_string(feature_t feature);
+    const char *feature_as_string(feature_t _feature);
 };
 
 #endif //RFID_MEDIATOR_H

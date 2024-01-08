@@ -39,8 +39,11 @@ public:
     feature_layout_t feature_layout;
     status_indicators status;
     screen_selector current_screen_selector;
-    screen_item_position screen_items[10] = {0};
+    screen_item_position screen_items[10];
     byte screen_item_count;
+    feature_item_type_t current_feature_item_type;
+    feature_t current_screen_features[10];
+    task_t current_screen_tasks[10];
 
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
