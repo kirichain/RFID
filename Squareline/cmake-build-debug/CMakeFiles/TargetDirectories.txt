@@ -1,3 +1,0 @@
-D:/Dropbox/Works/RFID/Squareline/cmake-build-debug/CMakeFiles/ui.dir
-D:/Dropbox/Works/RFID/Squareline/cmake-build-debug/CMakeFiles/edit_cache.dir
-D:/Dropbox/Works/RFID/Squareline/cmake-build-debug/CMakeFiles/rebuild_cache.dir
