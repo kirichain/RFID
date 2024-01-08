@@ -46,6 +46,7 @@ typedef struct task_args {
     char *mqttTopic;
     char *mqttBrokerUrl;
     byte blinkLedPin;
+    rfid_scanning_mode_t scanning_mode;
 } task_args;
 
 typedef struct task_results {
@@ -54,6 +55,9 @@ typedef struct task_results {
     operating_mode_t currentOperatingMode;
     feature_t currentFeature;
     task_t currentTask;
+    byte currentScreenItemIndex;
+    byte screenItemCount;
+    feature_item_type_t feature_item_type;
 } task_results;
 
 typedef struct message {
@@ -93,4 +97,17 @@ typedef struct rfid_scan_result {
     byte scan_count;
 } rfid_scan_result;
 
+typedef struct screen_item_position {
+    int x;
+    int y;
+    int w;
+    int h;
+} screen_item_position;
+
+typedef struct screen_selector {
+    screen_selector_t type;
+    screen_item_position old_position;
+    screen_item_position current_position;
+    byte screen_item_index;
+} screen_selector;
 #endif //RFID_STRUCTS_H

@@ -35,7 +35,8 @@ Mediator::Mediator() {
     isTaskCompleted = true;
     isTaskQueueEmpty = true;
 
-    taskResults.currentFeature = HOME_HANDHELD_1;
+    taskResults.currentFeature = NUM_FEATURES;
+    taskResults.currentScreenItemIndex = 0;
     taskArgs.task = IDLE;
 
     Serial.println("Mediator initiated");
@@ -48,6 +49,8 @@ void Mediator::init_services() const {
     } else {
         display.init(PORTRAIT);
     }
+    peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
+                                        menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
 }
 
 void Mediator::execute_task(task_t task) {
@@ -155,12 +158,21 @@ void Mediator::execute_task(task_t task) {
             taskResults.currentOperatingMode = taskArgs.operatingMode;
             break;
         case RENDER_FEATURE:
-            Serial.println(F("Execute task RENDER_FEATURE"));
-            //if (taskArgs.feature != taskResults.currentFeature) {
-            display.render_feature(taskArgs.feature);
-            //} else {
-            //    Serial.println(F("Feature is not changed. Keep current rendering"));
-            //}
+            if (taskArgs.feature != taskResults.currentFeature) {
+                Serial.println(F("Execute task RENDER_FEATURE"));
+                display.render_feature(taskArgs.feature);
+                // Update screen item index for screen selector
+                taskResults.currentScreenItemIndex = 0;
+                // Update screen item count for screen selector
+                taskResults.screenItemCount = display.screen_item_count;
+                // Print screen item count of this feature (screen)
+                Serial.print(F("Feature has : "));
+                Serial.print(taskResults.screenItemCount);
+                Serial.println(F(" items on the screen"));
+            } else {
+                // Feature is not changed. Keep current rendering
+                //Serial.println(F("Feature is not changed. Keep current rendering"));
+            }
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
@@ -169,18 +181,27 @@ void Mediator::execute_task(task_t task) {
                                                 rightDownNavButtonPinDefinition,
                                                 backCancelNavButtonPinDefinition);
             break;
-        case READ_NAVIGATION_BUTTON:
-            Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
-            peripherals.read_navigation_buttons();
-            peripherals.retrieve_corresponding_feature(taskArgs.previousFeature, taskResults.currentFeature);
-            peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+        case READ_NAVIGATION_BUTTON: {
+            //Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
+            // Get navigation direction
+            bool is_nav_button_pressed = peripherals.read_navigation_buttons(taskResults.currentScreenItemIndex,
+                                                                             taskResults.screenItemCount,
+                                                                             taskResults.feature_item_type);
+            //  Clear current screen selector and update to new position from button state
+            if (is_nav_button_pressed) {
+                display.clear_screen_selector();
+                display.update_screen_selector(taskResults.currentScreenItemIndex);
+                peripherals.retrieve_corresponding_feature(taskArgs.previousFeature, taskResults.currentFeature);
+                peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+            }
             break;
-        case GET_FEATURE:
-            Serial.println(F("Execute task GET_FEATURE"));
+        }
+        case GET_CURRENT_FEATURE:
+            Serial.println(F("Execute task GET_CURRENT_FEATURE"));
             taskArgs.feature = taskResults.currentFeature;
             break;
-        case SET_FEATURE:
-            Serial.println(F("Execute task SET_FEATURE"));
+        case SET_CURRENT_FEATURE:
+            Serial.println(F("Execute task SET_CURRENT_FEATURE"));
             if (taskArgs.feature != taskResults.currentFeature) {
                 taskArgs.previousFeature = taskResults.currentFeature;
                 taskResults.currentFeature = taskArgs.feature;
@@ -219,9 +240,14 @@ void Mediator::execute_task(task_t task) {
             break;
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
+            rfid.scan_rfid_tag();
             break;
         case WRITE_RFID_TAG:
             Serial.println(F("Execute task WRITE_RFID_TAG"));
+            break;
+        case SET_RFID_SCANNING_MODE:
+            Serial.println(F("Execute task SET_RFID_SCANNING_MODE"));
+            rfid.set_scanning_mode(taskArgs.scanning_mode);
             break;
         case INSERT_DATA_ROW:
             Serial.println(F("Execute task INSERT_DATA_ROW"));
@@ -264,7 +290,8 @@ void Mediator::set_current_task() {
 
 void Mediator::set_current_feature() {
     taskResults.currentFeature = taskArgs.feature;
-    Serial.println(F("Set current feature successfully to "));
+    Serial.print(F("Set current feature successfully to "));
+    Serial.println(F(feature_as_string(taskResults.currentFeature)));
 
 }
 
@@ -293,9 +320,9 @@ task_t Mediator::get_current_task() {
     return taskResults.currentTask;
 }
 
-feature_t Mediator::get_current_feature() {
-    Serial.print(F("Current feature is: "));
-    Serial.println(feature_as_string(taskResults.currentFeature));
+feature_t Mediator::get_current_feature() const {
+    //Serial.print(F("Current feature is: "));
+    //Serial.println(feature_as_string(taskResults.currentFeature));
     return taskResults.currentFeature;
 }
 

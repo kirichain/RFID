@@ -224,6 +224,7 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
 //    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + get_font_height())))
 //                     / (numRows + 1));
 
+    byte screen_item_index = 0;
     for (byte row = 0; row < numRows; ++row) {
         for (byte col = 0; col < numColumns; ++col) {
             byte index = row * numColumns + col;
@@ -232,10 +233,18 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
                 //int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + get_font_height() + vSpacing);
                 int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
                 draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
+                // Update accordingly screen item
+                screen_item_position _item_position = {x, y, iconHeight + textHeight, iconWidth};
+                update_screen_item(screen_item_index, _item_position);
+                ++screen_item_index;
             }
         }
     }
+
+    screen_item_count = screen_item_index;
     reset_display_setting();
+    // Start to set screen selector to the first one item
+    update_screen_selector(0);
 }
 
 byte Display::calculate_columns(byte iconCount) {
@@ -256,6 +265,9 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
 void Display::render_feature(feature_t _feature) {
     // Clear the viewport
     tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
+    // Clear screen items and reset screen selector
+    clear_screen_selector();
+    clear_screen_items();
 
     switch (_feature) {
         case BOOT:
@@ -581,3 +593,89 @@ void Display::reset_display_setting() {
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
 }
+
+void Display::update_screen_item(byte _index, screen_item_position _item_position) {
+    screen_items[_index].x = _item_position.x;
+    screen_items[_index].y = _item_position.y;
+    screen_items[_index].w = _item_position.w;
+    screen_items[_index].h = _item_position.h;
+    Serial.println(F("Updated screen item"));
+}
+
+void Display::clear_screen_items() {
+    memset(screen_items, 0, sizeof(screen_items));
+    Serial.println(F("Cleared screen items array"));
+}
+
+void Display::update_screen_selector(byte _screen_item_index) {
+    current_screen_selector.old_position = current_screen_selector.current_position;
+    current_screen_selector.current_position = screen_items[_screen_item_index];
+    current_screen_selector.screen_item_index = _screen_item_index;
+    Serial.println(F("Updated screen selector. Re render now"));
+
+    // Define border thickness
+    byte border_thickness = 2; // Adjust the thickness of your border here
+
+    // Define the color for the border
+    uint16_t border_color = TFT_RED; // Replace with your desired border color
+
+    // Define the color for clearing the border (background color)
+    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+
+    // Draw new screen selector border
+    // Draw top border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, border_color);
+    // Draw bottom border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y + current_screen_selector.current_position.h,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, border_color);
+    // Draw left border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), border_color);
+    // Draw right border
+    tft.fillRect(current_screen_selector.current_position.x + current_screen_selector.current_position.w,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), border_color);
+}
+
+void Display::clear_screen_selector() const {
+    // Define border thickness
+    byte border_thickness = 2; // Adjust the thickness of your border here
+
+    // Define the color for the border
+    uint16_t border_color = TFT_RED; // Replace with your desired border color
+
+    // Define the color for clearing the border (background color)
+    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+
+    // Clear old screen selector border by drawing over it with the background color
+    // Clear top border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, background_color);
+    // Clear bottom border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y + current_screen_selector.current_position.h,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, background_color);
+    // Clear left border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), background_color);
+    // Clear right border
+    tft.fillRect(current_screen_selector.current_position.x + current_screen_selector.current_position.w,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), background_color);
+}
+
+

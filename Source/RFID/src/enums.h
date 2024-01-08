@@ -73,10 +73,10 @@ enum task_t {
     GET_OPERATING_MODE,
     SET_OPERATING_MODE,
     RENDER_FEATURE,
-    GET_FEATURE,
+    GET_CURRENT_FEATURE,
     READ_NAVIGATION_BUTTON,
     INIT_NAVIGATION_BUTTON,
-    SET_FEATURE,
+    SET_CURRENT_FEATURE,
     SET_TASK,
     SET_TASK_STATUS,
     GET_TASK_STATUS,
@@ -89,6 +89,7 @@ enum task_t {
     SYNC_DATA_TO_DEVICE,
     READ_RFID_TAG,
     WRITE_RFID_TAG,
+    SET_RFID_SCANNING_MODE,
     INSERT_DATA_ROW,
     UPDATE_DATA_ROW,
     DELETE_DATA_ROW,
@@ -102,8 +103,22 @@ enum task_t {
     NUM_TASKS
 };
 
+enum feature_item_type_t {
+    MENU_ICON,
+    LIST_ITEM
+};
 enum rfid_tag_status_t {
     ASSOCIATED,
     UNASSOCIATED
+};
+
+enum rfid_scanning_mode_t {
+    SINGLE_SCAN,
+    MULTI_SCAN
+};
+
+enum screen_selector_t {
+    MENU_SELECTING,
+    ITEM_LIST_SELECTING
 };
 #endif //RFID_ENUMS_H

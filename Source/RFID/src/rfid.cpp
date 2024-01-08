@@ -11,6 +11,7 @@ Rfid::Rfid() {
 /*! Start connecting to rfid reader module using hardware serial _serial on TX-RX pins 16-17 */
 void Rfid::init() {
     Serial1.begin(115200, SERIAL_8N1, 16, 17);
+    set_tx_power(2600);
     get_hardware_version();
     get_software_version();
 }
@@ -25,7 +26,7 @@ String Rfid::hex2str(uint8_t num) {
 
 /*! @brief Clear the buffer.*/
 void Rfid::clean_buffer() {
-    for (int i = 0; i < 200; i++) {
+    for (byte i = 0; i < 200; i++) {
         buffer[i] = 0;
     }
 }
@@ -111,22 +112,52 @@ void Rfid::print_rfid_tag_info() {
     Serial.println(" ");
 }
 
-uint8_t Rfid::polling_once() {
+void Rfid::polling_once() {
     send_command((uint8_t *) POLLING_ONCE_CMD, sizeof(POLLING_ONCE_CMD));
-    uint8_t count = 0;
     while (wait_msg()) {
         if (buffer[23] == 0x7e) {
             print_rfid_tag_info();
         }
     }
-    return count;
 }
 
 void Rfid::scan_rfid_tag() {
-
+    switch (scanning_mode) {
+        case SINGLE_SCAN:
+            polling_once();
+            break;
+        case MULTI_SCAN:
+            break;
+    }
 }
 
 rfid_scan_result Rfid::get_rfid_scan_result() {
     rfid_scan_result _rfid_scan_result;
     return _rfid_scan_result;
+}
+
+void Rfid::set_scanning_mode(rfid_scanning_mode_t _scanning_mode) {
+    scanning_mode = _scanning_mode;
+}
+
+bool Rfid::set_tx_power(uint16_t db) {
+    memcpy(buffer, SET_TX_POWER, sizeof(SET_TX_POWER));
+    buffer[5] = (db >> 8) & 0xff;
+    buffer[6] = db & 0xff;
+
+    uint8_t check = 0;
+
+    for (uint8_t i = 1; i < 7; i++) {
+        check += buffer[i];
+    }
+    buffer[7] = check & 0xff;
+    send_command(buffer, sizeof(SET_TX_POWER));
+    if (wait_msg()) {
+        if (buffer[2] != 0xB6) {
+            return false;
+        }
+        return true;
+    } else {
+        return false;
+    }
 }

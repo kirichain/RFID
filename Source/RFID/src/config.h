@@ -31,10 +31,10 @@
 //#define display_size 2.8
 
 // Defined Navigation Button Pins
-#define menuSelectNavButtonPinDefinition 13
 #define leftUpNavButtonPinDefinition 4
-#define rightDownNavButtonPinDefinition 22
-#define backCancelNavButtonPinDefinition 23
+#define backCancelNavButtonPinDefinition 0
+#define menuSelectNavButtonPinDefinition 5
+#define rightDownNavButtonPinDefinition 26
 
 // Defined WiFi Configuration
 #define device_hostname "RFID-001-"

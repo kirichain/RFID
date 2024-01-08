@@ -54,13 +54,14 @@ const uint8_t SET_TX_POWER[] = {0xBB, 0x00, 0xB6, 0x00, 0x02,
 
 class Rfid {
 public:
+    rfid_scanning_mode_t scanning_mode;
     uint8_t buffer[200] = {0};
 
     Rfid();
 
     void init();
 
-    String hex2str(uint8_t num);
+    static String hex2str(uint8_t num);
 
     void clean_buffer();
 
@@ -72,11 +73,15 @@ public:
 
     String get_software_version();
 
-    uint8_t polling_once();
+    void polling_once();
 
     void print_rfid_tag_info();
 
     void scan_rfid_tag();
+
+    void set_scanning_mode(rfid_scanning_mode_t _scanning_mode);
+
+    bool set_tx_power(uint16_t db);
 
     rfid_scan_result get_rfid_scan_result();
 };
