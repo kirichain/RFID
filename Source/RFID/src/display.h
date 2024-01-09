@@ -10,7 +10,6 @@
 #include "structs.h"
 #include "SPI.h"
 #include "TFT_eSPI.h"
-#include "structs.h"
 #include "icons/backpack.h"
 #include "icons/connect-to-device.h"
 #include "icons/connect-to-server.h"
@@ -216,7 +215,7 @@ public:
 
     static byte calculate_rows(byte iconCount, byte numColumns);
 
-    void render_feature(feature_t _feature);
+    void render_feature(feature_t _feature, task_results &_taskResults);
 
     void draw_history_item(byte index, const rfid_scan_result &item) const;
 

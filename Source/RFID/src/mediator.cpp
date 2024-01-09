@@ -153,7 +153,11 @@ void Mediator::execute_task(task_t task) {
             break;
         case SCAN_WIFI_NETWORKS:
             Serial.println(F("Execute task SCAN_WIFI_NETWORKS"));
-
+            wifi.scan_wifi_networks();
+            taskResults.wifi_networks_count = wifi.wifi_networks_count;
+            for (byte i = 0; i < 10; ++i) {
+                taskResults.wifi_networks[i] = wifi.wifi_networks[i];
+            }
             break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
@@ -168,7 +172,7 @@ void Mediator::execute_task(task_t task) {
             if (taskArgs.feature != taskResults.currentFeature) {
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
-                display.render_feature(taskArgs.feature);
+                display.render_feature(taskArgs.feature, taskResults);
                 // Check if this feature requires background tasks before rendering information, if yes, run tasks,
                 // then re-render
                 if (display.is_background_task_required) {
@@ -186,7 +190,7 @@ void Mediator::execute_task(task_t task) {
 
                     display.is_background_task_completed = true;
                     display.is_background_task_required = false;
-                    display.render_feature(taskArgs.feature);
+                    display.render_feature(taskArgs.feature, taskResults);
                     display.is_background_task_completed = false;
                 }
                 // Update screen item index for screen selector

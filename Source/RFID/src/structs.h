@@ -49,6 +49,14 @@ typedef struct task_args {
     rfid_scanning_mode_t scanning_mode;
 } task_args;
 
+typedef struct wifi_network_info {
+    char ssid[32];
+    int rssi;
+    char password[32];
+    char hostname[32];
+    char ip[32];
+} wifi_network_info;
+
 typedef struct task_results {
     bool isFsLoaded;
     operating_mode_t savedOperatingModeInFs;
@@ -63,6 +71,8 @@ typedef struct task_results {
     task_t screenBackgroundTasks[10];
     feature_t featureNavigationHistory[10] = {NO_FEATURE};
     byte featureNavigationHistorySize = 0;
+    int wifi_networks_count;
+    wifi_network_info wifi_networks[10];
 
 } task_results;
 
@@ -116,12 +126,5 @@ typedef struct screen_selector {
     screen_item_position current_position;
     byte screen_item_index;
 } screen_selector;
-
-typedef struct wifi_network_info {
-    char ssid[32];
-    char password[32];
-    char hostname[32];
-    char ip[32];
-} wifi_network_info;
 
 #endif //RFID_STRUCTS_H

@@ -262,7 +262,7 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
     }
 }
 
-void Display::render_feature(feature_t _feature) {
+void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
     tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
     // Clear screen items and reset screen selector
@@ -308,10 +308,92 @@ void Display::render_feature(feature_t _feature) {
             current_screen_features[1] = SETTING_USER_INFO;
             break;
         }
-        case SETTING_WIFI:
+        case SETTING_WIFI: {
             // Check if background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
-                Serial.println(F("Start listing all available Wi-Fi networks"));
+                Serial.println(F("Start listing all available Wi-Fi networks on the screen"));
+                byte wifi_network_index = 0;
+                // Print all available wifi networks
+                tft.setFreeFont(&FreeSans9pt7b);
+                tft.setTextColor(TFT_WHITE);
+
+                // Define the starting position
+                int x = 20; // Start from left padding
+                int y = 50; // Start from below the header bar + padding
+                int lineHeight = 30; // Set the line height or row height to 50% more
+                int rowPadding = 5; // Set padding between rows
+                int headerHeight = 40; // Height of the header bar
+                int navbarHeight = 40; // Height of the navbar
+                int titlePadding = 20; // Padding between header and titles set to 20
+                int topSpace = 10; // Space between the text in the first row and titles
+                int leftPadding = 20; // Left padding
+                int rightPadding = 20; // Right padding
+
+                // Adjust the column width for Index by 100%
+                int colWidthIndex = 60; // Increased width for No (index) column
+                int colWidthRSSI = 50; // Width for RSSI column
+                // Calculate remaining width for SSID
+                int colWidthSSID = tft.width() - colWidthIndex - colWidthRSSI - (leftPadding + rightPadding);
+
+                // Draw titles with increased y coordinate
+                y += titlePadding; // Move below the header bar
+                tft.setCursor(x, y);
+                tft.print(F("Index"));
+                tft.setCursor(x + colWidthIndex + rowPadding, y);
+                tft.print(F("SSID"));
+                tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
+                tft.print(F("RSSI"));
+
+                // Start drawing the grid below the title with top space
+                y += topSpace + lineHeight; // Apply top space and move below the title
+
+                while (wifi_network_index < _taskResults.wifi_networks_count) {
+                    const char *ssid = _taskResults.wifi_networks[wifi_network_index].ssid;
+                    int rssi = _taskResults.wifi_networks[wifi_network_index].rssi;
+
+                    // Draw only if SSID is not empty
+                    if (strlen(ssid) > 0) {
+                        // Draw the index (No)
+                        tft.setCursor(x, y);
+                        tft.print(wifi_network_index + 1);
+
+                        // Draw vertical line after index
+                        tft.drawFastVLine(x + colWidthIndex - rowPadding, y - lineHeight - topSpace,
+                                          lineHeight + topSpace, TFT_WHITE);
+
+                        // Draw the SSID
+                        tft.setCursor(x + colWidthIndex + rowPadding, y);
+                        tft.print(ssid);
+
+                        // Draw vertical line after SSID
+                        tft.drawFastVLine(x + colWidthIndex + colWidthSSID, y - lineHeight - topSpace,
+                                          lineHeight + topSpace, TFT_WHITE);
+
+                        // Draw the RSSI
+                        tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
+                        tft.print(rssi);
+
+                        // Draw horizontal line after row
+                        tft.drawFastHLine(leftPadding, y + rowPadding, tft.width() - (leftPadding + rightPadding),
+                                          TFT_WHITE);
+
+                        // Move to the next line
+                        y += lineHeight + rowPadding; // Move down with row padding and increased row height
+
+                        // Check if we are near the bottom of the screen, if so, break or scroll
+                        if (y > tft.height() - navbarHeight - lineHeight - topSpace) {
+                            break; // Or implement scrolling
+                        }
+                    }
+
+                    wifi_network_index++;
+                }
+
+                // Set items type on screen
+                current_feature_item_type = LIST_ITEM;
+                // Reset current screen features
+                memset(current_screen_features, NO_FEATURE, 10);
+                screen_item_count = 0;
             } else {
                 is_background_task_required = true;
                 // Reset current screen background tasks
@@ -321,6 +403,7 @@ void Display::render_feature(feature_t _feature) {
                 current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
             }
             break;
+        }
         case SETTING_USER_INFO: {
             // Define which icons to display for the SETTING_USER_INFO case
             const byte settingUserInfoIconIndices[] = {14, 15};

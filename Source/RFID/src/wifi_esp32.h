@@ -7,6 +7,7 @@
 
 #include "Arduino.h"
 #include <Wifi.h>
+#include "structs.h."
 
 class Wifi {
 public:
@@ -15,6 +16,9 @@ public:
     char *currentStaWifiSSID;
     char *currentStaWifiPassword;
     char *currentHostname;
+
+    int wifi_networks_count;
+    wifi_network_info wifi_networks[10];
 
     Wifi();
 
@@ -33,6 +37,8 @@ public:
     static void terminate_ap_mode();
 
     static void terminate_sta_mode();
+
+    int scan_wifi_networks();
 
     void terminate_web_page();
 };
