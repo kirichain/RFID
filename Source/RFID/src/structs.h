@@ -60,6 +60,8 @@ typedef struct task_results {
     feature_item_type_t feature_item_type;
     feature_t screenFeatures[10];
     task_t screenTasks[10];
+    feature_t featureNavigationHistory[10] = {NO_FEATURE};
+    byte featureNavigationHistorySize = 0;
 } task_results;
 
 typedef struct message {

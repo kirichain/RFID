@@ -35,9 +35,10 @@ Mediator::Mediator() {
     isTaskCompleted = true;
     isTaskQueueEmpty = true;
 
-    taskResults.currentFeature = NUM_FEATURES;
+    taskResults.currentFeature = NO_FEATURE;
     taskResults.currentScreenItemIndex = 0;
     taskArgs.task = IDLE;
+    taskResults.featureNavigationHistory[++taskResults.featureNavigationHistorySize] = HOME_HANDHELD_1;
 
     Serial.println("Mediator initiated");
     //dataRow.timestamp = NULL;
@@ -201,25 +202,40 @@ void Mediator::execute_task(task_t task) {
                     taskResults.currentScreenItemIndex,
                     taskResults.screenItemCount,
                     taskResults.feature_item_type);
-            //  Clear current screen selector and update to new position from button state
-            if ((is_nav_button_pressed == LEFT_UP) or (is_nav_button_pressed == RIGHT_DOWN)) {
-                display.clear_screen_selector();
-                display.update_screen_selector(taskResults.currentScreenItemIndex);
-            } else if (is_nav_button_pressed == SELECT) {
-                switch (taskResults.feature_item_type) {
-                    case MENU_ICON:
-                        Serial.println(F("Retrieving corresponding feature now"));
-                        Serial.print(F("Current screen item index: "));
-                        Serial.println(taskResults.currentScreenItemIndex);
-                        peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
-                                                                   taskResults.currentFeature, taskArgs.feature,
-                                                                   taskResults.currentScreenItemIndex,
-                                                                   taskResults.screenFeatures);
-                        break;
-                    case LIST_ITEM:
-                        Peripherals::retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
-                        break;
-                }
+            // Clear current screen selector and update to new position from button state
+            switch (is_nav_button_pressed) {
+                case LEFT_UP:
+                case RIGHT_DOWN:
+                    display.clear_screen_selector();
+                    display.update_screen_selector(taskResults.currentScreenItemIndex);
+                    break;
+                case SELECT:
+                    switch (taskResults.feature_item_type) {
+                        case MENU_ICON:
+                            Serial.println(F("Retrieving corresponding feature now"));
+                            Serial.print(F("Current screen item index: "));
+                            Serial.println(taskResults.currentScreenItemIndex);
+                            Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                        taskResults.currentFeature, taskArgs.feature,
+                                                                        taskResults.currentScreenItemIndex,
+                                                                        taskResults.screenFeatures,
+                                                                        is_nav_button_pressed,
+                                                                        taskResults.featureNavigationHistory,
+                                                                        taskResults.featureNavigationHistorySize);
+                            break;
+                        case LIST_ITEM:
+                            Peripherals::retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+                            break;
+                    }
+                    break;
+                case BACK_CANCEL:
+                    Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                taskResults.currentFeature, taskArgs.feature,
+                                                                taskResults.currentScreenItemIndex,
+                                                                taskResults.screenFeatures, is_nav_button_pressed,
+                                                                taskResults.featureNavigationHistory,
+                                                                taskResults.featureNavigationHistorySize);
+                    break;
             }
             break;
         }

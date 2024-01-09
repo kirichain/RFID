@@ -29,8 +29,10 @@ public:
 
     static void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
 
-    static void retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
-                                        byte &screenItemIndex, feature_t (&screenFeatures)[10]);
+    static void
+    retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
+                                   byte &screenItemIndex, feature_t (&screenFeatures)[10], button_type_t &button_type,
+                                   feature_t (&navigation_history)[10], byte &navigation_history_size);
 };
 
 #endif //RFID_PERIPHERALS_H

@@ -127,9 +127,36 @@ void Peripherals::retrieve_corresponding_task(task_t &previousTask, task_t &curr
 
 void Peripherals::retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature,
                                                  feature_t &argsFeature, byte &screenItemIndex,
-                                                 feature_t (&screenFeatures)[10]) {
-    previousFeature = currentFeature;
-    Serial.print(F("New screen feature index: "));
-    Serial.println(screenFeatures[screenItemIndex]);
-    argsFeature = screenFeatures[screenItemIndex];
+                                                 feature_t (&screenFeatures)[10], button_type_t &button_type,
+                                                 feature_t (&navigation_history)[10],
+                                                 byte &navigation_history_size) {
+    switch (button_type) {
+        case SELECT:
+            previousFeature = currentFeature;
+            Serial.print(F("New screen feature index: "));
+            Serial.println(screenFeatures[screenItemIndex]);
+            argsFeature = screenFeatures[screenItemIndex];
+            if (navigation_history_size < 10) {
+                navigation_history[++navigation_history_size] = argsFeature;
+            } else {
+
+            }
+            break;
+        case BACK_CANCEL:
+            if (navigation_history_size > 1) {
+                argsFeature = previousFeature;
+                Serial.println(F("Back to previous feature"));
+                navigation_history[navigation_history_size] = NO_FEATURE;
+                --navigation_history_size;
+                if (navigation_history[navigation_history_size - 1] != NO_FEATURE) {
+                    previousFeature = navigation_history[navigation_history_size - 1];
+                } else {
+                    // We are in home already
+                }
+            } else {
+
+            }
+            break;
+    }
+
 }

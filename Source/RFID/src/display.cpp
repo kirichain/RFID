@@ -280,7 +280,7 @@ void Display::render_feature(feature_t _feature) {
             render_icons_grid(homeHandheld1IconIndices, 6);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
-            memset(current_screen_features, 0, 10);
+            memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = SETTING;
             current_screen_features[1] = RFID;
             current_screen_features[2] = PACKAGE;
@@ -303,7 +303,7 @@ void Display::render_feature(feature_t _feature) {
             render_icons_grid(settingIconIndices, 2);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
-            memset(current_screen_features, 0, 10);
+            memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = SETTING_WIFI;
             current_screen_features[1] = SETTING_USER_INFO;
             break;
@@ -316,6 +316,11 @@ void Display::render_feature(feature_t _feature) {
             const byte settingUserInfoIconIndices[] = {14, 15};
             // Call the new render_icons_grid function with the specific icons for SETTING_USER_INFO
             render_icons_grid(settingUserInfoIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING_USER_INFO_LOGIN;
+            current_screen_features[1] = SETTING_USER_INFO_LOGOUT;
             break;
         }
         case SETTING_USER_INFO_LOGIN:
@@ -331,7 +336,7 @@ void Display::render_feature(feature_t _feature) {
             render_icons_grid(rfidIconIndices, 3);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
-            memset(current_screen_features, 0, 10);
+            memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = RFID_SCAN;
             current_screen_features[1] = RFID_SCAN_HISTORY;
             current_screen_features[2] = RFID_MODIFY_TAG_DATA;
@@ -359,6 +364,9 @@ void Display::render_feature(feature_t _feature) {
             // tft.print("Press cancel to stop scanning");
             reset_display_setting();
             current_feature_item_type = LIST_ITEM;
+            // Reset current screen tasks
+            memset(current_screen_tasks, NO_TASK, 10);
+            current_screen_tasks[0] = READ_RFID_TAG;
             break;
         }
         case RFID_SCAN_HISTORY: {
@@ -437,6 +445,7 @@ void Display::render_feature(feature_t _feature) {
             tft.print("Unassociated");
             // Reset text size and color for subsequent text
             reset_display_setting();
+            current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_MODIFY_TAG_DATA:
@@ -447,6 +456,10 @@ void Display::render_feature(feature_t _feature) {
             const byte packageIconIndices[] = {21};
             // Call the new render_icons_grid function with the specific icons for PACKAGE
             render_icons_grid(packageIconIndices, 1);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = PACKAGE_DETAILS;
             break;
         }
         case PACKAGE_DETAILS:
@@ -457,6 +470,12 @@ void Display::render_feature(feature_t _feature) {
             const byte coworkingIconIndices[] = {6, 7, 8};
             // Call the new render_icons_grid function with the specific icons for CO WORKING
             render_icons_grid(coworkingIconIndices, 3);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = CO_WORKING_SCAN_NEARBY_DEVICE;
+            current_screen_features[1] = CO_WORKING_CONNECT_TO_DEVICE;
+            current_screen_features[2] = CO_WORKING_CONNECT_TO_SERVER;
             break;
         }
         case CO_WORKING_SCAN_NEARBY_DEVICE:
@@ -476,6 +495,11 @@ void Display::render_feature(feature_t _feature) {
             const byte databaseIconIndices[] = {16, 17,};
             // Call the new render_icons_grid function with the specific icons for DATABASE
             render_icons_grid(databaseIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = DATA_IMPORT;
+            current_screen_features[1] = DATA_EXPORT;
             break;
         }
         case DATA_IMPORT: {
@@ -483,6 +507,12 @@ void Display::render_feature(feature_t _feature) {
             const byte dataImportIconIndices[] = {18, 19, 20};
             // Call the new render_icons_grid function with the specific icons for DATA IMPORT
             render_icons_grid(dataImportIconIndices, 3);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = DATA_IMPORT_FROM_SD_CARD;
+            current_screen_features[1] = DATA_IMPORT_FROM_SERVER;
+            current_screen_features[2] = DATA_IMPORT_FROM_COMPUTER;
             break;
         }
         case DATA_IMPORT_FROM_SD_CARD:
@@ -490,6 +520,9 @@ void Display::render_feature(feature_t _feature) {
             break;
         case DATA_IMPORT_FROM_SERVER:
             // Code to handle DATA_IMPORT_FROM_SERVER feature
+            break;
+        case DATA_IMPORT_FROM_COMPUTER:
+            // Code to handle DATA_IMPORT_FROM_COMPUTER feature
             break;
         case DATA_EXPORT:
             // Code to handle DATA_EXPORT feature
