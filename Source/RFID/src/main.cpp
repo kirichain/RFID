@@ -7,8 +7,8 @@
 Mediator mediator;
 
 // Serial: For debugging
-// Serial1: For communicating with rfid module
-// Serial3: For communicating with computer
+// Serial 1: For communicating with rfid module
+// Serial 2: For communicating with computer
 void setup() {
     Serial.begin(115200);
     mediator.init_services();
@@ -95,9 +95,9 @@ void setup() {
 //    mediator.execute_task(RENDER_FEATURE);
 //    mediator.set_current_feature();
 //    delay(4000);
-//    mediator.execute_task(CHECK_CONNECTION);
-//    mediator.execute_task(INIT_AP_WIFI);
-//    mediator.execute_task(INIT_STA_WIFI);
+    //mediator.execute_task(CHECK_CONNECTION);
+    //mediator.execute_task(INIT_AP_WIFI);
+    mediator.execute_task(INIT_STA_WIFI);
 
 //For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
 //    mediator.taskArgs.task = BLINK_SCREEN;

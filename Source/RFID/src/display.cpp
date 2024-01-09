@@ -309,7 +309,17 @@ void Display::render_feature(feature_t _feature) {
             break;
         }
         case SETTING_WIFI:
-            // Code to handle SETUP_WIFI feature
+            // Check if background task is completed, if yes, start rendering, else, set background tasks and return
+            if (is_background_task_completed) {
+                Serial.println(F("Start listing all available Wi-Fi networks"));
+            } else {
+                is_background_task_required = true;
+                // Reset current screen background tasks
+                for (byte i = 0; i < 10; ++i) {
+                    current_screen_background_tasks[i] = NO_TASK;
+                }
+                current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
+            }
             break;
         case SETTING_USER_INFO: {
             // Define which icons to display for the SETTING_USER_INFO case

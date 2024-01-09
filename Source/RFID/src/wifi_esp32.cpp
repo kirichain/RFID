@@ -77,7 +77,7 @@ void Wifi::set_ap_wifi_credential(char *ssid, char *password) {
     currentApWifiSSID = ssid;
     currentApWifiPassword = password;
     char buffer[100];
-    sprintf(buffer, "Set new AP Wifi credential to SSID: %s, password: %s", ssid, password);
+    sprintf(buffer, "Set new AP Wifi credential to ssid: %s, password: %s", ssid, password);
     Serial.println(buffer);
 }
 
@@ -86,7 +86,7 @@ void Wifi::set_sta_wifi_credential(char *ssid, char *password, char *hostname) {
     currentStaWifiPassword = password;
     currentHostname = hostname;
     char buffer[100];
-    sprintf(buffer, "Set new STA Wifi credential to SSID: %s, password: %s, hostname: %s", ssid, password, hostname);
+    sprintf(buffer, "Set new STA Wifi credential to ssid: %s, password: %s, hostname: %s", ssid, password, hostname);
     Serial.println(buffer);
 }
 

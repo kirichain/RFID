@@ -12,12 +12,12 @@
 #define SERVER_STATUS_MAX_LEN 50
 #define LOGIN_STATUS_MAX_LEN  50
 
-typedef struct {
+typedef struct menu_icon {
     const char *name;
     const uint16_t *icon_data;
 } menu_icon;
 
-typedef struct {
+typedef struct status_indicators {
     char wifiStatus[WIFI_STATUS_MAX_LEN];
     char dateTime[DATE_TIME_MAX_LEN];
     char serverStatus[SERVER_STATUS_MAX_LEN];
@@ -60,8 +60,10 @@ typedef struct task_results {
     feature_item_type_t feature_item_type;
     feature_t screenFeatures[10];
     task_t screenTasks[10];
+    task_t screenBackgroundTasks[10];
     feature_t featureNavigationHistory[10] = {NO_FEATURE};
     byte featureNavigationHistorySize = 0;
+
 } task_results;
 
 typedef struct message {
@@ -114,4 +116,12 @@ typedef struct screen_selector {
     screen_item_position current_position;
     byte screen_item_index;
 } screen_selector;
+
+typedef struct wifi_network_info {
+    char ssid[32];
+    char password[32];
+    char hostname[32];
+    char ip[32];
+} wifi_network_info;
+
 #endif //RFID_STRUCTS_H

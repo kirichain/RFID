@@ -126,8 +126,10 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
@@ -149,6 +151,10 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task TERMINATE_STA_WIFI"));
             wifi.terminate_sta_mode();
             break;
+        case SCAN_WIFI_NETWORKS:
+            Serial.println(F("Execute task SCAN_WIFI_NETWORKS"));
+
+            break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
             taskResults.currentOperatingMode = operation.get_operating_mode();
@@ -163,6 +169,26 @@ void Mediator::execute_task(task_t task) {
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
                 display.render_feature(taskArgs.feature);
+                // Check if this feature requires background tasks before rendering information, if yes, run tasks,
+                // then re-render
+                if (display.is_background_task_required) {
+                    byte feature_background_task_index = 0;
+                    while ((feature_background_task_index <= 9) and
+                           (display.current_screen_background_tasks[feature_background_task_index] != NO_TASK)) {
+                        Serial.println(F("Executing background task"));
+                        execute_task(display.current_screen_background_tasks[feature_background_task_index]);
+                        ++feature_background_task_index;
+                    }
+
+                    Serial.print(F("This feature has : "));
+                    Serial.print(feature_background_task_index);
+                    Serial.println(F(" background tasks"));
+
+                    display.is_background_task_completed = true;
+                    display.is_background_task_required = false;
+                    display.render_feature(taskArgs.feature);
+                    display.is_background_task_completed = false;
+                }
                 // Update screen item index for screen selector
                 taskResults.currentScreenItemIndex = 0;
                 // Update screen item count for screen selector

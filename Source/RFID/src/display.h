@@ -7,6 +7,7 @@
 
 #include "Arduino.h"
 #include "enums.h"
+#include "structs.h"
 #include "SPI.h"
 #include "TFT_eSPI.h"
 #include "structs.h"
@@ -44,7 +45,9 @@ public:
     feature_item_type_t current_feature_item_type;
     feature_t current_screen_features[10];
     task_t current_screen_tasks[10];
-
+    task_t current_screen_background_tasks[10];
+    bool is_background_task_required = false;
+    bool is_background_task_completed = false;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
