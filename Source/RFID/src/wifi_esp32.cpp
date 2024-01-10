@@ -137,7 +137,7 @@ int Wifi::scan_wifi_networks() {
             strncpy(wifi_networks[i].ssid, WiFi.SSID(i).c_str(), sizeof(wifi_networks[i].ssid) - 1);
             wifi_networks[i].ssid[sizeof(wifi_networks[i].ssid) - 1] = '\0'; // Ensure null-termination
             // Store RSSI in the wifi_networks array
-            wifi_networks[i].rssi = WiFi.RSSI();
+            wifi_networks[i].rssi = WiFi.RSSI(i);
 
             // Print SSID and RSSI for each network found
             Serial.printf("%2d", i + 1);

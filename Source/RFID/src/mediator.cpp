@@ -245,7 +245,7 @@ void Mediator::execute_task(task_t task) {
                             Serial.println(F("Retrieving corresponding feature now"));
                             Serial.print(F("Current screen item index: "));
                             Serial.println(taskResults.currentScreenItemIndex);
-                            Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
+                            peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
                                                                         taskResults.currentFeature, taskArgs.feature,
                                                                         taskResults.currentScreenItemIndex,
                                                                         taskResults.screenFeatures,
@@ -254,7 +254,9 @@ void Mediator::execute_task(task_t task) {
                                                                         taskResults.featureNavigationHistorySize);
                             break;
                         case LIST_ITEM:
-                            Peripherals::retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+                            Serial.println(F("Retrieving corresponding task now"));
+                            Serial.print(F("Current screen item index: "));
+                            peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
                     }
                     break;

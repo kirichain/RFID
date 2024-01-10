@@ -385,7 +385,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             break; // Or implement scrolling
                         }
                     }
-
+                    //reset_display_setting();
                     wifi_network_index++;
                 }
 
@@ -395,6 +395,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 memset(current_screen_features, NO_FEATURE, 10);
                 screen_item_count = 0;
             } else {
+                tft.setFreeFont(&FreeSans9pt7b);
+                tft.setTextDatum(MC_DATUM);
+                tft.drawString("Please wait, scanning networks", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+                //reset_display_setting();
                 is_background_task_required = true;
                 // Reset current screen background tasks
                 for (byte i = 0; i < 10; ++i) {

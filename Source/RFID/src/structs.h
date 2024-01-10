@@ -50,7 +50,7 @@ typedef struct task_args {
 } task_args;
 
 typedef struct wifi_network_info {
-    char ssid[32];
+    char ssid[16];
     int rssi;
     char password[32];
     char hostname[32];
