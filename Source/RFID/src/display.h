@@ -20,6 +20,7 @@
 #include "icons/scan.h"
 #include "icons/scan-history.h"
 #include "icons/modify-rfid-tag.h"
+#include "icons/register_rfid_tag.h"
 #include "icons/setting.h"
 #include "icons/wifi-setting.h"
 #include "icons/user.h"
@@ -123,7 +124,7 @@ public:
     byte pageIndicatorMargin = 1; // Vertical position for the page indicator
 
     // Define an array of menu icon names corresponding to the header files
-    const char *menu_icon_names[22] = {
+    const char *menu_icon_names[23] = {
             "setting_icon",
             "rfid_icon",
             "package_icon",
@@ -145,11 +146,12 @@ public:
             "import-from-sd-card_icon",
             "import-from-server_icon",
             "import-from-computer_icon",
-            "package-details_icon"
+            "package-details_icon",
+            "register_rfid_tag_icon"
     };
 
     // Map menu names to menu icon data arrays
-    menu_icon icons[22] = {
+    menu_icon icons[23] = {
             {"co-working_icon",           co_working_icon},
             {"connect-to-device_icon",    connect_to_device_icon},
             {"connect-to-server_icon",    connect_to_server_icon},
@@ -172,6 +174,7 @@ public:
             {"package_icon",              package_icon},
             {"package-details_icon",      package_details_icon},
             {"sync-data_icon",            sync_data_icon},
+            {"register_rfid_tag_icon", register_rfid_tag_icon}
     };
 
     // Example history array

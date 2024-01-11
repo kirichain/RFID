@@ -10,7 +10,11 @@ Rfid::Rfid() {
 
 /*! Start connecting to rfid reader module using hardware serial _serial on TX-RX pins 16-17 */
 void Rfid::init() {
-    Serial1.begin(115200, SERIAL_8N1, 16, 17);
+    Serial2.begin(115200, SERIAL_8N1, 0, 25);
+//    while (!Serial2.available()) {
+//        Serial.println(F("Waiting for RFID UART connection"));
+//    }
+    Serial.println(F("RFID initiated"));
     set_tx_power(2600);
     get_hardware_version();
     get_software_version();
@@ -37,9 +41,10 @@ void Rfid::clean_buffer() {
 bool Rfid::wait_msg() {
     uint8_t i = 0;
     clean_buffer();
-    while (Serial1.available()) {
-        if (Serial1.available()) {
-            uint8_t b = Serial1.read();
+    while (Serial2.available()) {
+        Serial.println(F("Getting data from RFID module"));
+        if (Serial2.available()) {
+            uint8_t b = Serial2.read();
             buffer[i] = b;
             i++;
             if (b == 0x7e) {
@@ -50,17 +55,19 @@ bool Rfid::wait_msg() {
     if (buffer[0] == 0xbb && buffer[i - 1] == 0x7e) {
         return true;
     } else {
+        Serial.println(F("Wait for msg from RFID module failed"));
         return false;
     }
 }
 
 /*! @brief Send command.*/
 void Rfid::send_command(uint8_t *data, size_t size) {
-    Serial1.write(data, size);
+    Serial2.write(data, size);
 }
 
 /*! @brief Get hardware version information.*/
 String Rfid::get_hardware_version() {
+    Serial.println(F("Getting RFID hardware version"));
     send_command((uint8_t *) HARDWARE_VERSION_CMD, sizeof(HARDWARE_VERSION_CMD));
     if (wait_msg()) {
         String info;
@@ -78,6 +85,7 @@ String Rfid::get_hardware_version() {
 
 /*! @brief Get software version information.*/
 String Rfid::get_software_version() {
+    Serial.println(F("Getting RFID software version"));
     send_command((uint8_t *) SOFTWARE_VERSION_CMD, sizeof(SOFTWARE_VERSION_CMD));
     if (wait_msg()) {
         String info;
@@ -141,6 +149,7 @@ void Rfid::set_scanning_mode(rfid_scanning_mode_t _scanning_mode) {
 }
 
 bool Rfid::set_tx_power(uint16_t db) {
+    Serial.println(F("Start setting tx power"));
     memcpy(buffer, SET_TX_POWER, sizeof(SET_TX_POWER));
     buffer[5] = (db >> 8) & 0xff;
     buffer[6] = db & 0xff;
@@ -158,6 +167,7 @@ bool Rfid::set_tx_power(uint16_t db) {
         }
         return true;
     } else {
+        Serial.println(F("Set tx power failed"));
         return false;
     }
 }

@@ -154,7 +154,7 @@ byte Display::get_font_height() {
 }
 
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
-    for (uint16_t i = 0; i < 22; i++) {
+    for (uint16_t i = 0; i < 23; i++) {
         if (strcmp(icons[i].name, icon_name) == 0) {
             return &icons[i];
         }
@@ -234,7 +234,7 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
                 int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
                 draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
                 // Update accordingly screen item
-                screen_item_position _item_position = {x, y, iconHeight + textHeight, iconWidth};
+                screen_item_position _item_position = {x, y, iconWidth, iconHeight};
                 update_screen_item(screen_item_index, _item_position);
                 ++screen_item_index;
             }
@@ -405,6 +405,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     current_screen_background_tasks[i] = NO_TASK;
                 }
                 current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
+                //current_screen_background_tasks[0] = READ_RFID_TAG;
             }
             break;
         }
@@ -428,15 +429,16 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         case RFID: {
             // Define which icons to display for the RFID case
-            const byte rfidIconIndices[] = {9, 10, 11};
+            const byte rfidIconIndices[] = {9, 10, 11, 22};
             // Call the new render_icons_grid function with the specific icons for RFID
-            render_icons_grid(rfidIconIndices, 3);
+            render_icons_grid(rfidIconIndices, 4);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = RFID_SCAN;
             current_screen_features[1] = RFID_SCAN_HISTORY;
             current_screen_features[2] = RFID_MODIFY_TAG_DATA;
+            current_screen_features[3] = RFID_REGISTER_TAG;
             break;
         }
         case RFID_SCAN: {
@@ -547,6 +549,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         }
         case RFID_MODIFY_TAG_DATA:
             current_feature_item_type = LIST_ITEM;
+            break;
+        case RFID_REGISTER_TAG:
             break;
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case
@@ -764,7 +768,10 @@ void Display::update_screen_selector(byte _screen_item_index) {
     current_screen_selector.current_position = screen_items[_screen_item_index];
     current_screen_selector.screen_item_index = _screen_item_index;
     Serial.println(F("Updated screen selector. Re render now"));
-
+//    Serial.print(F("Current position w: "));
+//    Serial.println(current_screen_selector.current_position.w);
+//    Serial.print(F("Current position h: "));
+//    Serial.println(current_screen_selector.current_position.h);
     // Define border thickness
     byte border_thickness = 2; // Adjust the thickness of your border here
 

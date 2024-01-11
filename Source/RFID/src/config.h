@@ -34,7 +34,7 @@
 #define leftUpNavButtonPinDefinition 4
 #define backCancelNavButtonPinDefinition 0
 #define menuSelectNavButtonPinDefinition 5
-#define rightDownNavButtonPinDefinition 26
+#define rightDownNavButtonPinDefinition 35
 
 // Defined WiFi Configuration
 #define device_hostname "RFID-001-"

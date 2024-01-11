@@ -52,6 +52,7 @@ void Mediator::init_services() const {
     }
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
+    //rfid.init();
 }
 
 void Mediator::execute_task(task_t task) {
@@ -315,6 +316,7 @@ void Mediator::execute_task(task_t task) {
             break;
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
+            rfid.set_scanning_mode(SINGLE_SCAN);
             rfid.scan_rfid_tag();
             break;
         case WRITE_RFID_TAG:
