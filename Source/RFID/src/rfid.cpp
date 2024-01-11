@@ -10,14 +10,14 @@ Rfid::Rfid() {
 
 /*! Start connecting to rfid reader module using hardware serial _serial on TX-RX pins 16-17 */
 void Rfid::init() {
-    Serial2.begin(115200, SERIAL_8N1, 0, 25);
+    Serial2.begin(115200, SERIAL_8N1, 25, 26);
 //    while (!Serial2.available()) {
 //        Serial.println(F("Waiting for RFID UART connection"));
 //    }
     Serial.println(F("RFID initiated"));
-    set_tx_power(2600);
-    get_hardware_version();
-    get_software_version();
+//    set_tx_power(2600);
+//    get_hardware_version();
+//    get_software_version();
 }
 
 String Rfid::hex2str(uint8_t num) {
