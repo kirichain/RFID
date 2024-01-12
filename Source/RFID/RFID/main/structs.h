@@ -12,12 +12,12 @@
 #define SERVER_STATUS_MAX_LEN 50
 #define LOGIN_STATUS_MAX_LEN  50
 
-typedef struct {
+typedef struct menu_icon {
     const char *name;
     const uint16_t *icon_data;
 } menu_icon;
 
-typedef struct {
+typedef struct status_indicators {
     char wifiStatus[WIFI_STATUS_MAX_LEN];
     char dateTime[DATE_TIME_MAX_LEN];
     char serverStatus[SERVER_STATUS_MAX_LEN];
@@ -46,7 +46,16 @@ typedef struct task_args {
     char *mqttTopic;
     char *mqttBrokerUrl;
     byte blinkLedPin;
+    rfid_scanning_mode_t scanning_mode;
 } task_args;
+
+typedef struct wifi_network_info {
+    char ssid[16];
+    int rssi;
+    char password[32];
+    char hostname[32];
+    char ip[32];
+} wifi_network_info;
 
 typedef struct task_results {
     bool isFsLoaded;
@@ -54,6 +63,17 @@ typedef struct task_results {
     operating_mode_t currentOperatingMode;
     feature_t currentFeature;
     task_t currentTask;
+    byte currentScreenItemIndex;
+    byte screenItemCount;
+    feature_item_type_t feature_item_type;
+    feature_t screenFeatures[10];
+    task_t screenTasks[10];
+    task_t screenBackgroundTasks[10];
+    feature_t featureNavigationHistory[10] = {NO_FEATURE};
+    byte featureNavigationHistorySize = 0;
+    int wifi_networks_count;
+    wifi_network_info wifi_networks[10];
+
 } task_results;
 
 typedef struct message {
@@ -77,7 +97,7 @@ typedef struct rfid_tag {
     String shippedToId;
     String brandName;
     String poCode;
-    rfid_tag_status_t tagStatus;
+    rfid_tag_status_t tag_status;
 } rfid_tag;
 
 typedef struct rfid_item {
@@ -89,9 +109,22 @@ typedef struct rfid_item {
 typedef struct rfid_scan_result {
     bool success;
     rfid_tag scan_data;
-    //String epc;
     String timestamp;
     byte scan_count;
 } rfid_scan_result;
+
+typedef struct screen_item_position {
+    int x;
+    int y;
+    int w;
+    int h;
+} screen_item_position;
+
+typedef struct screen_selector {
+    screen_selector_t type;
+    screen_item_position old_position;
+    screen_item_position current_position;
+    byte screen_item_index;
+} screen_selector;
 
 #endif //RFID_STRUCTS_H

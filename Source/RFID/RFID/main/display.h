@@ -7,9 +7,9 @@
 
 #include "Arduino.h"
 #include "enums.h"
+#include "structs.h"
 #include "SPI.h"
 #include "TFT_eSPI.h"
-#include "structs.h"
 #include "icons/backpack.h"
 #include "icons/connect-to-device.h"
 #include "icons/connect-to-server.h"
@@ -20,6 +20,7 @@
 #include "icons/scan.h"
 #include "icons/scan-history.h"
 #include "icons/modify-rfid-tag.h"
+#include "icons/register_rfid_tag.h"
 #include "icons/setting.h"
 #include "icons/wifi-setting.h"
 #include "icons/user.h"
@@ -36,31 +37,21 @@
 
 class Display {
 public:
-    // Example history array
-    rfid_scan_result history[14] = {
-            {true, {"EPC123456789", "PID123", "M",  "Red",     "img_url_1",  "STID123", "BrandA", "PO123456", ASSOCIATED},   "2024-01-02 10:00", 5},
-            {true, {"EPC987654321", "PID987", "L",  "Blue",    "img_url_2",  "STID987", "BrandB", "PO654321", UNASSOCIATED}, "2024-01-02 09:45", 5},
-            {true, {"EPC564738291", "PID564", "S",  "Green",   "img_url_3",  "STID564", "BrandC", "PO564738", ASSOCIATED},   "2024-01-02 09:30", 5},
-            {true, {"EPC864213579", "PID864", "XL", "Black",   "img_url_4",  "STID864", "BrandD", "PO864213", UNASSOCIATED}, "2024-01-02 09:15", 5},
-            {true, {"EPC975310864", "PID975", "M",  "Yellow",  "img_url_5",  "STID975", "BrandE", "PO975310", ASSOCIATED},   "2024-01-02 09:00", 5},
-            {true, {"EPC472859106", "PID472", "L",  "White",   "img_url_6",  "STID472", "BrandF", "PO472859", UNASSOCIATED}, "2024-01-02 08:45", 5},
-            {true, {"EPC582947015", "PID582", "S",  "Purple",  "img_url_7",  "STID582", "BrandG", "PO582947", ASSOCIATED},   "2024-01-02 08:30", 5},
-            {true, {"EPC693840257", "PID693", "XL", "Orange",  "img_url_8",  "STID693", "BrandH", "PO693840", UNASSOCIATED}, "2024-01-02 08:15", 5},
-            {true, {"EPC204857396", "PID204", "M",  "Pink",    "img_url_9",  "STID204", "BrandI", "PO204857", ASSOCIATED},   "2024-01-02 08:00", 5},
-            {true, {"EPC918273645", "PID918", "L",  "Grey",    "img_url_10", "STID918", "BrandJ", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "S",  "Brown",   "img_url_11", "STID918", "BrandK", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "XL", "Cyan",    "img_url_12", "STID918", "BrandL", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "M",  "Magenta", "img_url_13", "STID918", "BrandM", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "L",  "Lime",    "img_url_14", "STID918", "BrandN", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-    };
-
     feature_layout_t feature_layout;
     status_indicators status;
-
+    screen_selector current_screen_selector;
+    screen_item_position screen_items[10];
+    byte screen_item_count;
+    feature_item_type_t current_feature_item_type;
+    feature_t current_screen_features[10];
+    task_t current_screen_tasks[10];
+    task_t current_screen_background_tasks[10];
+    bool is_background_task_required = false;
+    bool is_background_task_completed = false;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
-    const byte HEADER_HEIGHT = 40;
+    const byte HEADER_HEIGHT = 36;
     const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
     const byte ROW_HEIGHT = 25; // Height of each data row
     const int BORDER_COLOR = TFT_WHITE; // Assuming TFT_WHITE is the color constant for white
@@ -87,8 +78,9 @@ public:
     const byte TEXT_SPACING = 30; // Additional vertical space between lines of text in Part 3
 
     // Define colors for different UI elements
-    uint32_t headerColor = TFT_DARKGREY;
-    uint32_t navBarColor = TFT_DARKGREY;
+    uint32_t headerColor = 0x4A49;
+    uint32_t navBarColor = 0x4A49;
+    uint32_t backgroundColor = 0x2966;
     uint32_t textColor = TFT_WHITE;
     uint32_t borderColor = TFT_WHITE;
 
@@ -127,8 +119,13 @@ public:
     int rightIconX;
     int iconSpacing;
 
+    // Additional code for the page indicator
+    const char *pageIndicator = "1/2"; // This text represents the current page and the total number of pages
+    byte footerHeight = 30; // Height of the footer area for page indicator, adjust as needed
+    byte pageIndicatorMargin = 1; // Vertical position for the page indicator
+
     // Define an array of menu icon names corresponding to the header files
-    const char *menu_icon_names[22] = {
+    const char *menu_icon_names[23] = {
             "setting_icon",
             "rfid_icon",
             "package_icon",
@@ -150,11 +147,12 @@ public:
             "import-from-sd-card_icon",
             "import-from-server_icon",
             "import-from-computer_icon",
-            "package-details_icon"
+            "package-details_icon",
+            "register_rfid_tag_icon"
     };
 
     // Map menu names to menu icon data arrays
-    menu_icon icons[22] = {
+    menu_icon icons[23] = {
             {"co-working_icon",           co_working_icon},
             {"connect-to-device_icon",    connect_to_device_icon},
             {"connect-to-server_icon",    connect_to_server_icon},
@@ -177,13 +175,26 @@ public:
             {"package_icon",              package_icon},
             {"package-details_icon",      package_details_icon},
             {"sync-data_icon",            sync_data_icon},
+            {"register_rfid_tag_icon", register_rfid_tag_icon}
     };
 
-    // Additional code for the page indicator
-    const char *pageIndicator = "1/2"; // This text represents the current page and the total number of pages
-    byte footerHeight = 30; // Height of the footer area for page indicator, adjust as needed
-    byte pageIndicatorMargin = 1; // Vertical position for the page indicator
-
+    // Example history array
+    rfid_scan_result history[14] = {
+            {true, {"EPC123456789", "PID123", "M",  "Red",     "img_url_1",  "STID123", "BrandA", "PO123456", ASSOCIATED},   "2024-01-02 10:00", 5},
+            {true, {"EPC987654321", "PID987", "L",  "Blue",    "img_url_2",  "STID987", "BrandB", "PO654321", UNASSOCIATED}, "2024-01-02 09:45", 5},
+            {true, {"EPC564738291", "PID564", "S",  "Green",   "img_url_3",  "STID564", "BrandC", "PO564738", ASSOCIATED},   "2024-01-02 09:30", 5},
+            {true, {"EPC864213579", "PID864", "XL", "Black",   "img_url_4",  "STID864", "BrandD", "PO864213", UNASSOCIATED}, "2024-01-02 09:15", 5},
+            {true, {"EPC975310864", "PID975", "M",  "Yellow",  "img_url_5",  "STID975", "BrandE", "PO975310", ASSOCIATED},   "2024-01-02 09:00", 5},
+            {true, {"EPC472859106", "PID472", "L",  "White",   "img_url_6",  "STID472", "BrandF", "PO472859", UNASSOCIATED}, "2024-01-02 08:45", 5},
+            {true, {"EPC582947015", "PID582", "S",  "Purple",  "img_url_7",  "STID582", "BrandG", "PO582947", ASSOCIATED},   "2024-01-02 08:30", 5},
+            {true, {"EPC693840257", "PID693", "XL", "Orange",  "img_url_8",  "STID693", "BrandH", "PO693840", UNASSOCIATED}, "2024-01-02 08:15", 5},
+            {true, {"EPC204857396", "PID204", "M",  "Pink",    "img_url_9",  "STID204", "BrandI", "PO204857", ASSOCIATED},   "2024-01-02 08:00", 5},
+            {true, {"EPC918273645", "PID918", "L",  "Grey",    "img_url_10", "STID918", "BrandJ", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+            {true, {"EPC918273645", "PID918", "S",  "Brown",   "img_url_11", "STID918", "BrandK", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
+            {true, {"EPC918273645", "PID918", "XL", "Cyan",    "img_url_12", "STID918", "BrandL", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+            {true, {"EPC918273645", "PID918", "M",  "Magenta", "img_url_13", "STID918", "BrandM", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
+            {true, {"EPC918273645", "PID918", "L",  "Lime",    "img_url_14", "STID918", "BrandN", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+    };
     Display();
 
     void init(feature_layout_t _feature_layout);
@@ -208,7 +219,7 @@ public:
 
     static byte calculate_rows(byte iconCount, byte numColumns);
 
-    void render_feature(feature_t _feature);
+    void render_feature(feature_t _feature, task_results &_taskResults);
 
     void draw_history_item(byte index, const rfid_scan_result &item) const;
 
@@ -222,9 +233,17 @@ public:
 
     void update_status(status_indicators _status);
 
-    uint16_t convert_to_565_color(uint32_t hex_color);
+    static uint16_t convert_to_565_color(uint32_t hex_color);
 
-    void reset_display_setting();
+    static void reset_display_setting();
+
+    void update_screen_item(byte _index, screen_item_position _item_position);
+
+    void clear_screen_items();
+
+    void update_screen_selector(byte _screen_item_index);
+
+    void clear_screen_selector() const;
 };
 
 #endif //RFID_DISPLAY_H

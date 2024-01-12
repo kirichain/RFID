@@ -19,7 +19,6 @@
 #include "iam.h"
 #include "json.h"
 #include "mesh_network.h"
-#include "modbus_rs485.h"
 #include "mqtt.h"
 #include "operation.h"
 #include "ota.h"

@@ -27,7 +27,7 @@ void Display::init(feature_layout_t _feature_layout) {
         SCREEN_WIDTH = 480;
         SCREEN_HEIGHT = 320;
     }
-    tft.fillScreen(0x2966);
+    tft.fillScreen(backgroundColor);
     draw_layout(feature_layout);
 }
 
@@ -40,75 +40,70 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
     tft.setTextDatum(TL_DATUM); // Top-Left datum
 
     switch (_feature_layout) {
-        case PORTRAIT:
+        case PORTRAIT: {
             // Draw header at the top
             tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
 
             // Set text color for the header
             tft.setTextColor(textColor, headerColor);
 
-            // Draw WiFi status aligned to the top-left of the header
-            tft.setTextDatum(TL_DATUM); // Align to the top-left
-            tft.drawString(wifiStatus, 5, 5);
-
-            // Draw login status aligned to the top-left of the header, below WiFi status
-            tft.drawString(loginStatus, 5, 20);
+            // Wifi and server status icons
+            tft.pushImage(5, 10, 16, 16, wifi_connection_successful_icon);
+            tft.pushImage(23, 10, 16, 16, server_connection_successful_icon);
+            tft.drawString("Server connected", 42, 10);
 
             // Draw date and time aligned to the top-right of the header
             tft.setTextDatum(TR_DATUM); // Align to the top-right
-            tft.drawString(dateTime, SCREEN_WIDTH - 5, 5);
-
-            // Draw server status aligned to the top-right of the header, below date and time
-            tft.drawString(serverStatus, SCREEN_WIDTH - 5, 20);
+            tft.drawString(dateTime, SCREEN_WIDTH - 5, 10);
 
             // Draw viewport below the header
             tft.drawRect(0, HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, borderColor);
 
-            // Draw the navigation bar in the bottom
-            // Calculate starting y-coordinate for the navigation bar
-            navBarStartY = (_feature_layout == PORTRAIT ? SCREEN_HEIGHT : SCREEN_WIDTH) - NAV_BAR_HEIGHT;
-
-            // Draw the navigation bar background
-            tft.fillRect(0, navBarStartY, SCREEN_WIDTH, NAV_BAR_HEIGHT, navBarColor);
-
-            // Calculate the center y-coordinate of each icon
-            iconCenterY = navBarStartY + NAV_BAR_HEIGHT / 2;
-
-            // Set the size for the icons
-            iconSize = 30;
-
-            // Adjust the x-coordinate calculations
-            iconSpacing = (SCREEN_WIDTH - (4 * iconSize)) / 5; // Equal spacing between icons
-
-            leftIconX = iconSpacing; // Start with one spacing unit from the left edge
-            cancelIconX = leftIconX + iconSize + iconSpacing; // One icon and one spacing unit from the left icon
-            okIconX = cancelIconX + iconSize + iconSpacing; // One icon and one spacing unit from the cancel icon
-            rightIconX = okIconX + iconSize + iconSpacing; // One icon and one spacing unit from the ok icon
-
-            // Draw Left/Back icon (left arrow)
-            tft.setTextColor(TFT_WHITE);
-            tft.fillTriangle(leftIconX, iconCenterY, // Top vertex
-                             leftIconX + iconSize, iconCenterY - iconSize / 2, // Bottom left vertex
-                             leftIconX + iconSize, iconCenterY + iconSize / 2, // Bottom right vertex
-                             TFT_BLUE);
-
-            // Draw Cancel icon (character 'x')
-            tft.setTextColor(TFT_RED);
-            tft.setTextSize(2); // Adjust text size as needed
-            tft.drawChar('X', cancelIconX, iconCenterY - iconSize / 2, 2);
-
-            // Draw Select/OK icon (circle with a dot in the center)
-            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 2, TFT_BLUE);
-            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 4, TFT_WHITE);
-
-            // Draw Right/Next icon (right arrow)
-            tft.setTextColor(TFT_WHITE);
-            tft.fillTriangle(rightIconX + iconSize, iconCenterY, // Top vertex
-                             rightIconX, iconCenterY - iconSize / 2, // Bottom left vertex
-                             rightIconX, iconCenterY + iconSize / 2, // Bottom right vertex
-                             TFT_BLUE);
+//            // Draw the navigation bar in the bottom
+//            // Calculate starting y-coordinate for the navigation bar
+//            navBarStartY = (_feature_layout == PORTRAIT ? SCREEN_HEIGHT : SCREEN_WIDTH) - NAV_BAR_HEIGHT;
+//
+//            // Draw the navigation bar background
+//            tft.fillRect(0, navBarStartY, SCREEN_WIDTH, NAV_BAR_HEIGHT, navBarColor);
+//
+//            // Calculate the center y-coordinate of each icon
+//            iconCenterY = navBarStartY + NAV_BAR_HEIGHT / 2;
+//
+//            // Set the size for the icons
+//            iconSize = 30;
+//
+//            // Adjust the x-coordinate calculations
+//            iconSpacing = (SCREEN_WIDTH - (4 * iconSize)) / 5; // Equal spacing between icons
+//
+//            leftIconX = iconSpacing; // Start with one spacing unit from the left edge
+//            cancelIconX = leftIconX + iconSize + iconSpacing; // One icon and one spacing unit from the left icon
+//            okIconX = cancelIconX + iconSize + iconSpacing; // One icon and one spacing unit from the cancel icon
+//            rightIconX = okIconX + iconSize + iconSpacing; // One icon and one spacing unit from the ok icon
+//
+//            // Draw Left/Back icon (left arrow)
+//            tft.setTextColor(TFT_WHITE);
+//            tft.fillTriangle(leftIconX, iconCenterY, // Top vertex
+//                             leftIconX + iconSize, iconCenterY - iconSize / 2, // Bottom left vertex
+//                             leftIconX + iconSize, iconCenterY + iconSize / 2, // Bottom right vertex
+//                             TFT_BLUE);
+//
+//            // Draw Cancel icon (character 'x')
+//            tft.setTextColor(TFT_RED);
+//            tft.setTextSize(2); // Adjust text size as needed
+//            tft.drawChar('X', cancelIconX, iconCenterY - iconSize / 2, 2);
+//
+//            // Draw Select/OK icon (circle with a dot in the center)
+//            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 2, TFT_BLUE);
+//            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 4, TFT_WHITE);
+//
+//            // Draw Right/Next icon (right arrow)
+//            tft.setTextColor(TFT_WHITE);
+//            tft.fillTriangle(rightIconX + iconSize, iconCenterY, // Top vertex
+//                             rightIconX, iconCenterY - iconSize / 2, // Bottom left vertex
+//                             rightIconX, iconCenterY + iconSize / 2, // Bottom right vertex
+//                             TFT_BLUE);
             break;
-
+        }
         case LANDSCAPE:
             // Draw header at the top
             tft.fillRect(0, 0, SCREEN_HEIGHT, HEADER_HEIGHT, headerColor);
@@ -148,8 +143,12 @@ byte Display::get_font_height() {
 }
 
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
-    for (uint16_t i = 0; i < 23; i++) {
+    for (uint16_t i = 0; i < 27; ++i) {
         if (strcmp(icons[i].name, icon_name) == 0) {
+//            Serial.println(F("Got icon name: "));
+//            Serial.println(String(icon_name));
+//            Serial.println(icons[i].name);
+//            Serial.println(i);
             return &icons[i];
         }
     }
@@ -159,6 +158,8 @@ const menu_icon *Display::get_icon_by_name(const char *icon_name) {
 void Display::put_icon(int x, int y, const char *icon_name) {
     const menu_icon *icon = get_icon_by_name(icon_name);
     if (icon != nullptr) {
+//        Serial.println("Icon to be put: ");
+//        Serial.println(String(icon_name));
         tft.pushImage(x, y, iconWidth, iconHeight, icon->icon_data);
     } else {
         // Handle the error, for example, by printing to the serial port
@@ -259,7 +260,7 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
 
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
-    tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
+    tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
     // Clear screen items and reset screen selector
     clear_screen_selector();
     clear_screen_items();

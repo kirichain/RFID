@@ -17,6 +17,7 @@ IAM iam;
 MeshNetwork meshNetwork;
 Operation operation;
 Peripherals peripherals;
+Buzzer buzzer;
 Rfid rfid;
 Socket socket;
 Warehouse warehouse;
@@ -35,19 +36,30 @@ Mediator::Mediator() {
     isTaskCompleted = true;
     isTaskQueueEmpty = true;
 
-    taskResults.currentFeature = HOME_HANDHELD_1;
+    taskResults.currentFeature = NO_FEATURE;
+    taskResults.currentScreenItemIndex = 0;
     taskArgs.task = IDLE;
+    taskResults.featureNavigationHistory[++taskResults.featureNavigationHistorySize] = HOME_HANDHELD_1;
 
     Serial.println("Mediator initiated");
     //dataRow.timestamp = NULL;
 }
 
 void Mediator::init_services() const {
+    // Render layout based on operating mode
     if (taskArgs.feature == HOME_TERMINAL) {
         display.init(LANDSCAPE);
     } else {
         display.init(PORTRAIT);
     }
+    peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
+                                        menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
+    // Set buzzer pin
+    peripherals.set_digital_output(buzzerPinDefinition);
+    // Play welcome sound using buzzer
+    buzzer.welcome_sound();
+    // Check RFID module
+    rfid.init(rfid_rx_pin, rfid_tx_pin);
 }
 
 void Mediator::execute_task(task_t task) {
@@ -122,8 +134,10 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
@@ -145,6 +159,14 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task TERMINATE_STA_WIFI"));
             wifi.terminate_sta_mode();
             break;
+        case SCAN_WIFI_NETWORKS:
+            Serial.println(F("Execute task SCAN_WIFI_NETWORKS"));
+            wifi.scan_wifi_networks();
+            taskResults.wifi_networks_count = wifi.wifi_networks_count;
+            for (byte i = 0; i < 10; ++i) {
+                taskResults.wifi_networks[i] = wifi.wifi_networks[i];
+            }
+            break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
             taskResults.currentOperatingMode = operation.get_operating_mode();
@@ -155,12 +177,54 @@ void Mediator::execute_task(task_t task) {
             taskResults.currentOperatingMode = taskArgs.operatingMode;
             break;
         case RENDER_FEATURE:
-            Serial.println(F("Execute task RENDER_FEATURE"));
-            //if (taskArgs.feature != taskResults.currentFeature) {
-            display.render_feature(taskArgs.feature);
-            //} else {
-            //    Serial.println(F("Feature is not changed. Keep current rendering"));
-            //}
+            if (taskArgs.feature != taskResults.currentFeature) {
+                Serial.print(F("Execute task RENDER_FEATURE :"));
+                Serial.println(feature_as_string(taskArgs.feature));
+                display.render_feature(taskArgs.feature, taskResults);
+                // Check if this feature requires background tasks before rendering information, if yes, run tasks,
+                // then re-render
+                if (display.is_background_task_required) {
+                    byte feature_background_task_index = 0;
+                    while ((feature_background_task_index <= 9) and
+                           (display.current_screen_background_tasks[feature_background_task_index] != NO_TASK)) {
+                        Serial.println(F("Executing background task"));
+                        execute_task(display.current_screen_background_tasks[feature_background_task_index]);
+                        ++feature_background_task_index;
+                    }
+
+                    Serial.print(F("This feature has : "));
+                    Serial.print(feature_background_task_index);
+                    Serial.println(F(" background tasks"));
+
+                    display.is_background_task_completed = true;
+                    display.is_background_task_required = false;
+                    display.render_feature(taskArgs.feature, taskResults);
+                    display.is_background_task_completed = false;
+                }
+                // Update screen item index for screen selector
+                taskResults.currentScreenItemIndex = 0;
+                // Update screen item count for screen selector
+                taskResults.screenItemCount = display.screen_item_count;
+                // Update type of items on the screen
+                taskResults.feature_item_type = display.current_feature_item_type;
+                // Update list of features/tasks of items on the screen
+                switch (taskResults.feature_item_type) {
+                    case MENU_ICON:
+                        for (int i = 0; i < 10; ++i) {
+                            taskResults.screenFeatures[i] = display.current_screen_features[i];
+                        }
+                        break;
+                    case LIST_ITEM:
+                        break;
+                }
+                // Print screen item count of this feature (screen)
+                Serial.print(F("Feature has : "));
+                Serial.print(taskResults.screenItemCount);
+                Serial.println(F(" items on the screen"));
+            } else {
+                // Feature is not changed. Keep current rendering
+                //Serial.println(F("Feature is not changed. Keep current rendering"));
+            }
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
@@ -169,18 +233,58 @@ void Mediator::execute_task(task_t task) {
                                                 rightDownNavButtonPinDefinition,
                                                 backCancelNavButtonPinDefinition);
             break;
-        case READ_NAVIGATION_BUTTON:
-            Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
-            peripherals.read_navigation_buttons();
-            peripherals.retrieve_corresponding_feature(taskArgs.previousFeature, taskResults.currentFeature);
-            peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+        case READ_NAVIGATION_BUTTON: {
+            //Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
+            // Get navigation direction
+            button_type_t is_nav_button_pressed = peripherals.read_navigation_buttons(
+                    taskResults.currentScreenItemIndex,
+                    taskResults.screenItemCount,
+                    taskResults.feature_item_type);
+            // Clear current screen selector and update to new position from button state
+            switch (is_nav_button_pressed) {
+                case LEFT_UP:
+                case RIGHT_DOWN:
+                    display.clear_screen_selector();
+                    display.update_screen_selector(taskResults.currentScreenItemIndex);
+                    break;
+                case SELECT:
+                    switch (taskResults.feature_item_type) {
+                        case MENU_ICON:
+                            Serial.println(F("Retrieving corresponding feature now"));
+                            Serial.print(F("Current screen item index: "));
+                            Serial.println(taskResults.currentScreenItemIndex);
+                            peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                        taskResults.currentFeature, taskArgs.feature,
+                                                                        taskResults.currentScreenItemIndex,
+                                                                        taskResults.screenFeatures,
+                                                                        is_nav_button_pressed,
+                                                                        taskResults.featureNavigationHistory,
+                                                                        taskResults.featureNavigationHistorySize);
+                            break;
+                        case LIST_ITEM:
+                            Serial.println(F("Retrieving corresponding task now"));
+                            Serial.print(F("Current screen item index: "));
+                            peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
+                            break;
+                    }
+                    break;
+                case BACK_CANCEL:
+                    Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                taskResults.currentFeature, taskArgs.feature,
+                                                                taskResults.currentScreenItemIndex,
+                                                                taskResults.screenFeatures, is_nav_button_pressed,
+                                                                taskResults.featureNavigationHistory,
+                                                                taskResults.featureNavigationHistorySize);
+                    break;
+            }
             break;
-        case GET_FEATURE:
-            Serial.println(F("Execute task GET_FEATURE"));
+        }
+        case GET_CURRENT_FEATURE:
+            Serial.println(F("Execute task GET_CURRENT_FEATURE"));
             taskArgs.feature = taskResults.currentFeature;
             break;
-        case SET_FEATURE:
-            Serial.println(F("Execute task SET_FEATURE"));
+        case SET_CURRENT_FEATURE:
+            Serial.println(F("Execute task SET_CURRENT_FEATURE"));
             if (taskArgs.feature != taskResults.currentFeature) {
                 taskArgs.previousFeature = taskResults.currentFeature;
                 taskResults.currentFeature = taskArgs.feature;
@@ -219,9 +323,16 @@ void Mediator::execute_task(task_t task) {
             break;
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
+            //rfid.set_scanning_mode(SINGLE_SCAN);
+            rfid.set_scanning_mode(MULTI_SCAN);
+            rfid.scan_rfid_tag();
             break;
         case WRITE_RFID_TAG:
             Serial.println(F("Execute task WRITE_RFID_TAG"));
+            break;
+        case SET_RFID_SCANNING_MODE:
+            Serial.println(F("Execute task SET_RFID_SCANNING_MODE"));
+            rfid.set_scanning_mode(taskArgs.scanning_mode);
             break;
         case INSERT_DATA_ROW:
             Serial.println(F("Execute task INSERT_DATA_ROW"));
@@ -263,9 +374,11 @@ void Mediator::set_current_task() {
 }
 
 void Mediator::set_current_feature() {
-    taskResults.currentFeature = taskArgs.feature;
-    Serial.println(F("Set current feature successfully to "));
-
+    if (taskResults.currentFeature != taskArgs.feature) {
+        taskResults.currentFeature = taskArgs.feature;
+        Serial.print(F("Set current feature successfully to "));
+        Serial.println(F(feature_as_string(taskResults.currentFeature)));
+    }
 }
 
 void Mediator::set_current_task_status(bool taskStatus) {
@@ -294,8 +407,8 @@ task_t Mediator::get_current_task() {
 }
 
 feature_t Mediator::get_current_feature() {
-    Serial.print(F("Current feature is: "));
-    Serial.println(feature_as_string(taskResults.currentFeature));
+//    Serial.print(F("Current feature is: "));
+//    Serial.println(F(feature_as_string(taskResults.currentFeature)));
     return taskResults.currentFeature;
 }
 

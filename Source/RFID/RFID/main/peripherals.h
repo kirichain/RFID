@@ -10,25 +10,29 @@
 
 class Peripherals {
 private:
-    byte menuSelectNavButtonPin, leftUpNavButtonPin, rightDownNavButtonPin, backCancelNavButtonPin;
+    byte leftUpNavButtonPin, backCancelNavButtonPin, menuSelectNavButtonPin, rightDownNavButtonPin;
     byte lastMenuSelectNavButtonState, lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
 public:
     Peripherals();
 
-    void init_navigation_buttons(byte _menuSelectNavButtonPin, byte _leftUpNavButtonPin, byte _rightDownNavButtonPin,
-                                 byte _backCancelNavButtonPin);
+    void init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCancelNavButtonPin, byte _menuSelectNavButtonPin,
+                                 byte _rightDownNavButtonPin);
 
-    void read_navigation_buttons();
+    button_type_t read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
+                                          feature_item_type_t &feature_item_type);
 
-    void blink_led(byte ledPin);
+    static void blink_led(byte ledPin);
 
     void set_digital_input(byte pin);
 
-    void set_digital_output(byte pin);
+    static void set_digital_output(byte pin);
 
-    void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
+    static void retrieve_corresponding_task(task_t &previousTask, task_t &currentTask);
 
-    void retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature);
+    static void
+    retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
+                                   byte &screenItemIndex, feature_t (&screenFeatures)[10], button_type_t &button_type,
+                                   feature_t (&navigation_history)[10], byte &navigation_history_size);
 };
 
 #endif //RFID_PERIPHERALS_H

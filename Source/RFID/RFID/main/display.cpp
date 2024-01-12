@@ -27,13 +27,13 @@ void Display::init(feature_layout_t _feature_layout) {
         SCREEN_WIDTH = 480;
         SCREEN_HEIGHT = 320;
     }
-    tft.fillScreen(0xFFFF);
+    tft.fillScreen(0x2966);
     draw_layout(feature_layout);
 }
 
 void Display::draw_layout(feature_layout_t _feature_layout) {
     // Clear the screen before drawing the layout
-    tft.fillScreen(TFT_BLACK);
+    tft.fillScreen(backgroundColor);
 
     // Set text font and size
     tft.setTextSize(1);
@@ -45,12 +45,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
 
             // Set text color for the header
-            tft.setTextColor(textColor, headerColor);
-
-            // Draw header at the top
-            tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
-
-            // Set the color for the header text
             tft.setTextColor(textColor, headerColor);
 
             // Draw WiFi status aligned to the top-left of the header
@@ -154,7 +148,7 @@ byte Display::get_font_height() {
 }
 
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
-    for (uint16_t i = 0; i < 22; i++) {
+    for (uint16_t i = 0; i < 23; i++) {
         if (strcmp(icons[i].name, icon_name) == 0) {
             return &icons[i];
         }
@@ -224,6 +218,7 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
 //    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + get_font_height())))
 //                     / (numRows + 1));
 
+    byte screen_item_index = 0;
     for (byte row = 0; row < numRows; ++row) {
         for (byte col = 0; col < numColumns; ++col) {
             byte index = row * numColumns + col;
@@ -232,10 +227,19 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
                 //int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + get_font_height() + vSpacing);
                 int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
                 draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
+                // Update accordingly screen item
+                screen_item_position _item_position = {x, y, iconWidth, iconHeight};
+                update_screen_item(screen_item_index, _item_position);
+                ++screen_item_index;
             }
         }
     }
+    // Now we draw icons for nav bar (Setting) and append them to screen items
+
+    screen_item_count = screen_item_index;
     reset_display_setting();
+    // Start to set screen selector to the first one item
+    update_screen_selector(0);
 }
 
 byte Display::calculate_columns(byte iconCount) {
@@ -253,9 +257,12 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
     }
 }
 
-void Display::render_feature(feature_t _feature) {
+void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
     tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - NAV_BAR_HEIGHT - HEADER_HEIGHT, TFT_BLACK);
+    // Clear screen items and reset screen selector
+    clear_screen_selector();
+    clear_screen_items();
 
     switch (_feature) {
         case BOOT:
@@ -266,6 +273,15 @@ void Display::render_feature(feature_t _feature) {
             const byte homeHandheld1IconIndices[] = {0, 1, 2, 3, 4, 5};
             // Call the new render_icons_grid function with the specific icons for HOME HANDHELD 1
             render_icons_grid(homeHandheld1IconIndices, 6);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING;
+            current_screen_features[1] = RFID;
+            current_screen_features[2] = PACKAGE;
+            current_screen_features[3] = CO_WORKING;
+            current_screen_features[4] = DATABASE;
+            current_screen_features[5] = DATA_SYNC;
             break;
         }
         case HOME_HANDHELD_2:
@@ -280,16 +296,124 @@ void Display::render_feature(feature_t _feature) {
             const byte settingIconIndices[] = {12, 13};
             // Call the new render_icons_grid function with the specific icons for SETTING
             render_icons_grid(settingIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING_WIFI;
+            current_screen_features[1] = SETTING_USER_INFO;
             break;
         }
-        case SETTING_WIFI:
-            // Code to handle SETUP_WIFI feature
+        case SETTING_WIFI: {
+            // Check if background task is completed, if yes, start rendering, else, set background tasks and return
+            if (is_background_task_completed) {
+                Serial.println(F("Start listing all available Wi-Fi networks on the screen"));
+                byte wifi_network_index = 0;
+                // Print all available wifi networks
+                tft.setFreeFont(&FreeSans9pt7b);
+                tft.setTextColor(TFT_WHITE);
+
+                // Define the starting position
+                int x = 20; // Start from left padding
+                int y = 50; // Start from below the header bar + padding
+                int lineHeight = 30; // Set the line height or row height to 50% more
+                int rowPadding = 5; // Set padding between rows
+                int headerHeight = 40; // Height of the header bar
+                int navbarHeight = 40; // Height of the navbar
+                int titlePadding = 20; // Padding between header and titles set to 20
+                int topSpace = 10; // Space between the text in the first row and titles
+                int leftPadding = 20; // Left padding
+                int rightPadding = 20; // Right padding
+
+                // Adjust the column width for Index by 100%
+                int colWidthIndex = 60; // Increased width for No (index) column
+                int colWidthRSSI = 50; // Width for RSSI column
+                // Calculate remaining width for SSID
+                int colWidthSSID = tft.width() - colWidthIndex - colWidthRSSI - (leftPadding + rightPadding);
+
+                // Draw titles with increased y coordinate
+                y += titlePadding; // Move below the header bar
+                tft.setCursor(x, y);
+                tft.print(F("Index"));
+                tft.setCursor(x + colWidthIndex + rowPadding, y);
+                tft.print(F("SSID"));
+                tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
+                tft.print(F("RSSI"));
+
+                // Start drawing the grid below the title with top space
+                y += topSpace + lineHeight; // Apply top space and move below the title
+
+                while (wifi_network_index < _taskResults.wifi_networks_count) {
+                    const char *ssid = _taskResults.wifi_networks[wifi_network_index].ssid;
+                    int rssi = _taskResults.wifi_networks[wifi_network_index].rssi;
+
+                    // Draw only if SSID is not empty
+                    if (strlen(ssid) > 0) {
+                        // Draw the index (No)
+                        tft.setCursor(x, y);
+                        tft.print(wifi_network_index + 1);
+
+                        // Draw vertical line after index
+                        tft.drawFastVLine(x + colWidthIndex - rowPadding, y - lineHeight - topSpace,
+                                          lineHeight + topSpace, TFT_WHITE);
+
+                        // Draw the SSID
+                        tft.setCursor(x + colWidthIndex + rowPadding, y);
+                        tft.print(ssid);
+
+                        // Draw vertical line after SSID
+                        tft.drawFastVLine(x + colWidthIndex + colWidthSSID, y - lineHeight - topSpace,
+                                          lineHeight + topSpace, TFT_WHITE);
+
+                        // Draw the RSSI
+                        tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
+                        tft.print(rssi);
+
+                        // Draw horizontal line after row
+                        tft.drawFastHLine(leftPadding, y + rowPadding, tft.width() - (leftPadding + rightPadding),
+                                          TFT_WHITE);
+
+                        // Move to the next line
+                        y += lineHeight + rowPadding; // Move down with row padding and increased row height
+
+                        // Check if we are near the bottom of the screen, if so, break or scroll
+                        if (y > tft.height() - navbarHeight - lineHeight - topSpace) {
+                            break; // Or implement scrolling
+                        }
+                    }
+                    //reset_display_setting();
+                    wifi_network_index++;
+                }
+
+                // Set items type on screen
+                current_feature_item_type = LIST_ITEM;
+                // Reset current screen features
+                memset(current_screen_features, NO_FEATURE, 10);
+                screen_item_count = 0;
+            } else {
+                tft.setFreeFont(&FreeSans9pt7b);
+                tft.setTextDatum(MC_DATUM);
+                tft.drawString("Please wait, scanning networks", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
+                //reset_display_setting();
+                is_background_task_required = true;
+                // Reset current screen background tasks
+                for (byte i = 0; i < 10; ++i) {
+                    current_screen_background_tasks[i] = NO_TASK;
+                }
+                current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
+                current_screen_background_tasks[1] = READ_RFID_TAG;
+            }
             break;
+        }
         case SETTING_USER_INFO: {
             // Define which icons to display for the SETTING_USER_INFO case
             const byte settingUserInfoIconIndices[] = {14, 15};
             // Call the new render_icons_grid function with the specific icons for SETTING_USER_INFO
             render_icons_grid(settingUserInfoIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING_USER_INFO_LOGIN;
+            current_screen_features[1] = SETTING_USER_INFO_LOGOUT;
             break;
         }
         case SETTING_USER_INFO_LOGIN:
@@ -300,9 +424,16 @@ void Display::render_feature(feature_t _feature) {
             break;
         case RFID: {
             // Define which icons to display for the RFID case
-            const byte rfidIconIndices[] = {9, 10, 11};
+            const byte rfidIconIndices[] = {9, 10, 11, 22};
             // Call the new render_icons_grid function with the specific icons for RFID
-            render_icons_grid(rfidIconIndices, 3);
+            render_icons_grid(rfidIconIndices, 4);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = RFID_SCAN;
+            current_screen_features[1] = RFID_SCAN_HISTORY;
+            current_screen_features[2] = RFID_MODIFY_TAG_DATA;
+            current_screen_features[3] = RFID_REGISTER_TAG;
             break;
         }
         case RFID_SCAN: {
@@ -326,6 +457,10 @@ void Display::render_feature(feature_t _feature) {
             // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
             // tft.print("Press cancel to stop scanning");
             reset_display_setting();
+            current_feature_item_type = LIST_ITEM;
+            // Reset current screen tasks
+            memset(current_screen_tasks, NO_TASK, 10);
+            current_screen_tasks[0] = READ_RFID_TAG;
             break;
         }
         case RFID_SCAN_HISTORY: {
@@ -336,6 +471,7 @@ void Display::render_feature(feature_t _feature) {
             for (byte i = 0; i < 14; i++) {
                 draw_history_item(i, history[i]);
             }
+            current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_SCAN_RESULT: {
@@ -403,16 +539,23 @@ void Display::render_feature(feature_t _feature) {
             tft.print("Unassociated");
             // Reset text size and color for subsequent text
             reset_display_setting();
+            current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_MODIFY_TAG_DATA:
-
+            current_feature_item_type = LIST_ITEM;
+            break;
+        case RFID_REGISTER_TAG:
             break;
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case
             const byte packageIconIndices[] = {21};
             // Call the new render_icons_grid function with the specific icons for PACKAGE
             render_icons_grid(packageIconIndices, 1);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = PACKAGE_DETAILS;
             break;
         }
         case PACKAGE_DETAILS:
@@ -423,6 +566,12 @@ void Display::render_feature(feature_t _feature) {
             const byte coworkingIconIndices[] = {6, 7, 8};
             // Call the new render_icons_grid function with the specific icons for CO WORKING
             render_icons_grid(coworkingIconIndices, 3);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = CO_WORKING_SCAN_NEARBY_DEVICE;
+            current_screen_features[1] = CO_WORKING_CONNECT_TO_DEVICE;
+            current_screen_features[2] = CO_WORKING_CONNECT_TO_SERVER;
             break;
         }
         case CO_WORKING_SCAN_NEARBY_DEVICE:
@@ -442,6 +591,11 @@ void Display::render_feature(feature_t _feature) {
             const byte databaseIconIndices[] = {16, 17,};
             // Call the new render_icons_grid function with the specific icons for DATABASE
             render_icons_grid(databaseIconIndices, 2);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = DATA_IMPORT;
+            current_screen_features[1] = DATA_EXPORT;
             break;
         }
         case DATA_IMPORT: {
@@ -449,6 +603,12 @@ void Display::render_feature(feature_t _feature) {
             const byte dataImportIconIndices[] = {18, 19, 20};
             // Call the new render_icons_grid function with the specific icons for DATA IMPORT
             render_icons_grid(dataImportIconIndices, 3);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = DATA_IMPORT_FROM_SD_CARD;
+            current_screen_features[1] = DATA_IMPORT_FROM_SERVER;
+            current_screen_features[2] = DATA_IMPORT_FROM_COMPUTER;
             break;
         }
         case DATA_IMPORT_FROM_SD_CARD:
@@ -456,6 +616,9 @@ void Display::render_feature(feature_t _feature) {
             break;
         case DATA_IMPORT_FROM_SERVER:
             // Code to handle DATA_IMPORT_FROM_SERVER feature
+            break;
+        case DATA_IMPORT_FROM_COMPUTER:
+            // Code to handle DATA_IMPORT_FROM_COMPUTER feature
             break;
         case DATA_EXPORT:
             // Code to handle DATA_EXPORT feature
@@ -581,3 +744,92 @@ void Display::reset_display_setting() {
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
 }
+
+void Display::update_screen_item(byte _index, screen_item_position _item_position) {
+    screen_items[_index].x = _item_position.x;
+    screen_items[_index].y = _item_position.y;
+    screen_items[_index].w = _item_position.w;
+    screen_items[_index].h = _item_position.h;
+    Serial.println(F("Updated screen item"));
+}
+
+void Display::clear_screen_items() {
+    memset(screen_items, 0, sizeof(screen_items));
+    Serial.println(F("Cleared screen items array"));
+}
+
+void Display::update_screen_selector(byte _screen_item_index) {
+    current_screen_selector.old_position = current_screen_selector.current_position;
+    current_screen_selector.current_position = screen_items[_screen_item_index];
+    current_screen_selector.screen_item_index = _screen_item_index;
+    Serial.println(F("Updated screen selector. Re render now"));
+//    Serial.print(F("Current position w: "));
+//    Serial.println(current_screen_selector.current_position.w);
+//    Serial.print(F("Current position h: "));
+//    Serial.println(current_screen_selector.current_position.h);
+    // Define border thickness
+    byte border_thickness = 2; // Adjust the thickness of your border here
+
+    // Define the color for the border
+    uint16_t border_color = TFT_RED; // Replace with your desired border color
+
+    // Define the color for clearing the border (background color)
+    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+
+    // Draw new screen selector border
+    // Draw top border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, border_color);
+    // Draw bottom border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y + current_screen_selector.current_position.h,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, border_color);
+    // Draw left border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), border_color);
+    // Draw right border
+    tft.fillRect(current_screen_selector.current_position.x + current_screen_selector.current_position.w,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), border_color);
+}
+
+void Display::clear_screen_selector() const {
+    // Define border thickness
+    byte border_thickness = 2; // Adjust the thickness of your border here
+
+    // Define the color for the border
+    uint16_t border_color = TFT_RED; // Replace with your desired border color
+
+    // Define the color for clearing the border (background color)
+    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+
+    // Clear old screen selector border by drawing over it with the background color
+    // Clear top border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, background_color);
+    // Clear bottom border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y + current_screen_selector.current_position.h,
+                 current_screen_selector.current_position.w + (2 * border_thickness),
+                 border_thickness, background_color);
+    // Clear left border
+    tft.fillRect(current_screen_selector.current_position.x - border_thickness,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), background_color);
+    // Clear right border
+    tft.fillRect(current_screen_selector.current_position.x + current_screen_selector.current_position.w,
+                 current_screen_selector.current_position.y - border_thickness,
+                 border_thickness,
+                 current_screen_selector.current_position.h + (2 * border_thickness), background_color);
+}
+
+
