@@ -17,6 +17,7 @@ IAM iam;
 MeshNetwork meshNetwork;
 Operation operation;
 Peripherals peripherals;
+Buzzer buzzer;
 Rfid rfid;
 Socket socket;
 Warehouse warehouse;
@@ -45,6 +46,7 @@ Mediator::Mediator() {
 }
 
 void Mediator::init_services() const {
+    // Render layout based on operating mode
     if (taskArgs.feature == HOME_TERMINAL) {
         display.init(LANDSCAPE);
     } else {
@@ -52,7 +54,12 @@ void Mediator::init_services() const {
     }
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
-    //rfid.init();
+    // Set buzzer pin
+    peripherals.set_digital_output(buzzerPinDefinition);
+    // Play welcome sound using buzzer
+    buzzer.welcome_sound();
+    // Check RFID module
+    rfid.init(rfid_rx_pin, rfid_tx_pin);
 }
 
 void Mediator::execute_task(task_t task) {
@@ -316,7 +323,8 @@ void Mediator::execute_task(task_t task) {
             break;
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
-            rfid.set_scanning_mode(SINGLE_SCAN);
+            //rfid.set_scanning_mode(SINGLE_SCAN);
+            rfid.set_scanning_mode(MULTI_SCAN);
             rfid.scan_rfid_tag();
             break;
         case WRITE_RFID_TAG:

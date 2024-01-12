@@ -27,13 +27,13 @@ void Display::init(feature_layout_t _feature_layout) {
         SCREEN_WIDTH = 480;
         SCREEN_HEIGHT = 320;
     }
-    tft.fillScreen(0xFFFF);
+    tft.fillScreen(0x2966);
     draw_layout(feature_layout);
 }
 
 void Display::draw_layout(feature_layout_t _feature_layout) {
     // Clear the screen before drawing the layout
-    tft.fillScreen(TFT_BLACK);
+    tft.fillScreen(backgroundColor);
 
     // Set text font and size
     tft.setTextSize(1);
@@ -45,12 +45,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
 
             // Set text color for the header
-            tft.setTextColor(textColor, headerColor);
-
-            // Draw header at the top
-            tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
-
-            // Set the color for the header text
             tft.setTextColor(textColor, headerColor);
 
             // Draw WiFi status aligned to the top-left of the header
@@ -240,6 +234,7 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
             }
         }
     }
+    // Now we draw icons for nav bar (Setting) and append them to screen items
 
     screen_item_count = screen_item_index;
     reset_display_setting();
@@ -405,7 +400,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     current_screen_background_tasks[i] = NO_TASK;
                 }
                 current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
-                //current_screen_background_tasks[0] = READ_RFID_TAG;
+                current_screen_background_tasks[1] = READ_RFID_TAG;
             }
             break;
         }

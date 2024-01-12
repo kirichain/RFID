@@ -36,11 +36,18 @@
 #define menuSelectNavButtonPinDefinition 5
 #define rightDownNavButtonPinDefinition 35
 
+// Defined Buzzer Pin
+#define buzzerPinDefinition 15
+
 // Defined WiFi Configuration
 #define device_hostname "RFID-001-"
 #define default_wifi_ssid_1 "SFS OFFICE"
 #define default_wifi_password_1 "sfs#office!@"
 #define default_wifi_ssid_2 "ERP LTD"
 #define default_wifi_password_2 "erp@@2020"
+
+// Defined RFID Configuration
+#define rfid_rx_pin 25
+#define rfid_tx_pin 26
 
 #endif //RFID_CONFIG_H

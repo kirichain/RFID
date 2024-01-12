@@ -51,7 +51,7 @@ public:
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
-    const byte HEADER_HEIGHT = 40;
+    const byte HEADER_HEIGHT = 36;
     const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
     const byte ROW_HEIGHT = 25; // Height of each data row
     const int BORDER_COLOR = TFT_WHITE; // Assuming TFT_WHITE is the color constant for white
@@ -78,8 +78,9 @@ public:
     const byte TEXT_SPACING = 30; // Additional vertical space between lines of text in Part 3
 
     // Define colors for different UI elements
-    uint32_t headerColor = TFT_DARKGREY;
-    uint32_t navBarColor = TFT_DARKGREY;
+    uint32_t headerColor = 0x4A49;
+    uint32_t navBarColor = 0x4A49;
+    uint32_t backgroundColor = 0x2966;
     uint32_t textColor = TFT_WHITE;
     uint32_t borderColor = TFT_WHITE;
 

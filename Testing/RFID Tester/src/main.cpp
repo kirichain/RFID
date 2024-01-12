@@ -33,7 +33,7 @@ void setup() {
     // Start the main serial port
     Serial.begin(BAUD_RATE);
     // Start the RFID serial port
-    rfidSerial.begin(BAUD_RATE, SERIAL_8N1, 4, 25); // RX, TX
+    rfidSerial.begin(BAUD_RATE, SERIAL_8N1, 25, 26); // RX, TX
 
     if (rfidSerial) {
         Serial.println("Serial port is already open.");

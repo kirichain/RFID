@@ -98,7 +98,6 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     return button_type;
 }
 
-
 void Peripherals::blink_led(byte ledPin) {
     set_digital_output(ledPin);
     digitalWrite(ledPin, HIGH);
