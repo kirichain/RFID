@@ -58,50 +58,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
 
             // Draw viewport below the header
             tft.drawRect(0, HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, borderColor);
-
-//            // Draw the navigation bar in the bottom
-//            // Calculate starting y-coordinate for the navigation bar
-//            navBarStartY = (_feature_layout == PORTRAIT ? SCREEN_HEIGHT : SCREEN_WIDTH) - NAV_BAR_HEIGHT;
-//
-//            // Draw the navigation bar background
-//            tft.fillRect(0, navBarStartY, SCREEN_WIDTH, NAV_BAR_HEIGHT, navBarColor);
-//
-//            // Calculate the center y-coordinate of each icon
-//            iconCenterY = navBarStartY + NAV_BAR_HEIGHT / 2;
-//
-//            // Set the size for the icons
-//            iconSize = 30;
-//
-//            // Adjust the x-coordinate calculations
-//            iconSpacing = (SCREEN_WIDTH - (4 * iconSize)) / 5; // Equal spacing between icons
-//
-//            leftIconX = iconSpacing; // Start with one spacing unit from the left edge
-//            cancelIconX = leftIconX + iconSize + iconSpacing; // One icon and one spacing unit from the left icon
-//            okIconX = cancelIconX + iconSize + iconSpacing; // One icon and one spacing unit from the cancel icon
-//            rightIconX = okIconX + iconSize + iconSpacing; // One icon and one spacing unit from the ok icon
-//
-//            // Draw Left/Back icon (left arrow)
-//            tft.setTextColor(TFT_WHITE);
-//            tft.fillTriangle(leftIconX, iconCenterY, // Top vertex
-//                             leftIconX + iconSize, iconCenterY - iconSize / 2, // Bottom left vertex
-//                             leftIconX + iconSize, iconCenterY + iconSize / 2, // Bottom right vertex
-//                             TFT_BLUE);
-//
-//            // Draw Cancel icon (character 'x')
-//            tft.setTextColor(TFT_RED);
-//            tft.setTextSize(2); // Adjust text size as needed
-//            tft.drawChar('X', cancelIconX, iconCenterY - iconSize / 2, 2);
-//
-//            // Draw Select/OK icon (circle with a dot in the center)
-//            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 2, TFT_BLUE);
-//            tft.fillCircle(okIconX + iconSize / 2, iconCenterY, iconSize / 4, TFT_WHITE);
-//
-//            // Draw Right/Next icon (right arrow)
-//            tft.setTextColor(TFT_WHITE);
-//            tft.fillTriangle(rightIconX + iconSize, iconCenterY, // Top vertex
-//                             rightIconX, iconCenterY - iconSize / 2, // Bottom left vertex
-//                             rightIconX, iconCenterY + iconSize / 2, // Bottom right vertex
-//                             TFT_BLUE);
             break;
         }
         case LANDSCAPE:
@@ -206,41 +162,97 @@ void Display::draw_icon_with_label(int x, int y, byte _iconIndex, const char *ic
     put_text(x + iconWidth / 2, y + iconHeight + 20, iconNames[_iconIndex]);
 }
 
-void Display::render_icons_grid(const byte *iconIndices, byte _numIcons) {
+void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type) {
 //    if (not isSmallFontUsed) {
 //        tft.setFreeFont(&FreeSans9pt7b);
 //    }
-    tft.setFreeFont(&FreeSans9pt7b);
-    numColumns = calculate_columns(_numIcons);
-    numRows = calculate_rows(_numIcons, numColumns);
-    hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
-    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
-                     / (numRows + 1));
+    switch (render_type) {
+        case GRID: {
+            tft.setFreeFont(&FreeSans9pt7b);
+            numColumns = calculate_columns(_numIcons);
+            numRows = calculate_rows(_numIcons, numColumns);
+            hSpacing = round((SCREEN_WIDTH - (numColumns * iconWidth)) / (numColumns + 1));
+            vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + textHeight)))
+                             / (numRows + 1));
 //    vSpacing = round((SCREEN_HEIGHT - HEADER_HEIGHT - NAV_BAR_HEIGHT - (numRows * (iconHeight + get_font_height())))
 //                     / (numRows + 1));
 
-    byte screen_item_index = 0;
-    for (byte row = 0; row < numRows; ++row) {
-        for (byte col = 0; col < numColumns; ++col) {
-            byte index = row * numColumns + col;
-            if (index < _numIcons) {
-                int x = hSpacing + col * (iconWidth + hSpacing);
-                //int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + get_font_height() + vSpacing);
-                int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
-                draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
+            byte screen_item_index = 0;
+            for (byte row = 0; row < numRows; ++row) {
+                for (byte col = 0; col < numColumns; ++col) {
+                    byte index = row * numColumns + col;
+                    if (index < _numIcons) {
+                        int x = hSpacing + col * (iconWidth + hSpacing);
+                        //int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + get_font_height() + vSpacing);
+                        int y = vSpacing + NAV_BAR_HEIGHT + row * (iconHeight + textHeight + vSpacing);
+                        draw_icon_with_label(x, y, iconIndices[index], menu_icon_names);
+                        // Update accordingly screen item
+                        screen_item_position _item_position = {x, y, iconWidth, iconHeight};
+                        update_screen_item(screen_item_index, _item_position);
+                        ++screen_item_index;
+                    }
+                }
+            }
+
+            screen_item_count = screen_item_index;
+            reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            break;
+        }
+        case LIST: {
+            //tft.drawRect(16, 52, 288, 267, TFT_WHITE);
+            const int rectWidth = 288; // Width of the rectangle
+            const int rectHeight = iconHeight + textHeight + 30; // Total height including padding
+            const int rectX = (SCREEN_WIDTH - rectWidth) / 2; // Center the rectangle on the screen
+
+            byte screen_item_index = 0;
+            for (byte i = 0; i < _numIcons; ++i) {
+                int rectY = HEADER_HEIGHT + 16 + i * rectHeight; // Calculate the top position of the rectangle
+
+                // Draw the rectangle for the icon-text pair
+                tft.drawRect(rectX, rectY, rectWidth, rectHeight, TFT_WHITE);
+
+                // Calculate positions for the icon and text
+                int iconX = rectX + 16; // 15 pixels padding from the left edge of the rectangle
+                int iconY = rectY + 16; // 15 pixels padding from the top edge of the rectangle
+                int textX = iconX + iconWidth + 15; // Text starts after the icon and padding
+                int textY = iconY + (iconHeight / 2) - (textHeight / 2); // Center text vertically with respect to the icon
+
+                // Get the icon name using the index
+                const char *icon_name = menu_icon_names[iconIndices[i]];
+                String text(icon_name);
+
+                // Remove "_icon" from the string
+                text.replace("_icon", "");
+                // Replace remaining underscores with spaces
+                text.replace("_", " ");
+                // Replace hyphen with space
+                text.replace("-", " ");
+                // Capitalize the first letter
+                if (text.length() > 0) {
+                    text[0] = toupper(text[0]);
+                }
+
+                // Draw the icon
+                put_icon(iconX, iconY, icon_name);
+                // Draw the text next to the icon
+                tft.setFreeFont(&FreeSans12pt7b);
+                tft.drawString(text, textX, textY);
+
                 // Update accordingly screen item
-                screen_item_position _item_position = {x, y, iconWidth, iconHeight};
+                screen_item_position _item_position = {rectX, rectY, rectWidth, rectHeight};
                 update_screen_item(screen_item_index, _item_position);
                 ++screen_item_index;
             }
+
+            screen_item_count = screen_item_index;
+            reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            break;
         }
     }
-    // Now we draw icons for nav bar (Setting) and append them to screen items
-
-    screen_item_count = screen_item_index;
-    reset_display_setting();
-    // Start to set screen selector to the first one item
-    update_screen_selector(0);
 }
 
 byte Display::calculate_columns(byte iconCount) {
@@ -273,7 +285,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the HOME HANDHELD 1 case
             const byte homeHandheld1IconIndices[] = {0, 1, 2, 3, 4, 5};
             // Call the new render_icons_grid function with the specific icons for HOME HANDHELD 1
-            render_icons_grid(homeHandheld1IconIndices, 6);
+            render_icons_grid(homeHandheld1IconIndices, 6, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -296,7 +308,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the SETTING case
             const byte settingIconIndices[] = {12, 13};
             // Call the new render_icons_grid function with the specific icons for SETTING
-            render_icons_grid(settingIconIndices, 2);
+            render_icons_grid(settingIconIndices, 2, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -409,7 +421,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the SETTING_USER_INFO case
             const byte settingUserInfoIconIndices[] = {14, 15};
             // Call the new render_icons_grid function with the specific icons for SETTING_USER_INFO
-            render_icons_grid(settingUserInfoIconIndices, 2);
+            render_icons_grid(settingUserInfoIconIndices, 2, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -424,10 +436,12 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Code to handle SETUP_USER_INFO_LOGOUT feature
             break;
         case RFID: {
+            iconWidth = 36;
+            iconHeight = 36;
             // Define which icons to display for the RFID case
             const byte rfidIconIndices[] = {9, 10, 11, 22};
             // Call the new render_icons_grid function with the specific icons for RFID
-            render_icons_grid(rfidIconIndices, 4);
+            render_icons_grid(rfidIconIndices, 4, LIST);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -435,6 +449,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_screen_features[1] = RFID_SCAN_HISTORY;
             current_screen_features[2] = RFID_MODIFY_TAG_DATA;
             current_screen_features[3] = RFID_REGISTER_TAG;
+            iconWidth = 64;
+            iconHeight = 64;
             break;
         }
         case RFID_SCAN: {
@@ -552,7 +568,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the PACKAGE case
             const byte packageIconIndices[] = {21};
             // Call the new render_icons_grid function with the specific icons for PACKAGE
-            render_icons_grid(packageIconIndices, 1);
+            render_icons_grid(packageIconIndices, 1, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -566,7 +582,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the CO WORKING case
             const byte coworkingIconIndices[] = {6, 7, 8};
             // Call the new render_icons_grid function with the specific icons for CO WORKING
-            render_icons_grid(coworkingIconIndices, 3);
+            render_icons_grid(coworkingIconIndices, 3, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -591,7 +607,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the DATABASE case
             const byte databaseIconIndices[] = {16, 17,};
             // Call the new render_icons_grid function with the specific icons for DATABASE
-            render_icons_grid(databaseIconIndices, 2);
+            render_icons_grid(databaseIconIndices, 2, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -603,7 +619,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Define which icons to display for the DATA IMPORT case
             const byte dataImportIconIndices[] = {18, 19, 20};
             // Call the new render_icons_grid function with the specific icons for DATA IMPORT
-            render_icons_grid(dataImportIconIndices, 3);
+            render_icons_grid(dataImportIconIndices, 3, GRID);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
@@ -744,6 +760,7 @@ void Display::reset_display_setting() {
     tft.setTextSize(1);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
+
 }
 
 void Display::update_screen_item(byte _index, screen_item_position _item_position) {

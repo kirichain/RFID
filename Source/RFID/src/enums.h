@@ -114,6 +114,11 @@ enum feature_item_type_t {
     LIST_ITEM
 };
 
+enum feature_render_type_t {
+    GRID,
+    LIST
+};
+
 enum button_type_t {
     LEFT_UP,
     BACK_CANCEL,

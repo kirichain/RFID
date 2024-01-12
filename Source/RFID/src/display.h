@@ -104,8 +104,8 @@ public:
     byte numRows = 3; // Number of rows in the grid
 //    const byte iconWidth = 96; // Width of the icon
 //    const byte iconHeight = 96; // Height of the icon
-    const byte iconWidth = 64; // Width of the icon
-    const byte iconHeight = 64; // Height of the icon
+    byte iconWidth = 64; // Width of the icon
+    byte iconHeight = 64; // Height of the icon
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -230,7 +230,7 @@ public:
 
     void draw_icon_with_label(int x, int y, byte iconIndex, const char *iconNames[]);
 
-    void render_icons_grid(const byte *iconIndices, byte _numIcons);
+    void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t ender_type);
 
     static byte calculate_columns(byte iconCount);
 
