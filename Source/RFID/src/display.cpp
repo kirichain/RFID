@@ -56,8 +56,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.setTextDatum(TR_DATUM); // Align to the top-right
             tft.drawString(dateTime, SCREEN_WIDTH - 5, 10);
 
-            // Draw viewport below the header
-            tft.drawRect(0, HEADER_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, borderColor);
             break;
         }
         case LANDSCAPE:
@@ -275,7 +273,9 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
 
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
+    //backgroundColor = 0x441C;
     tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
+
     // Clear screen items and reset screen selector
     clear_screen_selector();
     clear_screen_items();
@@ -448,10 +448,13 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = RFID_SCAN;
+            //current_screen_features[0] = RFID_SCAN;
+            current_screen_features[0] = RFID_MES_PACKAGE_GROUP_LIST;
             current_screen_features[1] = RFID_SCAN_HISTORY;
-            current_screen_features[2] = RFID_MODIFY_TAG_DATA;
-            current_screen_features[3] = RFID_REGISTER_TAG;
+            //current_screen_features[2] = RFID_MODIFY_TAG_DATA;
+            current_screen_features[2] = RFID_BUYER_PO_LIST;
+            //current_screen_features[3] = RFID_REGISTER_TAG;
+            current_screen_features[3] = RFID_PO_DETAILS;
             iconWidth = 64;
             iconHeight = 64;
             break;
@@ -567,13 +570,119 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         case RFID_REGISTER_TAG:
             break;
-        case RFID_MES_PACKAGE_GROUP_LIST:
-
+        case RFID_MES_PACKAGE_GROUP_LIST: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("MES PACKAGE GROUP LIST", 38, 50);
+            tft.fillRect(10, 81, 300, 389, TFT_WHITE);
+            tft.fillRect(22, 93, 276, 40, headerColor);
+            tft.setTextColor(TFT_WHITE);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("#", 32, 103);
+            tft.drawString("MES PACKAGE GROUP", 50, 103);
+            tft.drawString("Qty", 260, 103);
+            // Draw list of items to be displayed
+            int x_index = 32;
+            int x_mes_package_group = 50;
+            int x_qty = 260;
+            int y_index = 143;
+            int y_mes_package_group = 143;
+            int y_qty = 143;
+            tft.setTextColor(TFT_BLACK);
+            for (byte i = 0; i < 8; ++i) {
+                tft.drawString(String(i), x_index, y_index);
+                tft.drawString(String(random(12345456)) + "AD-1232-DHC", x_mes_package_group, y_mes_package_group);
+                tft.drawString(String(i + random(12345)), x_qty, y_qty);
+//                tft.drawLine(x_mes_package_group, y_mes_package_group, x_mes_package_group, y_mes_package_group,
+//                             TFT_BLACK);
+                y_index += 40;
+                y_mes_package_group += 40;
+                y_qty += 40;
+            }
+            tft.setTextColor(TFT_BLUE);
+            // Page indicator on the bottom left
+            tft.setTextDatum(BL_DATUM);
+            tft.drawString("Page 1/15", 10, 470);
+            // Item count on the bottom right
+            tft.setTextDatum(BR_DATUM);
+            tft.drawString("Item count: 12345", 308, 470);
+            // Reset display settings
+            reset_display_setting();
             break;
-        case RFID_BUYER_PO_LIST:
+        }
+        case RFID_BUYER_PO_LIST: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("BUYER PO LIST", 95, 50);
+            tft.fillRect(10, 81, 300, 389, TFT_WHITE);
+            tft.fillRect(22, 93, 276, 40, headerColor);
+            tft.setTextColor(TFT_WHITE);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("#", 32, 103);
+            tft.drawString("Buyer PO", 50, 103);
+            tft.drawString("Lot Quantity", 190, 103);
+            // Draw list of items to be displayed
+            int x_index = 32;
+            int x_mes_package_group = 50;
+            int x_qty = 190;
+            int y_index = 143;
+            int y_mes_package_group = 143;
+            int y_qty = 143;
+            tft.setTextColor(TFT_BLACK);
+            for (byte i = 0; i < 8; ++i) {
+                tft.drawString(String(i), x_index, y_index);
+                tft.drawString(String(random(12345456)) + "AD", x_mes_package_group, y_mes_package_group);
+                tft.drawString(String(i + random(12345)) + "/" + String(random(12343)), x_qty, y_qty);
+//                tft.drawLine(x_mes_package_group, y_mes_package_group, x_mes_package_group, y_mes_package_group,
+//                             TFT_BLACK);
+                y_index += 40;
+                y_mes_package_group += 40;
+                y_qty += 40;
+            }
+            tft.setTextColor(TFT_BLUE);
+            // Page indicator on the bottom left
+            tft.setTextDatum(BL_DATUM);
+            tft.drawString("Page 1/15", 10, 470);
+            // Item count on the bottom right
+            tft.setTextDatum(BR_DATUM);
+            tft.drawString("Item count: 12345", 308, 470);
+            // Reset display settings
+            reset_display_setting();
             break;
-        case RFID_PO_DETAILS:
+        }
+        case RFID_PO_DETAILS: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("PO DETAILS", 114, 50);
+            tft.fillRect(10, 81, 300, 389, TFT_WHITE);
+            tft.fillRect(22, 93, 275, 40, headerColor);
+            tft.fillRect(22, 140, 275, 40, headerColor);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("Factory: P2B1-V-2C", 32, 105);
+            tft.drawString("Buyer PO: AD-LLM-0890", 32, 155);
+            // Draw the product image
+            tft.fillRect(22, 190, 100, 100, TFT_GREEN);
+            // Draw package infomartion
+            tft.setTextColor(TFT_BLACK);
+            tft.drawString("Delivery date:", 132, 190);
+            tft.drawString("15/01/2024", 132, 215);
+            tft.drawString("Destination:", 132, 255);
+            tft.drawString("HKG", 132, 275);
+            // More package information
+            tft.drawString("AO No: AD-LLM-0697", 22, 300);
+            tft.drawString("ADQty: 500", 22, 325);
+            tft.drawString("StyleName: LW9EZES CITY", 22, 350);
+            tft.drawString("Stylecode: LLM0902", 22, 375);
+            tft.drawString("StyleColor: 005 - SS’24 BLUE", 22, 400);
+            // Draw the continue button
+            tft.fillRect(22, 418, 275, 40, TFT_BLUE);
+            tft.setTextDatum(MC_DATUM);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("START SCANNING", SCREEN_WIDTH / 2, 435);
+            // Reset display settings
+            reset_display_setting();
             break;
+        }
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case
             const byte packageIconIndices[] = {21};
@@ -799,10 +908,7 @@ void Display::update_screen_selector(byte _screen_item_index) {
     byte border_thickness = 2; // Adjust the thickness of your border here
 
     // Define the color for the border
-    uint16_t border_color = TFT_RED; // Replace with your desired border color
-
-    // Define the color for clearing the border (background color)
-    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+    uint16_t border_color = TFT_RED;
 
     // Draw new screen selector border
     // Draw top border
@@ -831,11 +937,8 @@ void Display::clear_screen_selector() const {
     // Define border thickness
     byte border_thickness = 2; // Adjust the thickness of your border here
 
-    // Define the color for the border
-    uint16_t border_color = TFT_RED; // Replace with your desired border color
-
     // Define the color for clearing the border (background color)
-    uint16_t background_color = TFT_BLACK; // Replace with your actual background color
+    uint16_t background_color = backgroundColor;
 
     // Clear old screen selector border by drawing over it with the background color
     // Clear top border
