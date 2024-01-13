@@ -201,7 +201,9 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
             break;
         }
         case LIST: {
-            //tft.drawRect(16, 52, 288, 267, TFT_WHITE);
+            //tft.drawRect(16, 52, 288, 304, TFT_WHITE);
+            tft.fillRect(16, 52, 288, 304, TFT_WHITE);
+            tft.setTextColor(TFT_BLACK, TFT_WHITE);
             const int rectWidth = 288; // Width of the rectangle
             const int rectHeight = iconHeight + textHeight + 30; // Total height including padding
             const int rectX = (SCREEN_WIDTH - rectWidth) / 2; // Center the rectangle on the screen
@@ -211,13 +213,14 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
                 int rectY = HEADER_HEIGHT + 16 + i * rectHeight; // Calculate the top position of the rectangle
 
                 // Draw the rectangle for the icon-text pair
-                tft.drawRect(rectX, rectY, rectWidth, rectHeight, TFT_WHITE);
+                tft.drawRect(rectX, rectY, rectWidth, rectHeight, TFT_BLACK);
 
                 // Calculate positions for the icon and text
                 int iconX = rectX + 16; // 15 pixels padding from the left edge of the rectangle
                 int iconY = rectY + 16; // 15 pixels padding from the top edge of the rectangle
                 int textX = iconX + iconWidth + 15; // Text starts after the icon and padding
-                int textY = iconY + (iconHeight / 2) - (textHeight / 2); // Center text vertically with respect to the icon
+                int textY =
+                        iconY + (iconHeight / 2) - (textHeight / 2); // Center text vertically with respect to the icon
 
                 // Get the icon name using the index
                 const char *icon_name = menu_icon_names[iconIndices[i]];
@@ -563,6 +566,13 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = LIST_ITEM;
             break;
         case RFID_REGISTER_TAG:
+            break;
+        case RFID_MES_PACKAGE_GROUP_LIST:
+
+            break;
+        case RFID_BUYER_PO_LIST:
+            break;
+        case RFID_PO_DETAILS:
             break;
         case PACKAGE: {
             // Define which icons to display for the PACKAGE case
