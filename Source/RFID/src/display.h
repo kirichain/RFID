@@ -38,6 +38,11 @@
 #include "icons/wifi-connection-failed.h"
 #include "icons/server-connection-successful.h"
 #include "icons/server-connection-failed.h"
+#include "icons/mes-packages-banner.h"
+#include "icons/package-groups-banner.h"
+#include "icons/register_rfid_tag_button.h"
+#include "icons/setting_button.h"
+#include "icons/scan_button.h"
 
 class Display {
 public:
@@ -104,8 +109,9 @@ public:
     byte numRows = 3; // Number of rows in the grid
 //    const byte iconWidth = 96; // Width of the icon
 //    const byte iconHeight = 96; // Height of the icon
-    byte iconWidth = 64; // Width of the icon
-    byte iconHeight = 64; // Height of the icon
+    int iconWidth = 64; // Width of the icon
+    int iconHeight = 64; // Height of the icon
+    static const byte numIcons = 32; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -128,11 +134,11 @@ public:
 
     // Additional code for the page indicator
     const char *pageIndicator = "1/2"; // This text represents the current page and the total number of pages
-    byte footerHeight = 30; // Height of the footer area for page indicator, adjust as needed
+    byte footerHeight = 31; // Height of the footer area for page indicator, adjust as needed
     byte pageIndicatorMargin = 1; // Vertical position for the page indicator
 
     // Define an array of menu icon names corresponding to the header files
-    const char *menu_icon_names[27] = {
+    const char *menu_icon_names[numIcons] = {
             "setting_icon",
             "rfid_icon",
             "package_icon",
@@ -159,38 +165,48 @@ public:
             "wifi_connection_successful_icon",
             "wifi_connection_failed_icon",
             "server_connection_successful_icon",
-            "server_connection_failed_icon"
+            "server_connection_failed_icon",
+            "package_groups_banner_icon",
+            "mes_packages_banner_icon",
+            "register_rfid_tag_button_icon",
+            "setting_button_icon",
+            "scan_button_icon"
     };
 
     // Map menu names to menu icon data arrays
-    menu_icon icons[27] = {
-            {"co-working_icon",                 co_working_icon},
-            {"connect-to-device_icon",          connect_to_device_icon},
-            {"connect-to-server_icon",          connect_to_server_icon},
-            {"scan-nearby-devices_icon",        scan_nearby_devices_icon},
-            {"rfid_icon",                       rfid_icon},
-            {"scan_icon",                       scan_icon},
-            {"scan-history_icon",               scan_history_icon},
-            {"modify-rfid-tag_icon",            modify_rfid_tag_icon},
-            {"setting_icon",                    setting_icon},
-            {"wifi-setting_icon",               wifi_setting_icon},
-            {"user_icon",                       user_icon},
-            {"login_icon",                      login_icon},
-            {"logout_icon",                     logout_icon},
-            {"database-setting_icon",           database_setting_icon},
-            {"import_icon",                     import_icon},
-            {"import-from-sd-card_icon",        import_from_sd_card_icon},
-            {"import-from-server_icon",         import_from_server_icon},
-            {"import-from-computer_icon",       import_from_computer_icon},
-            {"export_icon",                     export_icon},
-            {"package_icon",                    package_icon},
-            {"package-details_icon",            package_details_icon},
-            {"sync-data_icon",                  sync_data_icon},
-            {"register_rfid_tag_icon",          register_rfid_tag_icon},
-            {"wifi_connection_successful_icon", wifi_connection_successful_icon},
-            {"wifi_connection_failed_icon",     wifi_connection_failed_icon},
-            {"server_connection_successful_icon",          server_connection_successful_icon},
-            {"server_connection_failed_icon",          server_connection_failed_icon}
+    menu_icon icons[numIcons] = {
+            {"co-working_icon",                   co_working_icon},
+            {"connect-to-device_icon",            connect_to_device_icon},
+            {"connect-to-server_icon",            connect_to_server_icon},
+            {"scan-nearby-devices_icon",          scan_nearby_devices_icon},
+            {"rfid_icon",                         rfid_icon},
+            {"scan_icon",                         scan_icon},
+            {"scan-history_icon",                 scan_history_icon},
+            {"modify-rfid-tag_icon",              modify_rfid_tag_icon},
+            {"setting_icon",                      setting_icon},
+            {"wifi-setting_icon",                 wifi_setting_icon},
+            {"user_icon",                         user_icon},
+            {"login_icon",                        login_icon},
+            {"logout_icon",                       logout_icon},
+            {"database-setting_icon",             database_setting_icon},
+            {"import_icon",                       import_icon},
+            {"import-from-sd-card_icon",          import_from_sd_card_icon},
+            {"import-from-server_icon",           import_from_server_icon},
+            {"import-from-computer_icon",         import_from_computer_icon},
+            {"export_icon",                       export_icon},
+            {"package_icon",                      package_icon},
+            {"package-details_icon",              package_details_icon},
+            {"sync-data_icon",                    sync_data_icon},
+            {"register_rfid_tag_icon",            register_rfid_tag_icon},
+            {"wifi_connection_successful_icon",   wifi_connection_successful_icon},
+            {"wifi_connection_failed_icon",       wifi_connection_failed_icon},
+            {"server_connection_successful_icon", server_connection_successful_icon},
+            {"server_connection_failed_icon",     server_connection_failed_icon},
+            {"package_groups_banner_icon",        package_groups_banner_icon},
+            {"mes_packages_banner_icon",          mes_packages_banner_icon},
+            {"register_rfid_tag_button_icon",     register_rfid_tag_button_icon},
+            {"setting_button_icon",               setting_button_icon},
+            {"scan_button_icon",                  scan_button_icon}
 
     };
 
@@ -230,7 +246,9 @@ public:
 
     void draw_icon_with_label(int x, int y, byte iconIndex, const char *iconNames[]);
 
-    void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t ender_type);
+    void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type);
+
+    void render_item_list(byte _numItems);
 
     static byte calculate_columns(byte iconCount);
 

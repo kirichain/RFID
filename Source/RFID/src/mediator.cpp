@@ -364,6 +364,9 @@ void Mediator::execute_task(task_t task) {
         case STOP_CONVEYOR:
             Serial.println(F("Execute task STOP_CONVEYOR"));
             break;
+        case SUBMIT_CHOSEN_ITEM:
+            Serial.println(F("Execute task SUBMIT_CHOSEN_ITEM"));
+            break;
     }
 }
 
@@ -406,7 +409,7 @@ task_t Mediator::get_current_task() {
     return taskResults.currentTask;
 }
 
-feature_t Mediator::get_current_feature() {
+feature_t Mediator::get_current_feature() const {
 //    Serial.print(F("Current feature is: "));
 //    Serial.println(F(feature_as_string(taskResults.currentFeature)));
     return taskResults.currentFeature;
