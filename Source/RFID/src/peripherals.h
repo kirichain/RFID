@@ -23,7 +23,7 @@ public:
 
     static void blink_led(byte ledPin);
 
-    void set_digital_input(byte pin);
+    static void set_digital_input(byte pin);
 
     static void set_digital_output(byte pin);
 

@@ -260,6 +260,9 @@ void Mediator::execute_task(task_t task) {
                                                                         is_nav_button_pressed,
                                                                         taskResults.featureNavigationHistory,
                                                                         taskResults.featureNavigationHistorySize);
+
+                            // Set screen selector border color accordingly to next feature
+                            display.set_screen_selector_border_color(taskArgs.feature);
                             break;
                         case LIST_ITEM:
                             Serial.println(F("Retrieving corresponding task now"));
@@ -275,7 +278,9 @@ void Mediator::execute_task(task_t task) {
                                                                 taskResults.screenFeatures, is_nav_button_pressed,
                                                                 taskResults.featureNavigationHistory,
                                                                 taskResults.featureNavigationHistorySize);
-                    break;
+
+                    // Set screen selector border color accordingly to next feature
+                    display.set_screen_selector_border_color(taskArgs.feature);
             }
             break;
         }

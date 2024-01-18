@@ -38,11 +38,14 @@
 #include "icons/wifi-connection-failed.h"
 #include "icons/server-connection-successful.h"
 #include "icons/server-connection-failed.h"
-#include "icons/mes-packages-banner.h"
-#include "icons/package-groups-banner.h"
 #include "icons/register_rfid_tag_button.h"
 #include "icons/setting_button.h"
 #include "icons/scan_button.h"
+#include "icons/incoming-packed-boxes-banner.h"
+#include "icons/outgoing-packed-boxes-banner.h"
+#include "icons/product-counting-banner.h"
+#include "icons/incoming-box.h"
+#include "icons/outgoing-box.h"
 
 class Display {
 public:
@@ -93,6 +96,7 @@ public:
     uint32_t backgroundColor = TFT_BLACK;
     uint32_t textColor = TFT_WHITE;
     uint32_t borderColor = TFT_WHITE;
+    uint16_t screen_selector_border_color = backgroundColor;
 
     // Placeholder text for various status indicators
     const char *wifiStatus = "WiFi: Connected";
@@ -111,7 +115,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 32; //  Number of icons
+    static const byte numIcons = 35; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -166,11 +170,14 @@ public:
             "wifi_connection_failed_icon",
             "server_connection_successful_icon",
             "server_connection_failed_icon",
-            "package_groups_banner_icon",
-            "mes_packages_banner_icon",
             "register_rfid_tag_button_icon",
             "setting_button_icon",
-            "scan_button_icon"
+            "scan_button_icon",
+            "incoming_packed_boxes_banner_icon",
+            "outgoing_packed_boxes_banner_icon",
+            "product_counting_banner_icon",
+            "incoming_box_icon",
+            "outgoing_box_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -202,11 +209,14 @@ public:
             {"wifi_connection_failed_icon",       wifi_connection_failed_icon},
             {"server_connection_successful_icon", server_connection_successful_icon},
             {"server_connection_failed_icon",     server_connection_failed_icon},
-            {"package_groups_banner_icon",        package_groups_banner_icon},
-            {"mes_packages_banner_icon",          mes_packages_banner_icon},
             {"register_rfid_tag_button_icon",     register_rfid_tag_button_icon},
             {"setting_button_icon",               setting_button_icon},
-            {"scan_button_icon",                  scan_button_icon}
+            {"scan_button_icon",                  scan_button_icon},
+            {"incoming_packed_boxes_banner_icon", incoming_packed_boxes_banner_icon},
+            {"outgoing_packed_boxes_banner_icon", outgoing_packed_boxes_banner_icon},
+            {"product_counting_banner_icon",      product_counting_banner_icon},
+            {"incoming_box_icon",                 incoming_box_icon},
+            {"outgoing_box_icon",                 outgoing_box_icon}
 
     };
 
@@ -279,6 +289,8 @@ public:
     void update_screen_selector(byte _screen_item_index);
 
     void clear_screen_selector() const;
+
+    void set_screen_selector_border_color(feature_t _next_feature);
 };
 
 #endif //RFID_DISPLAY_H
