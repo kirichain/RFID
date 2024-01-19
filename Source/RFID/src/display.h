@@ -46,6 +46,8 @@
 #include "icons/product-counting-banner.h"
 #include "icons/incoming-box.h"
 #include "icons/outgoing-box.h"
+#include "icons/green_tick_icon.h"
+#include "icons/red_x_icon.h"
 
 class Display {
 public:
@@ -115,7 +117,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 35; //  Number of icons
+    static const byte numIcons = 37; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -177,7 +179,9 @@ public:
             "outgoing_packed_boxes_banner_icon",
             "product_counting_banner_icon",
             "incoming_box_icon",
-            "outgoing_box_icon"
+            "outgoing_box_icon",
+            "green_tick_icon",
+            "red_x_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -216,7 +220,9 @@ public:
             {"outgoing_packed_boxes_banner_icon", outgoing_packed_boxes_banner_icon},
             {"product_counting_banner_icon",      product_counting_banner_icon},
             {"incoming_box_icon",                 incoming_box_icon},
-            {"outgoing_box_icon",                 outgoing_box_icon}
+            {"outgoing_box_icon",                 outgoing_box_icon},
+            {"green_tick_icon",                   green_tick_icon},
+            {"red_x_icon",                        red_x_icon}
 
     };
 

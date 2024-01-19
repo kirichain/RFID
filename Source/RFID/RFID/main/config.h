@@ -45,8 +45,6 @@
 #define default_wifi_password_1 "sfs#office!@"
 #define default_wifi_ssid_2 "ERP LTD"
 #define default_wifi_password_2 "erp@@2020"
-#define default_wifi_ssid_3 "HaiLong"
-#define default_wifi_password_3 "99999999"
 
 // Defined RFID Configuration
 #define rfid_rx_pin 25

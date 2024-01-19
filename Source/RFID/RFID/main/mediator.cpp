@@ -260,6 +260,9 @@ void Mediator::execute_task(task_t task) {
                                                                         is_nav_button_pressed,
                                                                         taskResults.featureNavigationHistory,
                                                                         taskResults.featureNavigationHistorySize);
+
+                            // Set screen selector border color accordingly to next feature
+                            display.set_screen_selector_border_color(taskArgs.feature);
                             break;
                         case LIST_ITEM:
                             Serial.println(F("Retrieving corresponding task now"));
@@ -275,7 +278,9 @@ void Mediator::execute_task(task_t task) {
                                                                 taskResults.screenFeatures, is_nav_button_pressed,
                                                                 taskResults.featureNavigationHistory,
                                                                 taskResults.featureNavigationHistorySize);
-                    break;
+
+                    // Set screen selector border color accordingly to next feature
+                    display.set_screen_selector_border_color(taskArgs.feature);
             }
             break;
         }
@@ -364,6 +369,9 @@ void Mediator::execute_task(task_t task) {
         case STOP_CONVEYOR:
             Serial.println(F("Execute task STOP_CONVEYOR"));
             break;
+        case SUBMIT_CHOSEN_ITEM:
+            Serial.println(F("Execute task SUBMIT_CHOSEN_ITEM"));
+            break;
     }
 }
 
@@ -406,7 +414,7 @@ task_t Mediator::get_current_task() {
     return taskResults.currentTask;
 }
 
-feature_t Mediator::get_current_feature() {
+feature_t Mediator::get_current_feature() const {
 //    Serial.print(F("Current feature is: "));
 //    Serial.println(F(feature_as_string(taskResults.currentFeature)));
     return taskResults.currentFeature;

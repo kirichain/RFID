@@ -31,7 +31,7 @@ void setup() {
 
 //    mediator.taskArgs.operatingMode = HANDHELD;
 //    mediator.execute_task(SET_OPERATING_MODE);
-    mediator.taskArgs.feature = HOME_HANDHELD_1;
+    mediator.taskArgs.feature = HOME_HANDHELD_2;
     mediator.execute_task(RENDER_FEATURE);
     mediator.set_current_feature();
 //    delay(4000);
@@ -98,7 +98,6 @@ void setup() {
     //mediator.execute_task(CHECK_CONNECTION);
     //mediator.execute_task(INIT_AP_WIFI);
     mediator.execute_task(INIT_STA_WIFI);
-
 //For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
 //    mediator.taskArgs.task = BLINK_SCREEN;
 //    mediator.set_current_task();

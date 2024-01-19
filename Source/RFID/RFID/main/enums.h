@@ -31,6 +31,11 @@ enum feature_t {
     RFID_SCAN_RESULT,
     RFID_MODIFY_TAG_DATA,
     RFID_REGISTER_TAG,
+    RFID_FACTORY_SELECT,
+    RFID_PACKAGE_GROUPS_LIST,
+    RFID_MES_PACKAGES_LIST,
+    RFID_BUYER_PO_LIST,
+    RFID_PO_DETAILS,
     PACKAGE,
     PACKAGE_DETAILS,
     CO_WORKING,
@@ -105,6 +110,7 @@ enum task_t {
     SEND_PERIPHERAL_OUTPUT,
     START_CONVEYOR,
     STOP_CONVEYOR,
+    SUBMIT_CHOSEN_ITEM,
     NO_TASK,
     NUM_TASKS
 };
@@ -112,6 +118,11 @@ enum task_t {
 enum feature_item_type_t {
     MENU_ICON,
     LIST_ITEM
+};
+
+enum feature_render_type_t {
+    GRID,
+    LIST
 };
 
 enum button_type_t {
