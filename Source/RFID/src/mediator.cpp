@@ -234,18 +234,42 @@ void Mediator::execute_task(task_t task) {
                                                 backCancelNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
-            //Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
+            // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
             // Get navigation direction
+            // To store current screen item index with LIST_ITEM type
+            byte previous_screen_item_index = taskResults.currentScreenItemIndex;
             button_type_t is_nav_button_pressed = peripherals.read_navigation_buttons(
                     taskResults.currentScreenItemIndex,
                     taskResults.screenItemCount,
                     taskResults.feature_item_type);
             // Clear current screen selector and update to new position from button state
             switch (is_nav_button_pressed) {
+                Serial.print(F("Before reading screen item index: "));
+                Serial.print(previous_screen_item_index);
                 case LEFT_UP:
-                case RIGHT_DOWN:
+                    // We just traverse through screen items for both cases
                     display.clear_screen_selector();
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
+                    if (display.current_feature_item_type == LIST_ITEM) {
+                        // We traverse through screen items and update items on screen base on item index and page
+                        if (taskResults.currentScreenItemIndex == 7 && previous_screen_item_index == 0) {
+                            Serial.println(F("We going up"));
+                            display.render_item_list(false, true);
+                        }
+                    }
+                    break;
+                case RIGHT_DOWN:
+                    // We just traverse through screen items for both cases
+                    display.clear_screen_selector();
+                    display.update_screen_selector(taskResults.currentScreenItemIndex);
+                    if (display.current_feature_item_type == LIST_ITEM) {
+                        // LIST_ITEM
+                        // We traverse through screen items and update items on screen base on item index and page
+                        if (taskResults.currentScreenItemIndex == 0 && previous_screen_item_index == 7) {
+                            Serial.println(F("We going down"));
+                            display.render_item_list(false, false);
+                        }
+                    }
                     break;
                 case SELECT:
                     switch (taskResults.feature_item_type) {
@@ -254,12 +278,12 @@ void Mediator::execute_task(task_t task) {
                             Serial.print(F("Current screen item index: "));
                             Serial.println(taskResults.currentScreenItemIndex);
                             peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
-                                                                        taskResults.currentFeature, taskArgs.feature,
-                                                                        taskResults.currentScreenItemIndex,
-                                                                        taskResults.screenFeatures,
-                                                                        is_nav_button_pressed,
-                                                                        taskResults.featureNavigationHistory,
-                                                                        taskResults.featureNavigationHistorySize);
+                                                                       taskResults.currentFeature, taskArgs.feature,
+                                                                       taskResults.currentScreenItemIndex,
+                                                                       taskResults.screenFeatures,
+                                                                       is_nav_button_pressed,
+                                                                       taskResults.featureNavigationHistory,
+                                                                       taskResults.featureNavigationHistorySize);
 
                             // Set screen selector border color accordingly to next feature
                             display.set_screen_selector_border_color(taskArgs.feature);

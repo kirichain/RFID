@@ -257,8 +257,65 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
     }
 }
 
-void Display::render_item_list(byte _numItems) {
+void Display::render_item_list(bool is_new_list_set, bool navigation_direction) {
+    const int x_index = 22;
+    const int x_item = 40;
+    const int x_item_qty = 250;
 
+    int y_all = 150;
+
+    static byte current_item_index = 0;
+    static byte current_page = 1;
+
+    if (is_new_list_set) {
+        current_item_index = 0;
+        current_page = 1;
+        Serial.println(F("Set item index in the list to 0. Page to 1"));
+    } else {
+        // Navigation direction: Determine which nav button is pressed and if current index is in the beginning/ending,
+        // we know which part of list should be shown (previous/next items)
+        // true (1) is down direction, false (0) is up direction
+        if (navigation_direction) {
+            if (current_item_index > 7) {
+                current_item_index -= 8;
+                --current_page;
+            }
+        } else {
+            if (current_item_index <= 31) {
+                current_item_index += 8;
+                ++current_page;
+            }
+        }
+        Serial.print(F("Current item index in the list: "));
+        Serial.println(current_item_index);
+
+        // Just render 8 items per called time, as long as item content is not blank
+        // Neednt update screen item position again, just re-render content
+        tft.setTextColor(TFT_WHITE);
+        tft.setFreeFont(&FreeSans9pt7b);
+        for (byte i = current_item_index; i < current_item_index + 8; ++i) {
+            if (screen_item_list_type_items[i] != "") {
+                tft.fillRect(x_index, y_all - 10, 276, 36, 0x528B);
+                tft.drawString(String(i), x_index, y_all);
+                tft.drawString(screen_item_list_type_items[i], x_item, y_all);
+                if (screen_item_list_type_quantities[i] != "") {
+                    tft.drawString(screen_item_list_type_quantities[i], x_item_qty, y_all);
+                }
+            }
+            y_all += 38;
+        }
+    }
+
+    // Page indicator on the bottom left
+    tft.setTextDatum(BL_DATUM);
+    tft.drawString("Page " + String(current_page) + "/5", 22, 468);
+    // Item count on the bottom right
+    tft.setTextDatum(BR_DATUM);
+    tft.drawString("Item count: 40", 300, 468);
+    // Reset display setting
+    reset_display_setting();
+    // Start to set screen selector to the first one item
+    //update_screen_selector(0);
 }
 
 byte Display::calculate_columns(byte iconCount) {
@@ -375,9 +432,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_screen_features[1] = RFID_PACKAGE_GROUPS_LIST;
             current_screen_features[2] = RFID_FACTORY_SELECT;
             current_screen_features[3] = RFID_SCAN_RESULT;
-            current_screen_features[4] = HOME_HANDHELD_1;
-            iconWidth = 64;
-            iconHeight = 64;
+            current_screen_features[4] = RFID_WEEK_SELECT;
             break;
         }
         case HOME_TERMINAL:
@@ -682,20 +737,44 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.drawString("Current scan status", 22, 308);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawRect(22, 335, 275, 50, 0x8430);
+            //tft.drawRect(22, 335, 275, 50, 0x8430);
+            tft.fillRect(22, 335, 275, 50, TFT_WHITE);
+            tft.setTextColor(TFT_BLACK);
             tft.drawString("Quantity in box", 37, 352);
             tft.setFreeFont(&FreeSansBold12pt7b);
-            tft.setTextColor(TFT_GREEN);
+            tft.setTextColor(0x350F);
             tft.drawString("10/10", 178, 350);
+            iconWidth = 24;
+            iconHeight = 24;
             put_icon(258, 349, "green_tick_icon");
-            // Draw the start scanning button
-            tft.fillRect(22, 425, 275, 40, TFT_BLUE);
-            tft.setTextDatum(MC_DATUM);
+            tft.setFreeFont(&FreeSans9pt7b);
+
+            byte screen_item_index = 0;
+            screen_item_position _item_position;
+            // Draw the clear button
+            tft.fillRect(22, 425, 130, 40, 0x437B);
             tft.setTextColor(TFT_WHITE);
-            tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("START SCANNING", SCREEN_WIDTH / 2, 442);
+            tft.drawString("CLEAR", 55, 438);
+            // Update accordingly screen item
+            _item_position = {22, 425, 130, 40};
+            update_screen_item(screen_item_index, _item_position);
+            ++screen_item_index;
+            // Draw the submit button
+            tft.fillRect(168, 425, 130, 40, 0x437B);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("SUBMIT", 200, 438);
+            // Update accordingly screen item
+            _item_position = {168, 425, 130, 40};
+            update_screen_item(screen_item_index, _item_position);
+            ++screen_item_index;
+
+            screen_item_count = screen_item_index;
+            screen_selector_border_color = 0x4208;
+
             // Reset display settings
             reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
             break;
         }
         case RFID_MODIFY_TAG_DATA:
@@ -755,6 +834,51 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             reset_display_setting();
             break;
         }
+        case RFID_WEEK_SELECT: {
+            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.setTextDatum(MC_DATUM);
+            tft.drawString("WEEK SELECTING", SCREEN_WIDTH / 2, 60);
+            tft.fillRect(10, 81, 300, 389, 0x4208);
+            tft.fillRect(22, 95, 276, 40, 0x5333);
+            tft.setTextColor(TFT_WHITE);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextDatum(TL_DATUM);
+            tft.drawString("Week", 30, 107);
+            // Draw list of items to be displayed
+            int x_week = 22;
+            int y_week = 150;
+            tft.setTextColor(TFT_WHITE);
+
+            // For updating screen selector and screen items
+            byte screen_item_index = 0;
+            screen_item_position _item_position;
+            for (byte i = 0; i < 6; ++i) {
+                // Highlight the first item in list
+                if (i == 0) tft.fillRect(22, 140, 276, 36, 0x7A86);
+                else { tft.fillRect(x_week, y_week - 10, 276, 36, 0x528B); }
+                tft.drawString("Week - " + String(i + 1), 30, y_week);
+
+                // Update accordingly screen item
+                _item_position = {x_week, y_week - 10, 276, 36};
+                update_screen_item(screen_item_index, _item_position);
+                ++screen_item_index;
+
+                y_week += 38;
+            }
+
+            screen_item_count = screen_item_index;
+            current_feature_item_type = LIST_ITEM;
+            // Reset current screen features
+            memset(current_screen_tasks, NO_TASK, 10);
+            current_screen_tasks[0] = NO_TASK;
+            screen_selector_border_color = 0x4208;
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            // Reset display settings
+            reset_display_setting();
+            break;
+        }
         case RFID_MES_PACKAGES_LIST: {
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.setTextColor(TFT_WHITE);
@@ -776,6 +900,12 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             int y_qty = 150;
             tft.setTextColor(TFT_WHITE);
 
+            for (byte i = 0; i < 40; ++i) {
+                screen_item_list_type_items[i] = "Item - " + String(i);
+            }
+            // Reset item list
+            render_item_list(true, false);
+
             // For updating screen selector and screen items
             byte screen_item_index = 0;
             screen_item_position _item_position;
@@ -784,7 +914,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 if (i == 0) tft.fillRect(22, 140, 276, 36, 0x7A86);
                 else { tft.fillRect(x_index, y_index - 10, 276, 36, 0x528B); }
                 tft.drawString(String(i), x_index, y_index);
-                tft.drawString("0770_5_927MDI003001_01_01", x_mes_package, y_mes_package);
+                tft.drawString(screen_item_list_type_items[i], x_mes_package, y_mes_package);
 
                 // Update accordingly screen item
                 _item_position = {x_index, y_index - 10, 276, 36};
@@ -798,10 +928,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
             // Page indicator on the bottom left
             tft.setTextDatum(BL_DATUM);
-            tft.drawString("Page 1/15", 22, 470);
+            tft.drawString("Page 1/5", 22, 468);
             // Item count on the bottom right
             tft.setTextDatum(BR_DATUM);
-            tft.drawString("Item count: 12345", 300, 470);
+            tft.drawString("Item count: 40", 300, 468);
 
             screen_item_count = screen_item_index;
             current_feature_item_type = LIST_ITEM;
@@ -965,7 +1095,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString("RevNo: 001", 22, 400);
             tft.setFreeFont(&FreeSans9pt7b);
             // Draw the start scanning button
-            tft.fillRect(22, 425, 275, 40, TFT_BLUE);
+            tft.fillRect(22, 425, 275, 40, 0x437B);
             tft.setTextDatum(MC_DATUM);
             tft.setTextColor(TFT_WHITE);
             tft.drawString("START SCANNING", SCREEN_WIDTH / 2, 442);
@@ -1169,6 +1299,8 @@ void Display::reset_display_setting() {
     tft.setTextSize(1);
     tft.setTextColor(TFT_WHITE, TFT_BLACK);
     tft.setTextDatum(TL_DATUM);
+    iconWidth = 64;
+    iconHeight = 64;
 }
 
 void Display::update_screen_item(byte _index, screen_item_position _item_position) {

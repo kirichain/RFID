@@ -65,6 +65,10 @@ public:
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
+    // Item list on screen with screen item type = LIST_ITEM
+    String screen_item_list_type_items[40] = {""};
+    String screen_item_list_type_quantities[40] = {""};
+
     const byte HEADER_HEIGHT = 36;
     const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
     const byte ROW_HEIGHT = 25; // Height of each data row
@@ -264,7 +268,7 @@ public:
 
     void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type);
 
-    void render_item_list(byte _numItems);
+    void render_item_list(bool is_new_list_set, bool navigation_direction);
 
     static byte calculate_columns(byte iconCount);
 
@@ -286,7 +290,7 @@ public:
 
     static uint16_t convert_to_565_color(uint32_t hex_color);
 
-    static void reset_display_setting();
+    void reset_display_setting();
 
     void update_screen_item(byte _index, screen_item_position _item_position);
 
