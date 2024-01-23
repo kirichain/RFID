@@ -211,8 +211,8 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
             for (byte i = 0; i < _numIcons; ++i) {
                 int rectY;
                 // Adding gap = 5 between rects
-                if (i == 0) rectY = HEADER_HEIGHT + 16 + i * rectHeight;
-                else rectY = HEADER_HEIGHT + 16 + i * (rectHeight + 5);
+                if (i == 0) rectY = 175 + i * rectHeight;
+                else rectY = 175 + i * (rectHeight + 5);
 
                 // Draw the rectangle for the icon-text pair
                 tft.fillRect(rectX, rectY, rectWidth, rectHeight, 0x528B);
@@ -484,6 +484,16 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString("SETTING", SCREEN_WIDTH / 2, 60);
             tft.setTextDatum(TL_DATUM);
 
+            // User info pane
+            tft.fillRect(16, 81, 288, 79, TFT_WHITE);
+            // Draw the user info avatar
+            tft.fillRect(32, 93, 45, 45, TFT_BLUE);
+            // Draw package infomartion
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextColor(TFT_BLACK);
+            tft.drawString("The Late Late Show", 86, 93);
+            tft.drawString("User ID: 12345678", 86, 123);
+
             iconWidth = 36;
             iconHeight = 36;
             // Define which icons to display for the Setting case
@@ -495,8 +505,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = SETTING_WIFI;
             current_screen_features[1] = RFID_SCAN_HISTORY;
-            iconWidth = 64;
-            iconHeight = 64;
             // Reset display settings
             reset_display_setting();
             break;
@@ -1087,7 +1095,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = RFID_SCAN_RESULT;
+            //current_screen_features[0] = RFID_SCAN_RESULT;
+            current_screen_features[0] = HOME_HANDHELD_2;
             // Reset display settings
             reset_display_setting();
             break;
