@@ -201,18 +201,21 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
         }
         case LIST: {
             //tft.drawRect(16, 52, 288, 304, TFT_WHITE);
-            tft.fillRect(16, 52, 288, 304, TFT_WHITE);
-            tft.setTextColor(TFT_BLACK, TFT_WHITE);
+            //tft.fillRect(16, 52, 288, 304, 0x528B);
+            tft.setTextColor(TFT_WHITE);
             const int rectWidth = 288; // Width of the rectangle
             const int rectHeight = iconHeight + textHeight + 30; // Total height including padding
             const int rectX = (SCREEN_WIDTH - rectWidth) / 2; // Center the rectangle on the screen
 
             byte screen_item_index = 0;
             for (byte i = 0; i < _numIcons; ++i) {
-                int rectY = HEADER_HEIGHT + 16 + i * rectHeight; // Calculate the top position of the rectangle
+                int rectY;
+                // Adding gap = 5 between rects
+                if (i == 0) rectY = HEADER_HEIGHT + 16 + i * rectHeight;
+                else rectY = HEADER_HEIGHT + 16 + i * (rectHeight + 5);
 
                 // Draw the rectangle for the icon-text pair
-                tft.drawRect(rectX, rectY, rectWidth, rectHeight, TFT_BLACK);
+                tft.fillRect(rectX, rectY, rectWidth, rectHeight, 0x528B);
 
                 // Calculate positions for the icon and text
                 int iconX = rectX + 16; // 15 pixels padding from the left edge of the rectangle
@@ -241,7 +244,9 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
                 // Draw the text next to the icon
                 tft.setFreeFont(&FreeSans12pt7b);
                 tft.drawString(text, textX, textY);
-
+                // Draw the rectangle for decoration to the right side
+                tft.fillTriangle(270, rectY + (rectHeight / 2), 260, (rectY + (rectHeight / 2)) - 5, 260,
+                                 (rectY + (rectHeight / 2)) + 5, TFT_WHITE);
                 // Update accordingly screen item
                 screen_item_position _item_position = {rectX, rectY, rectWidth, rectHeight};
                 update_screen_item(screen_item_index, _item_position);
@@ -472,22 +477,29 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
-            // Old setting screen
-//        case SETTING: {
-//            // Define which icons to display for the SETTING case
-//            const byte settingIconIndices[] = {12, 13};
-//            // Call the new render_icons_grid function with the specific icons for SETTING
-//            render_icons_grid(settingIconIndices, 2, GRID);
-//            current_feature_item_type = MENU_ICON;
-//            // Reset current screen features
-//            memset(current_screen_features, NO_FEATURE, 10);
-//            current_screen_features[0] = SETTING_WIFI;
-//            current_screen_features[1] = SETTING_USER_INFO;
-//            break;
-//        }
-            // New setting screen
         case SETTING: {
+            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.setTextDatum(MC_DATUM);
+            tft.drawString("SETTING", SCREEN_WIDTH / 2, 60);
+            tft.setTextDatum(TL_DATUM);
 
+            iconWidth = 36;
+            iconHeight = 36;
+            // Define which icons to display for the Setting case
+            const byte settingIconIndices[] = {12, 10};
+            // Call the new render_icons_grid function with the specific icons for Setting
+            render_icons_grid(settingIconIndices, 2, LIST);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING_WIFI;
+            current_screen_features[1] = RFID_SCAN_HISTORY;
+            iconWidth = 64;
+            iconHeight = 64;
+            // Reset display settings
+            reset_display_setting();
+            break;
         }
         case SETTING_WIFI: {
             // Check if background task is completed, if yes, start rendering, else, set background tasks and return
@@ -664,7 +676,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             for (byte i = 0; i < 14; i++) {
                 draw_history_item(i, history[i]);
             }
-            current_feature_item_type = LIST_ITEM;
+            //current_feature_item_type = LIST_ITEM;
             break;
         }
         case RFID_SCAN_RESULT: {
@@ -943,7 +955,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.setTextColor(TFT_WHITE);
             tft.setTextDatum(MC_DATUM);
-            tft.drawString("Package groups list", SCREEN_WIDTH / 2, 60);
+            tft.drawString("PACKAGE GROUPS", SCREEN_WIDTH / 2, 60);
             tft.fillRect(10, 81, 300, 389, 0x4208);
             tft.fillRect(22, 95, 276, 40, 0x5333);
             tft.setTextColor(TFT_WHITE);
