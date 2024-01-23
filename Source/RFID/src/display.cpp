@@ -472,17 +472,22 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
+            // Old setting screen
+//        case SETTING: {
+//            // Define which icons to display for the SETTING case
+//            const byte settingIconIndices[] = {12, 13};
+//            // Call the new render_icons_grid function with the specific icons for SETTING
+//            render_icons_grid(settingIconIndices, 2, GRID);
+//            current_feature_item_type = MENU_ICON;
+//            // Reset current screen features
+//            memset(current_screen_features, NO_FEATURE, 10);
+//            current_screen_features[0] = SETTING_WIFI;
+//            current_screen_features[1] = SETTING_USER_INFO;
+//            break;
+//        }
+            // New setting screen
         case SETTING: {
-            // Define which icons to display for the SETTING case
-            const byte settingIconIndices[] = {12, 13};
-            // Call the new render_icons_grid function with the specific icons for SETTING
-            render_icons_grid(settingIconIndices, 2, GRID);
-            current_feature_item_type = MENU_ICON;
-            // Reset current screen features
-            memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = SETTING_WIFI;
-            current_screen_features[1] = SETTING_USER_INFO;
-            break;
+
         }
         case SETTING_WIFI: {
             // Check if background task is completed, if yes, start rendering, else, set background tasks and return

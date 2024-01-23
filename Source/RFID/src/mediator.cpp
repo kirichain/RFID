@@ -79,6 +79,14 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task BLINK_SCREEN"));
             display.blink_screen(isTaskCompleted);
             break;
+        case RECEIVE_COMMUNICATION_MESSAGE:
+            Serial.println(F("Execute task RECEIVE_COMMUNICATION_MESSAGE"));
+
+            break;
+        case SEND_COMMUNICATION_MESSAGE:
+            Serial.println(F("Execute task SEND_COMMUNICATION_MESSAGE"));
+
+            break;
         case INIT_MESSAGE_QUEUE:
             Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
             break;

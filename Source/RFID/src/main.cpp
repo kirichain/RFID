@@ -11,6 +11,7 @@ Mediator mediator;
 // Serial 2: For communicating with computer
 void setup() {
     Serial.begin(115200);
+    Serial2.begin(115200);
     mediator.init_services();
 //    mediator.taskArgs.feature = BOOT;
 //    mediator.set_current_feature();
@@ -60,6 +61,7 @@ void loop() {
 //            mediator.taskArgs.task = mediator.taskResults.currentTask;
 //            mediator.execute_task(mediator.taskArgs.task);
 //            mediator.execute_task(READ_NAVIGATION_BUTTON);
+//            mediator.execute_task(RECEIVE_COMMUNICATION_MESSAGE);
 //            mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
 //            mediator.get_current_task_status();
 //            yield();
