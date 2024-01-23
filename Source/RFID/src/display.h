@@ -60,12 +60,13 @@ public:
     feature_t current_screen_features[10];
     task_t current_screen_tasks[10];
     task_t current_screen_background_tasks[10];
+    String current_screen_list_items[8] = {""};
     bool is_background_task_required = false;
     bool is_background_task_completed = false;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
-    // Item list on screen with screen item type = LIST_ITEM
+    // Items in list on screen with screen item type = LIST_ITEM
     String screen_item_list_type_items[40] = {""};
     String screen_item_list_type_quantities[40] = {""};
 

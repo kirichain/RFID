@@ -46,6 +46,8 @@
 #include "icons/product-counting-banner.h"
 #include "icons/incoming-box.h"
 #include "icons/outgoing-box.h"
+#include "icons/green_tick_icon.h"
+#include "icons/red_x_icon.h"
 
 class Display {
 public:
@@ -58,10 +60,15 @@ public:
     feature_t current_screen_features[10];
     task_t current_screen_tasks[10];
     task_t current_screen_background_tasks[10];
+    String current_screen_list_items[8] = {""};
     bool is_background_task_required = false;
     bool is_background_task_completed = false;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
+
+    // Items in list on screen with screen item type = LIST_ITEM
+    String screen_item_list_type_items[40] = {""};
+    String screen_item_list_type_quantities[40] = {""};
 
     const byte HEADER_HEIGHT = 36;
     const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
@@ -115,7 +122,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 35; //  Number of icons
+    static const byte numIcons = 37; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -177,7 +184,9 @@ public:
             "outgoing_packed_boxes_banner_icon",
             "product_counting_banner_icon",
             "incoming_box_icon",
-            "outgoing_box_icon"
+            "outgoing_box_icon",
+            "green_tick_icon",
+            "red_x_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -216,7 +225,9 @@ public:
             {"outgoing_packed_boxes_banner_icon", outgoing_packed_boxes_banner_icon},
             {"product_counting_banner_icon",      product_counting_banner_icon},
             {"incoming_box_icon",                 incoming_box_icon},
-            {"outgoing_box_icon",                 outgoing_box_icon}
+            {"outgoing_box_icon",                 outgoing_box_icon},
+            {"green_tick_icon",                   green_tick_icon},
+            {"red_x_icon",                        red_x_icon}
 
     };
 
@@ -258,7 +269,7 @@ public:
 
     void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type);
 
-    void render_item_list(byte _numItems);
+    void render_item_list(bool is_new_list_set, bool navigation_direction);
 
     static byte calculate_columns(byte iconCount);
 
@@ -280,7 +291,7 @@ public:
 
     static uint16_t convert_to_565_color(uint32_t hex_color);
 
-    static void reset_display_setting();
+    void reset_display_setting();
 
     void update_screen_item(byte _index, screen_item_position _item_position);
 

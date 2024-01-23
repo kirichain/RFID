@@ -73,7 +73,8 @@ typedef struct task_results {
     byte featureNavigationHistorySize = 0;
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
-
+    // For scanning options
+    String selected_list_items[10] = {""};
 } task_results;
 
 typedef struct message {
