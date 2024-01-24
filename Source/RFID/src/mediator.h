@@ -54,7 +54,7 @@ private:
             "STOP_CONVEYOR", "SUBMIT_CHOSEN_ITEM"
     };
     const char *feature_names[NUM_FEATURES] = {
-            "BOOT", "HOME_HANDHELD_1", "HOME_HANDHELD_2", "HOME_TERMINAL", "SETUP", "SETUP_WIFI",
+            "BOOT", "LOADING", "HOME_HANDHELD_1", "HOME_HANDHELD_2", "HOME_TERMINAL", "SETUP", "SETUP_WIFI",
             "SETUP_USER_INFO", "SETUP_USER_INFO_LOGIN", "SETUP_USER_INFO_LOGOUT", "RFID", "RFID_SCAN",
             "RFID_SCAN_HISTORY", "RFID_SCAN_RESULT", "RFID_MODIFY_TAG_DATA", "RFID_REGISTER_TAG", "RFID_FACTORY_SELECT",
             "RFID_WEEK_SELECT", "RFID_MES_PACKAGES_LIST", "RFID_PACKAGE_GROUPS_LIST", "RFID_BUYER_PO_LIST",
@@ -72,7 +72,7 @@ public:
 
     Mediator();
 
-    void init_services() const;
+    void init_services();
 
     void execute_task(task_t task);
 

@@ -17,6 +17,7 @@ enum feature_layout_t {
 
 enum feature_t {
     BOOT,
+    LOADING,
     HOME_HANDHELD_1,
     HOME_HANDHELD_2,
     HOME_TERMINAL,

@@ -45,13 +45,14 @@ Mediator::Mediator() {
     //dataRow.timestamp = NULL;
 }
 
-void Mediator::init_services() const {
+void Mediator::init_services() {
     // Render layout based on operating mode
     if (taskArgs.feature == HOME_TERMINAL) {
         display.init(LANDSCAPE);
     } else {
         display.init(PORTRAIT);
     }
+    display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Set buzzer pin
@@ -192,6 +193,7 @@ void Mediator::execute_task(task_t task) {
                 // Check if this feature requires background tasks before rendering information, if yes, run tasks,
                 // then re-render
                 if (display.is_background_task_required) {
+                    display.render_feature(LOADING, taskResults);
                     byte feature_background_task_index = 0;
                     while ((feature_background_task_index <= 9) and
                            (display.current_screen_background_tasks[feature_background_task_index] != NO_TASK)) {
@@ -261,7 +263,7 @@ void Mediator::execute_task(task_t task) {
                         // We traverse through screen items and update items on screen base on item index and page
                         if (taskResults.currentScreenItemIndex == 7 && previous_screen_item_index == 0) {
                             Serial.println(F("We re going up in the list"));
-                            display.render_item_list(false, true);
+                            display.render_item_list(false, true, true, 40, 0x528B);
                         }
                     }
                     break;
@@ -274,7 +276,7 @@ void Mediator::execute_task(task_t task) {
                         // We traverse through screen items and update items on screen base on item index and page
                         if (taskResults.currentScreenItemIndex == 0 && previous_screen_item_index == 7) {
                             Serial.println(F("We re going down in the list"));
-                            display.render_item_list(false, false);
+                            display.render_item_list(false, false, true, 40, 0x528B);
                         }
                     }
                     break;
