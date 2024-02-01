@@ -4,7 +4,17 @@
 
 #include "display.h"
 
+AnimatedGIF gif;
 TFT_eSPI tft = TFT_eSPI();
+
+// This section is used for display GIF---------------------------------------------------
+#ifdef USE_DMA
+uint16_t usTemp[2][BUFFER_SIZE]; // Definition for DMA buffer
+#else
+uint16_t usTemp[1][BUFFER_SIZE]; // Definition for non-DMA buffer
+#endif
+bool dmaBuf = 0; // Definition of dmaBuf
+// End section----------------------------------------------------------------------------
 
 Display::Display() {
 
@@ -29,6 +39,7 @@ void Display::init(feature_layout_t _feature_layout) {
     }
     tft.fillScreen(backgroundColor);
     draw_layout(feature_layout);
+    gif.begin(BIG_ENDIAN_PIXELS);
 }
 
 void Display::draw_layout(feature_layout_t _feature_layout) {
@@ -201,18 +212,21 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
         }
         case LIST: {
             //tft.drawRect(16, 52, 288, 304, TFT_WHITE);
-            tft.fillRect(16, 52, 288, 304, TFT_WHITE);
-            tft.setTextColor(TFT_BLACK, TFT_WHITE);
+            //tft.fillRect(16, 52, 288, 304, 0x528B);
+            tft.setTextColor(TFT_WHITE);
             const int rectWidth = 288; // Width of the rectangle
             const int rectHeight = iconHeight + textHeight + 30; // Total height including padding
             const int rectX = (SCREEN_WIDTH - rectWidth) / 2; // Center the rectangle on the screen
 
             byte screen_item_index = 0;
             for (byte i = 0; i < _numIcons; ++i) {
-                int rectY = HEADER_HEIGHT + 16 + i * rectHeight; // Calculate the top position of the rectangle
+                int rectY;
+                // Adding gap = 5 between rects
+                if (i == 0) rectY = 175 + i * rectHeight;
+                else rectY = 175 + i * (rectHeight + 5);
 
                 // Draw the rectangle for the icon-text pair
-                tft.drawRect(rectX, rectY, rectWidth, rectHeight, TFT_BLACK);
+                tft.fillRect(rectX, rectY, rectWidth, rectHeight, 0x528B);
 
                 // Calculate positions for the icon and text
                 int iconX = rectX + 16; // 15 pixels padding from the left edge of the rectangle
@@ -241,7 +255,9 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
                 // Draw the text next to the icon
                 tft.setFreeFont(&FreeSans12pt7b);
                 tft.drawString(text, textX, textY);
-
+                // Draw the rectangle for decoration to the right side
+                tft.fillTriangle(270, rectY + (rectHeight / 2), 260, (rectY + (rectHeight / 2)) - 5, 260,
+                                 (rectY + (rectHeight / 2)) + 5, TFT_WHITE);
                 // Update accordingly screen item
                 screen_item_position _item_position = {rectX, rectY, rectWidth, rectHeight};
                 update_screen_item(screen_item_index, _item_position);
@@ -258,7 +274,8 @@ void Display::render_icons_grid(const byte *iconIndices, byte _numIcons, feature
 }
 
 // This method renders list of items
-void Display::render_item_list(bool is_new_list_set, bool navigation_direction) {
+void Display::render_item_list(bool is_new_list_set, bool navigation_direction, bool is_page_displayed, int item_count,
+                               uint16_t item_background_color) {
     const int x_index = 22;
     const int x_item = 44;
     const int x_item_qty = 235;
@@ -311,7 +328,8 @@ void Display::render_item_list(bool is_new_list_set, bool navigation_direction) 
         if (item_index < 40) {
             if (screen_item_list_type_items[item_index] != "") {
                 // Render items on the screen and quantities if this param is available
-                tft.fillRect(x_index, y_all - 10, 276, 36, 0x528B);
+                //tft.fillRect(x_index, y_all - 10, 276, 36, 0x528B);
+                tft.fillRect(x_index, y_all - 10, 276, 36, item_background_color);
                 tft.setTextColor(0xFCC0);
                 tft.drawString(String(item_index + 1), x_index, y_all);
                 tft.setTextColor(TFT_WHITE);
@@ -339,12 +357,15 @@ void Display::render_item_list(bool is_new_list_set, bool navigation_direction) 
     current_feature_item_type = LIST_ITEM;
 
     // Page indicator on the bottom left
-    tft.setTextDatum(BL_DATUM);
-    tft.fillRect(22, 443, 276, 27, 0x4208);
-    tft.drawString("Page " + String(current_page) + "/5", 22, 468);
-    // Item count on the bottom right
-    tft.setTextDatum(BR_DATUM);
-    tft.drawString("Item count: 40", 300, 468);
+    if (is_page_displayed) {
+        tft.setTextDatum(BL_DATUM);
+        tft.fillRect(22, 443, 276, 27, 0x4208);
+        tft.drawString("Page " + String(current_page) + "/5", 22, 468);
+        // Item count on the bottom right
+        tft.setTextDatum(BR_DATUM);
+        tft.drawString("Item count: " + String(item_count), 300, 468);
+    }
+
     // Reset display setting
     reset_display_setting();
 
@@ -380,6 +401,31 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case BOOT:
             // Code to handle BOOT feature
             break;
+        case LOADING: {
+            tft.setSwapBytes(false);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextColor(TFT_WHITE, 0x2966);
+            tft.setTextDatum(MC_DATUM);
+            tft.drawString("Loading...", SCREEN_WIDTH / 2, 270);
+            for (int i = 0; i < 2; i++) {
+                if (gif.open((uint8_t *) loading_animation, sizeof(loading_animation), GIFDraw)) {
+                    Serial.printf("Successfully opened GIF; Canvas size = %d x %d\n", gif.getCanvasWidth(),
+                                  gif.getCanvasHeight());
+                    tft.startWrite();  // The TFT chip select is locked low
+                    while (gif.playFrame(true, NULL)) {
+                        yield();
+                    }
+                    gif.close();
+                    tft.endWrite();  // Release TFT chip select for other SPI devices
+                }
+            }
+            tft.setSwapBytes(true);
+            reset_display_setting();
+            //draw_layout(feature_layout);
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            break;
+        }
         case HOME_HANDHELD_1: {
             // Define which icons to display for the HOME HANDHELD 1 case
             const byte homeHandheld1IconIndices[] = {0, 1, 2, 3, 4, 5};
@@ -399,14 +445,23 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case HOME_HANDHELD_2: {
             // Define which icons to display for the HOME HANDHELD 1 case
             const byte homeHandheld1IconIndices[] = {28, 27, 9, 10, 0};
-            // Put current counted packed boxes------------------------------------
+            // Put current counted packed boxes-------------------------------------
+            iconWidth = 75;
+            iconHeight = 75;
+            put_icon(15, 43, menu_icon_names[34]);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("Product Counting", 100, 51);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextColor(0x6B4D);
+            tft.drawString("(Factory line)", 100, 75);
+            tft.drawString("IoT mode: ", 100, 100);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString("Connected", 185, 100);
+            tft.fillRect(15, 130, 290, 5, 0x5B0C);
+            tft.drawString("0770_5_LLM0927MDI003001_01_05", 15, 150);
 
-            // Put counted packed boxes banner--------------------------------------
-            iconWidth = 290;
-            iconHeight = 100;
-            put_icon(15, 51, menu_icon_names[32]);
-
-            // Put element by hand (Thanks to my "wisdom" leader, your shit will be remembered forever)-------------
+            // Put elements by hand-------------------------------------------------
             byte screen_item_index = 0;
             screen_item_position _item_position;
             tft.setFreeFont(&FreeSans9pt7b);
@@ -414,45 +469,45 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconWidth = 290;
             iconHeight = 80;
             // Put Incoming packed boxes banner--------------------------------------
-            put_icon(15, 171, menu_icon_names[30]);
+            put_icon(15, 220, menu_icon_names[30]);
             // Update accordingly screen item
-            _item_position = {15, 171, 290, 80};
+            _item_position = {15, 220, 290, 80};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
 
             // Put Outgoing packed boxes banner------------------------------------
-            put_icon(15, 261, menu_icon_names[31]);
+            put_icon(15, 315, menu_icon_names[31]);
             // Update accordingly screen item
-            _item_position = {15, 261, 290, 80};
+            _item_position = {15, 315, 290, 80};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
 
             // Put Register button on the bottom left------------------------------------
             iconWidth = 138;
             iconHeight = 45;
-            put_icon(15, 368, menu_icon_names[27]);
+            put_icon(15, 420, menu_icon_names[27]);
             // Update accordingly screen item
-            _item_position = {15, 368, 138, 45};
+            _item_position = {15, 420, 138, 45};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
 
             // Put Scan button------------------------------------
             iconWidth = 138;
             iconHeight = 45;
-            put_icon(167, 368, menu_icon_names[29]);
+            put_icon(167, 420, menu_icon_names[29]);
             // Update accordingly screen item
-            _item_position = {167, 368, 138, 45};
+            _item_position = {167, 420, 138, 45};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
 
             // Put Setting button on the bottom right------------------------------------
-            iconWidth = 290;
-            iconHeight = 40;
-            put_icon(15, 425, menu_icon_names[28]);
-            // Update accordingly screen item
-            _item_position = {15, 425, 290, 40};
-            update_screen_item(screen_item_index, _item_position);
-            ++screen_item_index;
+//            iconWidth = 290;
+//            iconHeight = 40;
+//            put_icon(15, 425, menu_icon_names[28]);
+//            // Update accordingly screen item
+//            _item_position = {15, 425, 290, 40};
+//            update_screen_item(screen_item_index, _item_position);
+//            ++screen_item_index;
 
             screen_selector_border_color = backgroundColor;
             screen_item_count = screen_item_index;
@@ -462,26 +517,47 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = RFID_FACTORY_SELECT;
-            current_screen_features[1] = RFID_FACTORY_SELECT;
+            current_screen_features[0] = RFID_SCAN_RESULT;
+            current_screen_features[1] = RFID_SCAN_RESULT;
             current_screen_features[2] = RFID_REGISTER_TAG;
-            current_screen_features[3] = RFID_SCAN_RESULT;
-            current_screen_features[4] = SETTING;
+            current_screen_features[3] = RFID_SCAN_DETAILS_REVIEW;
+            //current_screen_features[4] = SETTING;
             break;
         }
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
         case SETTING: {
-            // Define which icons to display for the SETTING case
-            const byte settingIconIndices[] = {12, 13};
-            // Call the new render_icons_grid function with the specific icons for SETTING
-            render_icons_grid(settingIconIndices, 2, GRID);
+            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.setTextDatum(MC_DATUM);
+            tft.drawString("SETTING", SCREEN_WIDTH / 2, 60);
+            tft.setTextDatum(TL_DATUM);
+
+            // User info pane
+            tft.fillRect(16, 81, 288, 79, TFT_WHITE);
+            // Draw the user info avatar
+            tft.fillRect(32, 96, 45, 45, TFT_BLUE);
+            // Draw package infomartion
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(TFT_BLACK);
+            tft.drawString("Nguyen Van A", 86, 96);
+            tft.setTextFont(2);
+            tft.drawString("User ID: 12345678", 86, 126);
+
+            iconWidth = 36;
+            iconHeight = 36;
+            // Define which icons to display for the Setting case
+            const byte settingIconIndices[] = {12};
+            // Call the new render_icons_grid function with the specific icons for Setting
+            render_icons_grid(settingIconIndices, 1, LIST);
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
             current_screen_features[0] = SETTING_WIFI;
-            current_screen_features[1] = SETTING_USER_INFO;
+            //current_screen_features[1] = RFID_SCAN_HISTORY;
+            // Reset display settings
+            reset_display_setting();
             break;
         }
         case SETTING_WIFI: {
@@ -489,39 +565,22 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             if (is_background_task_completed) {
                 Serial.println(F("Start listing all available Wi-Fi networks on the screen"));
                 byte wifi_network_index = 0;
+                byte wifi_network_count = 0;
                 // Print all available wifi networks
-                tft.setFreeFont(&FreeSans9pt7b);
                 tft.setTextColor(TFT_WHITE);
+                tft.setTextDatum(MC_DATUM);
+                tft.setFreeFont(&FreeSansBold12pt7b);
+                tft.drawString("WIFI", SCREEN_WIDTH / 2, 60);
+                tft.setTextDatum(TL_DATUM);
 
-                // Define the starting position
-                int x = 20; // Start from left padding
-                int y = 50; // Start from below the header bar + padding
-                int lineHeight = 30; // Set the line height or row height to 50% more
-                int rowPadding = 5; // Set padding between rows
-                int headerHeight = 40; // Height of the header bar
-                int navbarHeight = 40; // Height of the navbar
-                int titlePadding = 20; // Padding between header and titles set to 20
-                int topSpace = 10; // Space between the text in the first row and titles
-                int leftPadding = 20; // Left padding
-                int rightPadding = 20; // Right padding
-
-                // Adjust the column width for Index by 100%
-                int colWidthIndex = 60; // Increased width for No (index) column
-                int colWidthRSSI = 50; // Width for RSSI column
-                // Calculate remaining width for SSID
-                int colWidthSSID = tft.width() - colWidthIndex - colWidthRSSI - (leftPadding + rightPadding);
-
-                // Draw titles with increased y coordinate
-                y += titlePadding; // Move below the header bar
-                tft.setCursor(x, y);
-                tft.print(F("Index"));
-                tft.setCursor(x + colWidthIndex + rowPadding, y);
-                tft.print(F("SSID"));
-                tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
-                tft.print(F("RSSI"));
-
-                // Start drawing the grid below the title with top space
-                y += topSpace + lineHeight; // Apply top space and move below the title
+                tft.fillRect(10, 81, 300, 389, 0x4208);
+                tft.fillRect(22, 95, 276, 40, 0x5333);
+                tft.setTextColor(TFT_WHITE);
+                tft.setFreeFont(&FreeSans9pt7b);
+                tft.setTextDatum(TL_DATUM);
+                tft.drawString("#", 22, 107);
+                tft.drawString("SSID", 44, 107);
+                tft.drawString("RSSI", 235, 107);
 
                 while (wifi_network_index < _taskResults.wifi_networks_count) {
                     const char *ssid = _taskResults.wifi_networks[wifi_network_index].ssid;
@@ -529,59 +588,35 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Draw only if SSID is not empty
                     if (strlen(ssid) > 0) {
-                        // Draw the index (No)
-                        tft.setCursor(x, y);
-                        tft.print(wifi_network_index + 1);
-
-                        // Draw vertical line after index
-                        tft.drawFastVLine(x + colWidthIndex - rowPadding, y - lineHeight - topSpace,
-                                          lineHeight + topSpace, TFT_WHITE);
-
-                        // Draw the SSID
-                        tft.setCursor(x + colWidthIndex + rowPadding, y);
-                        tft.print(ssid);
-
-                        // Draw vertical line after SSID
-                        tft.drawFastVLine(x + colWidthIndex + colWidthSSID, y - lineHeight - topSpace,
-                                          lineHeight + topSpace, TFT_WHITE);
-
-                        // Draw the RSSI
-                        tft.setCursor(x + colWidthIndex + colWidthSSID + rowPadding, y);
-                        tft.print(rssi);
-
-                        // Draw horizontal line after row
-                        tft.drawFastHLine(leftPadding, y + rowPadding, tft.width() - (leftPadding + rightPadding),
-                                          TFT_WHITE);
-
-                        // Move to the next line
-                        y += lineHeight + rowPadding; // Move down with row padding and increased row height
-
-                        // Check if we are near the bottom of the screen, if so, break or scroll
-                        if (y > tft.height() - navbarHeight - lineHeight - topSpace) {
-                            break; // Or implement scrolling
-                        }
+                        screen_item_list_type_items[wifi_network_index] = String(ssid);
+                        screen_item_list_type_quantities[wifi_network_index] = String(rssi);
+                        ++wifi_network_count;
                     }
-                    //reset_display_setting();
                     wifi_network_index++;
                 }
 
-                // Set items type on screen
-                current_feature_item_type = LIST_ITEM;
+                // Render list
+                render_item_list(true, false, false, 8, 0x528B);
+
+                // Reset current screen tasks
+                memset(current_screen_tasks, NO_TASK, 10);
+                current_screen_tasks[0] = NO_TASK;
                 // Reset current screen features
                 memset(current_screen_features, NO_FEATURE, 10);
-                screen_item_count = 0;
+                current_screen_features[0] = HOME_HANDHELD_2;
+                // Reset display settings
+                reset_display_setting();
             } else {
-                tft.setFreeFont(&FreeSans9pt7b);
-                tft.setTextDatum(MC_DATUM);
-                tft.drawString("Please wait, scanning networks", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
-                //reset_display_setting();
+//                tft.setFreeFont(&FreeSans9pt7b);
+//                tft.setTextDatum(MC_DATUM);
+                //tft.drawString("Please wait, scanning networks", SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2);
                 is_background_task_required = true;
                 // Reset current screen background tasks
                 for (byte i = 0; i < 10; ++i) {
                     current_screen_background_tasks[i] = NO_TASK;
                 }
                 current_screen_background_tasks[0] = SCAN_WIFI_NETWORKS;
-                current_screen_background_tasks[1] = READ_RFID_TAG;
+                //current_screen_background_tasks[1] = READ_RFID_TAG;
             }
             break;
         }
@@ -659,79 +694,9 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             for (byte i = 0; i < 14; i++) {
                 draw_history_item(i, history[i]);
             }
-            current_feature_item_type = LIST_ITEM;
+            //current_feature_item_type = LIST_ITEM;
             break;
         }
-            // Old RFID_SCAN_RESULT
-        case NUM_FEATURES: {
-            // Part 1: RFID Scan Result Header below the existing navigation bar
-            tft.fillRect(0, HEADER_HEIGHT, SCREEN_WIDTH, RFID_SCAN_RESULT_HEADER_HEIGHT,
-                         convert_to_565_color(0x2596be));
-            tft.setTextColor(TFT_WHITE);
-            tft.setFreeFont(&FreeSans18pt7b);
-            //tft.setTextSize(2);
-            tft.setTextDatum(MC_DATUM);
-            tft.drawString("Scan result", SCREEN_WIDTH / 2, HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT / 2);
-            tft.setTextDatum(TL_DATUM); // Resetting datum for subsequent text
-
-            // Divider line below the header
-            int divider1Y = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT;
-            tft.fillRect(0, divider1Y, SCREEN_WIDTH, 2, TFT_WHITE);
-
-            byte leftPadding = 10;
-            // Part 2: RFID Scan Result Product Info
-            int productInfoStartY = HEADER_HEIGHT + RFID_SCAN_RESULT_HEADER_HEIGHT + 2 + VERTICAL_SPACE;
-            // Display product image/product image container
-//            tft.drawRect(leftPadding, productInfoStartY, RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH,
-//                         RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT,
-//                         TFT_WHITE);
-            tft.pushImage(leftPadding, productInfoStartY, RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH,
-                          RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT, backpack);
-            // Adjusted text positions in Part 2 with TEXT_SPACING for vertical space between lines and text size 1
-            int textXOffset = RFID_SCAN_RESULT_PRODUCT_IMG_WIDTH + 10 + leftPadding;
-            int textYOffset =
-                    productInfoStartY + VERTICAL_SPACE; // Start the text below the image with some vertical space
-            tft.setFreeFont(&FreeSans9pt7b);
-            //tft.setTextSize(1); // Set text size to 1 for Part 2
-            tft.setCursor(textXOffset, textYOffset);
-            tft.print("Product ID: XYZ");
-            tft.setCursor(textXOffset, textYOffset + TEXT_SPACING);
-            tft.print("Size: M");
-            tft.setCursor(textXOffset, textYOffset + 2 * TEXT_SPACING);
-            tft.print("Color: Red");
-
-            // Divider line below Part 2
-            int divider2Y = productInfoStartY + RFID_SCAN_RESULT_PRODUCT_IMG_HEIGHT + VERTICAL_SPACE;
-            tft.fillRect(0, divider2Y, SCREEN_WIDTH, 2, TFT_WHITE);
-
-            // Part 3: RFID Scan Result Tag Info with TEXT_SPACING between lines and text size 2
-            int tagInfoStartY = divider2Y + 2 + VERTICAL_SPACE + 20;
-
-            tft.setFreeFont(&FreeSans12pt7b);
-            //tft.setTextFont(2);
-            //tft.setTextSize(2); // Set text size to 2 for Part 3
-            tft.setCursor(leftPadding, tagInfoStartY);
-            tft.print("Brand: BrandName");
-            tft.setCursor(leftPadding, tagInfoStartY + TEXT_SPACING + 5);
-            tft.print("PO code: 12345");
-            tft.setCursor(leftPadding, tagInfoStartY + 2 * TEXT_SPACING + 10);
-            tft.print("EPC: 0987654321");
-            tft.setCursor(leftPadding, tagInfoStartY + 3 * TEXT_SPACING + 15);
-            tft.print("Shipped to ID: STID123");
-
-            // Special handling for "Tag status: Associated" with green background
-            tft.setCursor(leftPadding, tagInfoStartY + 4 * TEXT_SPACING + 20);
-            tft.print("Tag status: ");
-//            tft.setTextColor(TFT_GREEN); // Set text color to black with green background
-//            tft.print("Associated");
-            tft.setTextColor(TFT_RED); // Set text color to black with green background
-            tft.print("Unassociated");
-            // Reset text size and color for subsequent text
-            reset_display_setting();
-            current_feature_item_type = LIST_ITEM;
-            break;
-        }
-            // New RFID_SCAN_RESULT
         case RFID_SCAN_RESULT: {
             // Check provided arguments which are selected items from previous lists
             Serial.println(F("Selected items from previous lists: "));
@@ -793,7 +758,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             byte screen_item_index = 0;
             screen_item_position _item_position;
             // Draw the clear button
-            tft.fillRect(22, 425, 130, 40, 0x437B);
+            tft.fillRect(22, 425, 130, 40, 0x3250);
             tft.setTextColor(TFT_WHITE);
             tft.drawString("CLEAR", 55, 438);
             // Update accordingly screen item
@@ -801,7 +766,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
             // Draw the submit button
-            tft.fillRect(168, 425, 130, 40, 0x437B);
+            tft.fillRect(168, 425, 130, 40, 0x3250);
             tft.setTextColor(TFT_WHITE);
             tft.drawString("SUBMIT", 200, 438);
             // Update accordingly screen item
@@ -811,11 +776,15 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
             screen_item_count = screen_item_index;
             screen_selector_border_color = 0x4208;
-
-            // Reset display settings
-            reset_display_setting();
+            current_feature_item_type = MENU_ICON;
             // Start to set screen selector to the first one item
             update_screen_selector(0);
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = HOME_HANDHELD_2;
+            current_screen_features[1] = HOME_HANDHELD_2;
+            // Reset display settings
+            reset_display_setting();
             break;
         }
         case RFID_MODIFY_TAG_DATA:
@@ -835,33 +804,33 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString("MES Packages:", 32, 138);
             tft.drawString(_taskResults.selected_list_items[3], 32, 162);
             // Draw the product image
-            tft.fillRect(22, 190, 80, 80, TFT_GREEN);
+            tft.fillRect(22, 193, 80, 80, 0xDEDB);
             // Draw package infomartion
             tft.setTextFont(2);
-            tft.drawString("AO No: ", 112, 190);
+            tft.drawString("AO No: ", 112, 193);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("AD-LLM-0697", 180, 190);
+            tft.drawString("AD-LLM-0697", 180, 193);
             tft.setTextFont(2);
-            tft.drawString("ADQty: ", 112, 212);
+            tft.drawString("ADQty: ", 112, 215);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("500", 180, 212);
+            tft.drawString("500", 180, 215);
             tft.setTextFont(2);
-            tft.drawString("Delivery date: ", 112, 235);
+            tft.drawString("Delivery date: ", 112, 238);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("15/01/2024", 200, 235);
+            tft.drawString("15/01/2024", 200, 238);
             tft.setTextFont(2);
-            tft.drawString("Destination: ", 112, 255);
+            tft.drawString("Destination: ", 112, 258);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("HKG", 200, 255);
+            tft.drawString("HKG", 200, 258);
 
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.drawString("Total registered RFID tags:", 22, 293);
-            tft.fillRect(22, 335, 275, 50, TFT_WHITE);
+            tft.fillRect(22, 320, 275, 50, TFT_WHITE);
             tft.setTextColor(TFT_BLACK);
-            tft.drawString("Pass", 37, 352);
+            tft.drawString("Pass", 37, 337);
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.setTextColor(0x350F);
-            tft.drawString("100/500", 178, 350);
+            tft.drawString("100/500", 178, 335);
 
             tft.setTextColor(TFT_WHITE);
             tft.setTextFont(2);
@@ -884,7 +853,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = HOME_HANDHELD_2;
+            current_screen_features[0] = RFID_PACKAGE_GROUPS_LIST;
             current_screen_features[1] = HOME_HANDHELD_2;
             // Reset display settings
             reset_display_setting();
@@ -924,7 +893,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             screen_item_list_type_items[5] = "[PJA1]-V-J1";
 
             // Render list
-            render_item_list(true, false);
+            render_item_list(true, false, true, 40, 0x528B);
 
             // Reset current screen tasks
             memset(current_screen_tasks, NO_TASK, 10);
@@ -958,7 +927,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
 
             // Render list
-            render_item_list(true, false);
+            render_item_list(true, false, true, 40, 0x528B);
 
             // Reset current screen tasks
             memset(current_screen_tasks, NO_TASK, 10);
@@ -992,7 +961,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
 
             // Render list
-            render_item_list(true, false);
+            render_item_list(true, false, true, 40, 0x528B);
 
             // Reset current screen tasks
             memset(current_screen_tasks, NO_TASK, 10);
@@ -1008,7 +977,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.setTextColor(TFT_WHITE);
             tft.setTextDatum(MC_DATUM);
-            tft.drawString("Package groups list", SCREEN_WIDTH / 2, 60);
+            tft.drawString("PACKAGE GROUPS", SCREEN_WIDTH / 2, 60);
             tft.fillRect(10, 81, 300, 389, 0x4208);
             tft.fillRect(22, 95, 276, 40, 0x5333);
             tft.setTextColor(TFT_WHITE);
@@ -1027,7 +996,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
 
             // Render list
-            render_item_list(true, false);
+            render_item_list(true, false, true, 40, 0x528B);
 
             // Reset current screen tasks
             memset(current_screen_tasks, NO_TASK, 10);
@@ -1084,48 +1053,64 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case RFID_SCAN_DETAILS_REVIEW: {
-            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString("DETAILS", 114, 50);
+            tft.setTextDatum(TC_DATUM);
+            tft.drawString("REVIEW SCANNING DETAILS", SCREEN_WIDTH / 2, 50);
+            tft.setTextDatum(TL_DATUM);
             tft.fillRect(10, 81, 300, 389, 0x4208);
-            tft.fillRect(22, 93, 275, 32, 0x8430);
-            tft.fillRect(22, 130, 275, 54, 0x8430);
+            //tft.fillRect(22, 93, 275, 32, 0x8430);
+            tft.fillRect(22, 93, 275, 54, 0x8430);
             //tft.setFreeFont(&FreeSans9pt7b);
             tft.setTextFont(2);
             tft.setTextSize(1);
-            tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 101);
-            tft.drawString("MES Packages:", 32, 138);
-            tft.drawString(_taskResults.selected_list_items[3], 32, 162);
+            //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 101);
+            tft.drawString("MES Packages:", 32, 101);
+            tft.drawString(_taskResults.selected_list_items[3], 32, 125);
             // Draw the product image
-            tft.fillRect(22, 190, 80, 80, TFT_GREEN);
+            tft.fillRect(22, 156, 80, 80, 0xDEDB);
             // Draw package infomartion
             tft.setTextFont(2);
-            tft.drawString("AO No: ", 112, 190);
+            tft.drawString("AO No: ", 112, 156);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("AD-LLM-0697", 180, 190);
+            tft.drawString("AD-LLM-0697", 180, 156);
             tft.setTextFont(2);
-            tft.drawString("ADQty: ", 112, 212);
+            tft.drawString("ADQty: ", 112, 178);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("500", 180, 212);
+            tft.drawString("500", 180, 178);
             tft.setTextFont(2);
-            tft.drawString("Delivery date: ", 112, 235);
+            tft.drawString("Delivery date: ", 112, 200);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("15/01/2024", 200, 235);
+            tft.drawString("15/01/2024", 200, 200);
             tft.setTextFont(2);
-            tft.drawString("Destination: ", 112, 255);
+            tft.drawString("Destination: ", 112, 222);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("HKG", 200, 255);
+            tft.drawString("HKG", 200, 222);
             tft.setFreeFont(&FreeSans9pt7b);
             // More package information
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("StyleName: ", 22, 247);
             tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.drawString("StyleName: LW9EZES CITY", 22, 300);
-            tft.drawString("StyleCode: LLM0902", 22, 325);
-            tft.drawString("StyleSize: MDI", 22, 350);
-            tft.drawString("StyleColor: 005 - SS’24 BLUE", 22, 375);
-            tft.drawString("RevNo: 001", 22, 400);
+            tft.drawString("LW9EZES CITY", 130, 247);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("StyleCode: ", 22, 272);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.drawString("LLM0902", 130, 272);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("StyleSize: ", 22, 297);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.drawString("MDI", 130, 297);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("StyleColor: ", 22, 322);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.drawString("005 - SS’24 BLUE", 130, 322);
+            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("RevNo: ", 22, 347);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.drawString("001", 130, 347);
             tft.setFreeFont(&FreeSans9pt7b);
             // Draw the start scanning button
-            tft.fillRect(22, 425, 275, 40, 0x437B);
+            tft.fillRect(22, 425, 275, 40, 0x3250);
             tft.setTextDatum(MC_DATUM);
             tft.setTextColor(TFT_WHITE);
             tft.drawString("START SCANNING", SCREEN_WIDTH / 2, 442);
@@ -1140,6 +1125,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_feature_item_type = MENU_ICON;
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
+            //current_screen_features[0] = RFID_SCAN_RESULT;
             current_screen_features[0] = RFID_SCAN_RESULT;
             // Reset display settings
             reset_display_setting();
@@ -1339,7 +1325,7 @@ uint16_t Display::convert_to_565_color(uint32_t hex_color) {
 void Display::reset_display_setting() {
     tft.setTextFont(2);
     tft.setTextSize(1);
-    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setTextColor(TFT_WHITE);
     tft.setTextDatum(TL_DATUM);
     iconWidth = 64;
     iconHeight = 64;
@@ -1371,7 +1357,7 @@ void Display::update_screen_selector(byte _screen_item_index) {
     byte border_thickness = 2; // Adjust the thickness of your border here
 
     // Define the color for the selector border
-    uint16_t border_color = 0x32B5;
+    uint16_t border_color = 0xED49;
 
     // Draw new screen selector border
     // Draw top border
@@ -1442,4 +1428,118 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
     }
 }
 
+void GIFDraw(GIFDRAW *pDraw) {
+    uint8_t *s;
+    uint16_t *d, *usPalette;
+    int x, y, iWidth, iCount, centerX, centerY;
+
+    // Calculate centered x and y coordinates
+    centerX = (DISPLAY_WIDTH - pDraw->iWidth) / 2;
+    centerY = (DISPLAY_HEIGHT - pDraw->iHeight) / 2;
+
+    // Set drawing start point (top-left corner of the image) to the centered coordinates
+    pDraw->iX = centerX;
+    pDraw->iY = centerY;
+
+    // Continue with the original code but now with the centered position
+    iWidth = pDraw->iWidth;
+    if (iWidth + pDraw->iX > DISPLAY_WIDTH)
+        iWidth = DISPLAY_WIDTH - pDraw->iX;
+    usPalette = pDraw->pPalette;
+    y = pDraw->iY + pDraw->y; // current line
+
+    // Ensure that the drawing does not go outside the display bounds
+    if (y >= DISPLAY_HEIGHT || pDraw->iX >= DISPLAY_WIDTH || iWidth < 1)
+        return;
+
+    // Old image disposal
+    s = pDraw->pPixels;
+    if (pDraw->ucDisposalMethod == 2) // restore to background color
+    {
+        for (x = 0; x < iWidth; x++) {
+            if (s[x] == pDraw->ucTransparent)
+                s[x] = pDraw->ucBackground;
+        }
+        pDraw->ucHasTransparency = 0;
+    }
+
+    // Apply the new pixels to the main image
+    if (pDraw->ucHasTransparency) // if transparency used
+    {
+        uint8_t *pEnd, c, ucTransparent = pDraw->ucTransparent;
+        pEnd = s + iWidth;
+        x = 0;
+        iCount = 0; // count non-transparent pixels
+        while (x < iWidth) {
+            c = ucTransparent - 1;
+            d = &usTemp[0][0];
+            while (c != ucTransparent && s < pEnd && iCount < BUFFER_SIZE) {
+                c = *s++;
+                if (c == ucTransparent) // done, stop
+                {
+                    s--; // back up to treat it like transparent
+                } else // opaque
+                {
+                    *d++ = usPalette[c];
+                    iCount++;
+                }
+            } // while looking for opaque pixels
+            if (iCount) // any opaque pixels?
+            {
+                // DMA would degrtade performance here due to short line segments
+                tft.setAddrWindow(pDraw->iX + x, y, iCount, 1);
+                tft.pushPixels(usTemp, iCount);
+                x += iCount;
+                iCount = 0;
+            }
+            // no, look for a run of transparent pixels
+            c = ucTransparent;
+            while (c == ucTransparent && s < pEnd) {
+                c = *s++;
+                if (c == ucTransparent)
+                    x++;
+                else
+                    s--;
+            }
+        }
+    } else {
+        s = pDraw->pPixels;
+
+        // Unroll the first pass to boost DMA performance
+        // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+        if (iWidth <= BUFFER_SIZE)
+            for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+        else
+            for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+
+#ifdef USE_DMA // 71.6 fps (ST7796 84.5 fps)
+        tft.dmaWait();
+    tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
+    tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+    dmaBuf = !dmaBuf;
+#else // 57.0 fps
+        tft.setAddrWindow(pDraw->iX, y, iWidth, 1);
+        tft.pushPixels(&usTemp[0][0], iCount);
+#endif
+
+        iWidth -= iCount;
+        // Loop if pixel buffer smaller than width
+        while (iWidth > 0) {
+            // Translate the 8-bit pixels through the RGB565 palette (already byte reversed)
+            if (iWidth <= BUFFER_SIZE)
+                for (iCount = 0; iCount < iWidth; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+            else
+                for (iCount = 0; iCount < BUFFER_SIZE; iCount++) usTemp[dmaBuf][iCount] = usPalette[*s++];
+
+#ifdef USE_DMA
+            tft.dmaWait();
+      tft.pushPixelsDMA(&usTemp[dmaBuf][0], iCount);
+      dmaBuf = !dmaBuf;
+#else
+            tft.pushPixels(&usTemp[0][0], iCount);
+#endif
+            iWidth -= iCount;
+        }
+    }
+} /* GIFDraw() */
 

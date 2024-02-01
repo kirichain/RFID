@@ -188,3 +188,10 @@ int Wifi::scan_wifi_networks() {
 
     return wifi_networks_count;
 }
+
+String Wifi::get_mac_addr() {
+    Serial.print(F("Mac address: "));
+    Serial.println(WiFi.macAddress());
+    mac_address = WiFi.macAddress();
+    return WiFi.macAddress();
+}

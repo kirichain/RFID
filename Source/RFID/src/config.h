@@ -5,12 +5,37 @@
 #ifndef RFID_CONFIG_H
 #define RFID_CONFIG_H
 
+// Defined Wi-Fi Configuration
+#define device_hostname "RFID-001"
+#define default_wifi_ssid_1 "SFS OFFICE"
+#define default_wifi_password_1 "sfs#office!@"
+#define default_wifi_ssid_2 "ERP LTD"
+#define default_wifi_password_2 "erp@@2020"
+
 // Defined Server Information
 #define web_socket_server_url "xyz.com:80"
 #define web_socket_secure_server_url "xyz.com:443"
 #define base_server_url "pungkook.com"
 #define base_api_server_url "api.pungkook.com"
 #define ota_server_url "ota.pungkook.com"
+#define tpm_server_url "tpm.pungkookvn.com"
+
+// Defined API Endpoints & Queries
+#define get_mqtt_config "/RFIotDevice/GetMqttConfig"
+#define get_rfid_tag_info "/RFIotDevice/GetCardRegistration"
+#define register_new_rfid_tag "/RFIotDevice/PostCardRegistration"
+#define get_mqtt_config_query "?macAddress="
+#define get_rfid_tag_info_query "?mesKey="
+
+// Defined MQTT Configuration
+#define	mqtt_tcp_server "125.234.135.55"
+#define	mqtt_auto_reconnect_delay 5000
+#define	mqtt_username "pk2"
+#define	mqtt_password "abc123"
+#define	mqtt_port 1883
+#define	mqtt_wsport 1884
+#define mqtt_lwt_topic "rfid/status/"
+#define mqtt_mes_selection_topic "rfid/mes/"
 
 // Defined FS Information
 #define fs_device_data_file "device_data.txt"
@@ -39,14 +64,7 @@
 // Defined Buzzer Pin
 #define buzzerPinDefinition 15
 
-// Defined WiFi Configuration
-#define device_hostname "RFID-001-"
-#define default_wifi_ssid_1 "SFS OFFICE"
-#define default_wifi_password_1 "sfs#office!@"
-#define default_wifi_ssid_2 "ERP LTD"
-#define default_wifi_password_2 "erp@@2020"
-
-// Defined RFID Configuration
+// Defined RFID Module Configuration
 #define rfid_rx_pin 25
 #define rfid_tx_pin 26
 

@@ -37,8 +37,8 @@ Mediator::Mediator() {
     isTaskQueueEmpty = true;
 
     taskResults.currentFeature = NO_FEATURE;
+    taskResults.currentTask = NO_TASK;
     taskResults.currentScreenItemIndex = 0;
-    taskArgs.task = IDLE;
     taskResults.featureNavigationHistory[++taskResults.featureNavigationHistorySize] = HOME_HANDHELD_2;
 
     Serial.println("Mediator initiated");
@@ -61,6 +61,8 @@ void Mediator::init_services() {
     buzzer.welcome_sound();
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
+    // Get mac address
+    wifi.get_mac_addr();
 }
 
 void Mediator::execute_task(task_t task) {
@@ -80,11 +82,11 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task BLINK_SCREEN"));
             display.blink_screen(isTaskCompleted);
             break;
-        case RECEIVE_COMMUNICATION_MESSAGE:
-            Serial.println(F("Execute task RECEIVE_COMMUNICATION_MESSAGE"));
+        case READ_SERIAL_COMMUNICATION_MESSAGE:
+            //Serial.println(F("Execute task RECEIVE_COMMUNICATION_MESSAGE"));
 
             break;
-        case SEND_COMMUNICATION_MESSAGE:
+        case SEND_SERIAL_COMMUNICATION_MESSAGE:
             Serial.println(F("Execute task SEND_COMMUNICATION_MESSAGE"));
 
             break;
@@ -99,19 +101,16 @@ void Mediator::execute_task(task_t task) {
             break;
         case SUBSCRIBE_MQTT_TOPIC:
             Serial.println(F("Execute task SUBSCRIBE_TOPIC"));
-            break;
-        case RETRIEVE_MQTT_MESSAGE:
-            Serial.println(F("Execute task RETRIEVE_MQTT_MESSAGE"));
+            mqtt.subscribe_topic(taskArgs.mqtt_subscribed_topic);
             break;
         case CONNECT_MQTT_BROKER:
             Serial.println(F("Execute task CONNECT_MQTT_BROKER"));
-            mqtt.isBrokerConnected = false;
-            while (!mqtt.isBrokerConnected) {
-                mqtt.connect_to_broker(taskArgs.mqttBrokerUrl);
-            }
+            mqtt.connect_to_broker(taskArgs.mqttBrokerIp, taskArgs.mqttBrokerPort, taskArgs.mqttLwtTopic,
+                                   wifi.mac_address);
             break;
         case HANDLE_MQTT_MESSAGE:
             Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
+            mqtt.handle_incoming_message();
             break;
         case LOAD_CONFIG:
             Serial.println(F("Execute task LOAD_CONFIG"));
@@ -143,10 +142,10 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-//            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
-//            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
-            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
@@ -443,9 +442,11 @@ void Mediator::execute_task(task_t task) {
 }
 
 void Mediator::set_current_task() {
-    taskResults.currentTask = taskArgs.task;
-    Serial.print(F("Set current task to: "));
-    Serial.println(task_as_string(taskArgs.task));
+    if (taskArgs.task != NO_TASK) {
+        taskResults.currentTask = taskArgs.task;
+        Serial.print(F("Set current task to: "));
+        Serial.println(task_as_string(taskArgs.task));
+    }
 }
 
 void Mediator::set_current_feature() {

@@ -11,6 +11,7 @@ Mediator mediator;
 // Serial 2: For communicating with computer
 void setup() {
     Serial.begin(115200);
+    Serial2.begin(115200);
     mediator.init_services();
 //    mediator.taskArgs.feature = BOOT;
 //    mediator.set_current_feature();
@@ -37,6 +38,10 @@ void setup() {
     //mediator.execute_task(CHECK_CONNECTION);
     //mediator.execute_task(INIT_AP_WIFI);
     mediator.execute_task(INIT_STA_WIFI);
+    mediator.taskArgs.mqttBrokerIp = mqtt_tcp_server;
+    mediator.taskArgs.mqttBrokerPort = mqtt_port;
+    mediator.taskArgs.mqttLwtTopic = mqtt_lwt_topic;
+    mediator.execute_task(CONNECT_MQTT_BROKER);
 //For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
 //    mediator.taskArgs.task = BLINK_SCREEN;
 //    mediator.set_current_task();
@@ -53,22 +58,27 @@ void loop() {
     mediator.execute_task(RENDER_FEATURE);
     mediator.set_current_feature();
     mediator.execute_task(READ_NAVIGATION_BUTTON);
-//    mediator.taskArgs.task = mediator.taskResults.currentTask;
-//    mediator.set_current_task();
-//    if (mediator.isTaskExecutable) {
-//        while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
-//            mediator.taskArgs.task = mediator.taskResults.currentTask;
-//            mediator.execute_task(mediator.taskArgs.task);
-//            mediator.execute_task(READ_NAVIGATION_BUTTON);
-//            mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
-//            mediator.get_current_task_status();
-//            yield();
-//        }
-//
-//        Serial.println(F("Task execution completed"));
-//        mediator.set_current_task_status(true);
-//        mediator.taskArgs.task = IDLE;
-//        mediator.set_current_task();
-//        mediator.set_current_task_status(false);
-//    }
+    mediator.execute_task(READ_SERIAL_COMMUNICATION_MESSAGE);
+
+    mediator.taskArgs.task = mediator.taskResults.currentTask;
+    mediator.set_current_task();
+
+    if ((mediator.isTaskExecutable) & (mediator.taskArgs.task != IDLE)) {
+        while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
+            mediator.taskArgs.task = mediator.taskResults.currentTask;
+            mediator.execute_task(mediator.taskArgs.task);
+            mediator.execute_task(READ_NAVIGATION_BUTTON);
+            mediator.execute_task(READ_SERIAL_COMMUNICATION_MESSAGE);
+            //mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
+            mediator.execute_task(HANDLE_MQTT_MESSAGE);
+            mediator.get_current_task_status();
+            yield();
+        }
+
+        Serial.println(F("Task execution completed"));
+        mediator.set_current_task_status(true);
+        mediator.taskArgs.task = IDLE;
+        mediator.set_current_task();
+        mediator.set_current_task_status(false);
+    }
 }

@@ -6,18 +6,25 @@
 #define RFID_REQUEST_H
 
 #include "Arduino.h"
+#include <HTTPClient.h>
+#include "structs.h"
 
-typedef struct response {
-    byte statusCode;
-    String payload;
-} response;
+extern HTTPClient http;
 
 class Request {
 public:
     Request();
 
-    response get();
+    static bool ping(const String &host_name, const String &header, const String &header_value);
 
-    response post();
+    static http_response
+    get(const String &host_name, const String &path_name, const String &query, const String &header,
+        const String &header_value);
+
+    static http_response
+    post(const String &host_name, const String &path_name, const String &payload, const String &header,
+         const String &header_value);
+
 };
+
 #endif //RFID_REQUEST_H

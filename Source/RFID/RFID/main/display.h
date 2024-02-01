@@ -6,11 +6,13 @@
 #define RFID_DISPLAY_H
 
 #include "Arduino.h"
+#include "GIFDraw.h"
+#include "icons/loading_animation.h"
+#include "AnimatedGIF.h"
 #include "enums.h"
 #include "structs.h"
 #include "SPI.h"
 #include "TFT_eSPI.h"
-#include "icons/backpack.h"
 #include "icons/connect-to-device.h"
 #include "icons/connect-to-server.h"
 #include "icons/co-working.h"
@@ -48,6 +50,8 @@
 #include "icons/outgoing-box.h"
 #include "icons/green_tick_icon.h"
 #include "icons/red_x_icon.h"
+
+void GIFDraw(GIFDRAW *pDraw);
 
 class Display {
 public:
@@ -100,7 +104,7 @@ public:
     uint32_t headerColor = 0x4A49;
     uint32_t navBarColor = 0x4A49;
     //uint32_t backgroundColor = 0x2966;
-    uint32_t backgroundColor = TFT_BLACK;
+    uint32_t backgroundColor = 0x2966;
     uint32_t textColor = TFT_WHITE;
     uint32_t borderColor = TFT_WHITE;
     uint16_t screen_selector_border_color = backgroundColor;
@@ -269,7 +273,8 @@ public:
 
     void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type);
 
-    void render_item_list(bool is_new_list_set, bool navigation_direction);
+    void render_item_list(bool is_new_list_set, bool navigation_direction, bool is_page_displayed, int item_count,
+                          uint16_t item_background_color);
 
     static byte calculate_columns(byte iconCount);
 
@@ -302,6 +307,7 @@ public:
     void clear_screen_selector() const;
 
     void set_screen_selector_border_color(feature_t _next_feature);
+
 };
 
 #endif //RFID_DISPLAY_H

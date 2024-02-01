@@ -43,8 +43,10 @@ typedef struct task_args {
     char wifi_hostname[32];
     data_row dataRow;
     data_collection dataCollection;
-    char *mqttTopic;
-    char *mqttBrokerUrl;
+    char *mqtt_topic;
+    const char *mqttBrokerIp;
+    const char *mqttLwtTopic;
+    int mqttBrokerPort;
     byte blinkLedPin;
     rfid_scanning_mode_t scanning_mode;
 } task_args;

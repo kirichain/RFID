@@ -43,8 +43,12 @@ typedef struct task_args {
     char wifi_hostname[32];
     data_row dataRow;
     data_collection dataCollection;
-    char *mqttTopic;
-    char *mqttBrokerUrl;
+    char *mqtt_topic;
+    const char *mqttBrokerIp;
+    const char *mqttLwtTopic;
+    const char *mqtt_subscribed_topic;
+
+    int mqttBrokerPort;
     byte blinkLedPin;
     rfid_scanning_mode_t scanning_mode;
 } task_args;
@@ -75,6 +79,7 @@ typedef struct task_results {
     wifi_network_info wifi_networks[10];
     // For scanning options
     String selected_list_items[10] = {""};
+    String selected_mes_package = "Not selected";
 } task_results;
 
 typedef struct message {
@@ -127,5 +132,10 @@ typedef struct screen_selector {
     screen_item_position current_position;
     byte screen_item_index;
 } screen_selector;
+
+typedef struct http_response {
+    int status_code;
+    String payload;
+} http_response;
 
 #endif //RFID_STRUCTS_H

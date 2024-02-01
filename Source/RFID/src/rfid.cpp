@@ -10,7 +10,7 @@ Rfid::Rfid() {
 
 void Rfid::init(byte rx_pin, byte tx_pin) {
     Serial2.begin(115200, SERIAL_8N1, rx_pin, tx_pin);
-    Serial.println(F("RFID initiated"));
+    Serial.println(F("RFID module initiated"));
     set_tx_power(2600);
     get_hardware_version();
 //    get_software_version();

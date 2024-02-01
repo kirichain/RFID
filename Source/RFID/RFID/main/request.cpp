@@ -8,8 +8,13 @@ Request::Request() {
 
 }
 
-response Request::get() {
+bool Request::ping() {
+    return true;
+}
+
+response Request::get(const String& query) {
     response _response;
+
     return _response;
 }
 
