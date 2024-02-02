@@ -152,7 +152,8 @@ public:
     static String read_response_async();
 
     static String
-    read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size);
+    read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
+                  unsigned long timeout);
 
     static void send_command(uint8_t *data, size_t size);
 

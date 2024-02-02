@@ -6,6 +6,7 @@
 #define RFID_DISPLAY_H
 
 #include "Arduino.h"
+#include "qrcode_espi.h"
 #include "GIFDraw.h"
 #include "icons/loading_animation.h"
 #include "AnimatedGIF.h"
@@ -67,6 +68,8 @@ public:
     String current_screen_list_items[8] = {""};
     bool is_background_task_required = false;
     bool is_background_task_completed = false;
+    bool is_loading_animation_displayed = false;
+    bool is_back_to_home = false;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 

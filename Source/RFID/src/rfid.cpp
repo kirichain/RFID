@@ -41,7 +41,7 @@ String Rfid::read_response_async() {
     String response = "";
     bool startDetected = false;
     unsigned long lastReadTime = millis();
-    const unsigned long timeout = 1000; // Set a timeout period, e.g., 1000 milliseconds (1 second)
+    const unsigned long timeout = 1000; // Set a timeout period
     const String noTagResponse = "BB01FF000115167E"; // "No tags found" message without spaces
     int noTagCount = 0; // Counter for "no tags found" messages
 
@@ -68,7 +68,7 @@ String Rfid::read_response_async() {
                             Serial.println("No tag threshold exceeded. Stopping scan.");
                             //Serial.println(F("Stop scanning multi RFID tags"));
                             //send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-                            break; // Exit the loop after 5 "no tags found" messages
+                            break; // Exit the loop after 10 "no tags found" messages
                         }
                     } else {
                         noTagCount = 0; // Reset the counter if a tag is found
@@ -92,7 +92,8 @@ String Rfid::read_response_async() {
 }
 
 String
-Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size) {
+Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
+                    unsigned long timeout) {
     String success_confirmation_string = "";
     if (wait_for_success_confirmation) {
         success_confirmation_string = byte_array_to_hex_string(success_confirmation, confirmation_size);
@@ -102,7 +103,7 @@ Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirm
     String response = "";
     bool startDetected = false;
     unsigned long lastReadTime = 0;
-    const unsigned long timeout = 3000; // Set a timeout period, e.g., 1000 milliseconds (1 second)
+    //const unsigned long timeout = 1000; // Set a timeout period
 
     // Read the response until no more data is received for the duration of the timeout
     while (true) {
@@ -129,9 +130,10 @@ Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirm
                     }
                     Serial.println(response);
                     startDetected = false;
+                    response = "";
                 }
             }
-        } else if (millis() - lastReadTime > timeout && startDetected == false) {
+        } else if (millis() - lastReadTime > timeout && !startDetected) {
             // If no more data is received for the duration of the timeout, break the loop
             break;
         }
@@ -153,7 +155,7 @@ String Rfid::get_hardware_version() {
     Serial.println(F("Getting RFID hardware version"));
     Serial.println(F("Hardware version: "));
     send_command((uint8_t *) HARDWARE_VERSION_CMD, sizeof(HARDWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8));
+    Serial.println(read_response(false, nullptr, 8, 3000));
     return "";
 }
 
@@ -161,7 +163,7 @@ String Rfid::get_hardware_version() {
 String Rfid::get_software_version() {
     Serial.println(F("Getting RFID software version"));
     send_command((uint8_t *) SOFTWARE_VERSION_CMD, sizeof(SOFTWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8));
+    Serial.println(read_response(false, nullptr, 8, 3000));
     return "";
 }
 
@@ -186,7 +188,7 @@ void Rfid::print_rfid_tag_info() {
 
 void Rfid::polling_once() {
     send_command((uint8_t *) POLLING_ONCE_CMD, sizeof(POLLING_ONCE_CMD));
-    Serial.println(read_response_async());
+    Serial.println(read_response(false, nullptr, 8, 100));
 //    while (wait_msg()) {
 //        if (buffer[23] == 0x7e) {
 //            print_rfid_tag_info();
@@ -204,14 +206,18 @@ void Rfid::polling_multi() {
 void Rfid::scan_rfid_tag() const {
     switch (scanning_mode) {
         case SINGLE_SCAN:
+            Serial.println(F("Start scanning RFID tags once"));
             polling_once();
+            Serial.println(F("Stop scanning RFID tags once"));
+            send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
+            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000));
             break;
         case MULTI_SCAN:
             Serial.println(F("Start scanning multi RFID tags"));
             polling_multi();
             Serial.println(F("Stop scanning multi RFID tags"));
             send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8));
+            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000));
             break;
     }
 }
@@ -229,7 +235,7 @@ void Rfid::set_tx_power(uint16_t db) {
     Serial.println(F("Start setting tx power"));
     send_command((uint8_t *) SET_TX_POWER, sizeof(SET_TX_POWER));
     Serial.print(F("Set TX power received: "));
-    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8));
+    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8, 3000));
 }
 
 

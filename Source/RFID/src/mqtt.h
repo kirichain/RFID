@@ -22,19 +22,29 @@ private:
     String lwt_payload;
     String last_subscribed_topic;
 public:
+    String last_payload;
+
+    bool is_broker_connected;
+    bool is_mes_package_selected;
+    mqtt_event_t expected_event;
+
     MQTT();
 
     static void onMqttDisconnect(AsyncMqttClientDisconnectReason reason);
 
     static void onMqttConnectStatic(bool sessionPresent);
 
-    void onMqttConnect(bool sessionPresent) const;
+    void onMqttConnect(bool sessionPresent);
 
     static void onMqttSubscribeStatic(uint16_t packetId, uint8_t qos);
 
     void onMqttSubscribe(uint16_t packetId, uint8_t qos);
 
     static void
+    onMqttMessageStatic(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
+                  size_t total);
+
+    void
     onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
                   size_t total);
 
@@ -44,7 +54,10 @@ public:
 
     static bool publish_message(char *topicName);
 
-    void handle_incoming_message();
+    void handle_incoming_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
+                                 size_t total);
+
+    void wait_for_mqtt_event(mqtt_event_t _event);
 };
 
 #endif //RFID_MQTT_H

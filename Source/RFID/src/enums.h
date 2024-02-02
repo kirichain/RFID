@@ -18,6 +18,7 @@ enum feature_layout_t {
 enum feature_t {
     BOOT,
     LOADING,
+    QR_CODE_SCANNING,
     HOME_HANDHELD_1,
     HOME_HANDHELD_2,
     HOME_TERMINAL,
@@ -149,5 +150,10 @@ enum rfid_scanning_mode_t {
 enum screen_selector_t {
     MENU_SELECTING,
     ITEM_LIST_SELECTING
+};
+
+enum mqtt_event_t {
+    MES_PACKAGE_SELECTED,
+    NONE
 };
 #endif //RFID_ENUMS_H

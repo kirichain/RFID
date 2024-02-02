@@ -46,7 +46,7 @@ typedef struct task_args {
     char *mqtt_topic;
     const char *mqttBrokerIp;
     const char *mqttLwtTopic;
-    const char *mqtt_subscribed_topic;
+    String mqtt_subscribed_topic;
 
     int mqttBrokerPort;
     byte blinkLedPin;
@@ -77,9 +77,13 @@ typedef struct task_results {
     byte featureNavigationHistorySize = 0;
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
+    String mac_address;
     // For scanning options
     String selected_list_items[10] = {""};
-    String selected_mes_package = "Not selected";
+    // For MQTT events
+    String selected_mes_package = "";
+    // For RFID
+    int current_scanned_rfid_tag_count = 0;
 } task_results;
 
 typedef struct message {
