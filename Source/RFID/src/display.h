@@ -51,6 +51,7 @@
 #include "icons/outgoing-box.h"
 #include "icons/green_tick_icon.h"
 #include "icons/red_x_icon.h"
+#include "icons/qr-code-placeholder-banner.h"
 
 void GIFDraw(GIFDRAW *pDraw);
 
@@ -104,10 +105,10 @@ public:
     const byte TEXT_SPACING = 30; // Additional vertical space between lines of text in Part 3
 
     // Define colors for different UI elements
-    uint32_t headerColor = 0x4A49;
+    uint32_t headerColor = 0x3B2D;
     uint32_t navBarColor = 0x4A49;
     //uint32_t backgroundColor = 0x2966;
-    uint32_t backgroundColor = 0x2966;
+    uint32_t backgroundColor = 0x84B2;
     uint32_t textColor = TFT_WHITE;
     uint32_t borderColor = TFT_WHITE;
     uint16_t screen_selector_border_color = backgroundColor;
@@ -129,7 +130,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 37; //  Number of icons
+    static const byte numIcons = 38; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -193,7 +194,8 @@ public:
             "incoming_box_icon",
             "outgoing_box_icon",
             "green_tick_icon",
-            "red_x_icon"
+            "red_x_icon",
+            "qr_code_placeholder_banner_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -234,27 +236,27 @@ public:
             {"incoming_box_icon",                 incoming_box_icon},
             {"outgoing_box_icon",                 outgoing_box_icon},
             {"green_tick_icon",                   green_tick_icon},
-            {"red_x_icon",                        red_x_icon}
-
-    };
+            {"red_x_icon",                        red_x_icon},
+            {"qr_code_placeholder_banner_icon",   qr_code_placeholder_banner_icon}
+            };
 
     // Example history array
-    rfid_scan_result history[14] = {
-            {true, {"EPC123456789", "PID123", "M",  "Red",     "img_url_1",  "STID123", "BrandA", "PO123456", ASSOCIATED},   "2024-01-02 10:00", 5},
-            {true, {"EPC987654321", "PID987", "L",  "Blue",    "img_url_2",  "STID987", "BrandB", "PO654321", UNASSOCIATED}, "2024-01-02 09:45", 5},
-            {true, {"EPC564738291", "PID564", "S",  "Green",   "img_url_3",  "STID564", "BrandC", "PO564738", ASSOCIATED},   "2024-01-02 09:30", 5},
-            {true, {"EPC864213579", "PID864", "XL", "Black",   "img_url_4",  "STID864", "BrandD", "PO864213", UNASSOCIATED}, "2024-01-02 09:15", 5},
-            {true, {"EPC975310864", "PID975", "M",  "Yellow",  "img_url_5",  "STID975", "BrandE", "PO975310", ASSOCIATED},   "2024-01-02 09:00", 5},
-            {true, {"EPC472859106", "PID472", "L",  "White",   "img_url_6",  "STID472", "BrandF", "PO472859", UNASSOCIATED}, "2024-01-02 08:45", 5},
-            {true, {"EPC582947015", "PID582", "S",  "Purple",  "img_url_7",  "STID582", "BrandG", "PO582947", ASSOCIATED},   "2024-01-02 08:30", 5},
-            {true, {"EPC693840257", "PID693", "XL", "Orange",  "img_url_8",  "STID693", "BrandH", "PO693840", UNASSOCIATED}, "2024-01-02 08:15", 5},
-            {true, {"EPC204857396", "PID204", "M",  "Pink",    "img_url_9",  "STID204", "BrandI", "PO204857", ASSOCIATED},   "2024-01-02 08:00", 5},
-            {true, {"EPC918273645", "PID918", "L",  "Grey",    "img_url_10", "STID918", "BrandJ", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "S",  "Brown",   "img_url_11", "STID918", "BrandK", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "XL", "Cyan",    "img_url_12", "STID918", "BrandL", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "M",  "Magenta", "img_url_13", "STID918", "BrandM", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-            {true, {"EPC918273645", "PID918", "L",  "Lime",    "img_url_14", "STID918", "BrandN", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-    };
+//    rfid_scan_result history[14] = {
+//            {true, {"EPC123456789", "PID123", "M",  "Red",     "img_url_1",  "STID123", "BrandA", "PO123456", ASSOCIATED},   "2024-01-02 10:00", 5},
+//            {true, {"EPC987654321", "PID987", "L",  "Blue",    "img_url_2",  "STID987", "BrandB", "PO654321", UNASSOCIATED}, "2024-01-02 09:45", 5},
+//            {true, {"EPC564738291", "PID564", "S",  "Green",   "img_url_3",  "STID564", "BrandC", "PO564738", ASSOCIATED},   "2024-01-02 09:30", 5},
+//            {true, {"EPC864213579", "PID864", "XL", "Black",   "img_url_4",  "STID864", "BrandD", "PO864213", UNASSOCIATED}, "2024-01-02 09:15", 5},
+//            {true, {"EPC975310864", "PID975", "M",  "Yellow",  "img_url_5",  "STID975", "BrandE", "PO975310", ASSOCIATED},   "2024-01-02 09:00", 5},
+//            {true, {"EPC472859106", "PID472", "L",  "White",   "img_url_6",  "STID472", "BrandF", "PO472859", UNASSOCIATED}, "2024-01-02 08:45", 5},
+//            {true, {"EPC582947015", "PID582", "S",  "Purple",  "img_url_7",  "STID582", "BrandG", "PO582947", ASSOCIATED},   "2024-01-02 08:30", 5},
+//            {true, {"EPC693840257", "PID693", "XL", "Orange",  "img_url_8",  "STID693", "BrandH", "PO693840", UNASSOCIATED}, "2024-01-02 08:15", 5},
+//            {true, {"EPC204857396", "PID204", "M",  "Pink",    "img_url_9",  "STID204", "BrandI", "PO204857", ASSOCIATED},   "2024-01-02 08:00", 5},
+//            {true, {"EPC918273645", "PID918", "L",  "Grey",    "img_url_10", "STID918", "BrandJ", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+//            {true, {"EPC918273645", "PID918", "S",  "Brown",   "img_url_11", "STID918", "BrandK", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
+//            {true, {"EPC918273645", "PID918", "XL", "Cyan",    "img_url_12", "STID918", "BrandL", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+//            {true, {"EPC918273645", "PID918", "M",  "Magenta", "img_url_13", "STID918", "BrandM", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
+//            {true, {"EPC918273645", "PID918", "L",  "Lime",    "img_url_14", "STID918", "BrandN", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
+//    };
 
     Display();
 

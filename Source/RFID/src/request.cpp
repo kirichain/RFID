@@ -58,7 +58,9 @@ Request::post(const String &host_name, const String &path_name, const String &pa
     http_response _response;
     http.begin(host_name + path_name);
     http.addHeader(header, header_value);
-    http.addHeader("Content-Type", "application/json");
+    http.addHeader("Content-Type", "application/xml");
+    Serial.println(F("Sending payload: "));
+    Serial.println(payload);
     _response.status_code = http.POST(payload);
 
     if (_response.status_code > 0) {

@@ -33,12 +33,6 @@ void setup() {
 //    mediator.taskArgs.operatingMode = HANDHELD;
 //    mediator.execute_task(SET_OPERATING_MODE);
     mediator.execute_task(INIT_STA_WIFI);
-    mediator.taskArgs.mqttBrokerIp = mqtt_tcp_server;
-    mediator.taskArgs.mqttBrokerPort = mqtt_port;
-    mediator.taskArgs.mqttLwtTopic = mqtt_lwt_topic;
-    mediator.execute_task(CONNECT_MQTT_BROKER);
-    mediator.taskArgs.mqtt_subscribed_topic = String(mqtt_mes_selection_topic) + mediator.taskResults.mac_address;
-    mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
 
     mediator.taskArgs.feature = HOME_HANDHELD_2;
     mediator.execute_task(RENDER_FEATURE);

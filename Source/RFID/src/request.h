@@ -6,9 +6,13 @@
 #define RFID_REQUEST_H
 
 #include "Arduino.h"
+//#include <WiFiClient.h>
+//#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
+
 #include "structs.h"
 
+//#include
 extern HTTPClient http;
 
 class Request {

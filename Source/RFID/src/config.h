@@ -16,9 +16,9 @@
 #define web_socket_server_url "xyz.com:80"
 #define web_socket_secure_server_url "xyz.com:443"
 #define base_server_url "pungkook.com"
-#define base_api_server_url "api.pungkook.com"
+#define base_api_server_url "http://mespk2.pungkookvn.com:8888"
 #define ota_server_url "ota.pungkook.com"
-#define tpm_server_url "tpm.pungkookvn.com"
+#define tpm_server_url "http://tpm.pungkookvn.com"
 
 // Defined API Endpoints & Queries
 #define get_mqtt_config "/RFIotDevice/GetMqttConfig"

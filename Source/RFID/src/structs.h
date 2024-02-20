@@ -53,6 +53,31 @@ typedef struct task_args {
     rfid_scanning_mode_t scanning_mode;
 } task_args;
 
+typedef struct rfid_tag {
+    String epc = "";
+//    String productId;
+//    String productSize;
+//    String productColor;
+//    String productImgUrl;
+//    String shippedToId;
+//    String brandName;
+//    String poCode;
+//    rfid_tag_status_t tag_status;
+} rfid_tag;
+
+typedef struct rfid_item {
+    String item_id;
+    String description;
+    rfid_tag rfid_data;
+} rfid_item;
+
+typedef struct rfid_scan_result {
+    bool success;
+    rfid_tag scan_data;
+    String timestamp;
+    byte scan_count;
+} rfid_scan_result;
+
 typedef struct wifi_network_info {
     char ssid[16];
     int rssi;
@@ -84,6 +109,7 @@ typedef struct task_results {
     String selected_mes_package = "";
     // For RFID
     int current_scanned_rfid_tag_count = 0;
+    rfid_tag scanned_rfid_tags[100];
 } task_results;
 
 typedef struct message {
@@ -97,31 +123,6 @@ typedef struct device_config {
     char *defaultStaWifiSSID;
     char *defaultStaWifiPassword;
 } device_config;
-
-typedef struct rfid_tag {
-    String epc;
-    String productId;
-    String productSize;
-    String productColor;
-    String productImgUrl;
-    String shippedToId;
-    String brandName;
-    String poCode;
-    rfid_tag_status_t tag_status;
-} rfid_tag;
-
-typedef struct rfid_item {
-    String item_id;
-    String description;
-    rfid_tag rfid_data;
-} rfid_item;
-
-typedef struct rfid_scan_result {
-    bool success;
-    rfid_tag scan_data;
-    String timestamp;
-    byte scan_count;
-} rfid_scan_result;
 
 typedef struct screen_item_position {
     int x;

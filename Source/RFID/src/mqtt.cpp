@@ -150,7 +150,7 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
             end = end == -1 ? last_payload.length() : end; // If no quote, then it's the end of the payload
 
             // Extract the mesKey value
-            mes_package = last_payload.substring(start + 6, end);
+            mes_package = last_payload.substring(start, end);
 
             Serial.print(F("Extracted MES key: "));
             Serial.println(mes_package);
