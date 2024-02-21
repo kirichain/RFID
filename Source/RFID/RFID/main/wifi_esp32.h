@@ -16,7 +16,8 @@ public:
     char *currentStaWifiSSID;
     char *currentStaWifiPassword;
     char *currentHostname;
-    char *mac_address;
+
+    String mac_address;
 
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
@@ -43,7 +44,7 @@ public:
 
     void terminate_web_page();
 
-    static String get_mac_addr();
+    String get_mac_addr();
 };
 
 #endif //RFID_WIFI_H

@@ -46,10 +46,37 @@ typedef struct task_args {
     char *mqtt_topic;
     const char *mqttBrokerIp;
     const char *mqttLwtTopic;
+    String mqtt_subscribed_topic;
+
     int mqttBrokerPort;
     byte blinkLedPin;
     rfid_scanning_mode_t scanning_mode;
 } task_args;
+
+typedef struct rfid_tag {
+    String epc = "";
+//    String productId;
+//    String productSize;
+//    String productColor;
+//    String productImgUrl;
+//    String shippedToId;
+//    String brandName;
+//    String poCode;
+//    rfid_tag_status_t tag_status;
+} rfid_tag;
+
+typedef struct rfid_item {
+    String item_id;
+    String description;
+    rfid_tag rfid_data;
+} rfid_item;
+
+typedef struct rfid_scan_result {
+    bool success;
+    rfid_tag scan_data;
+    String timestamp;
+    byte scan_count;
+} rfid_scan_result;
 
 typedef struct wifi_network_info {
     char ssid[16];
@@ -75,8 +102,17 @@ typedef struct task_results {
     byte featureNavigationHistorySize = 0;
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
+    String mac_address;
     // For scanning options
     String selected_list_items[10] = {""};
+    // For MQTT events
+    String selected_mes_package = "";
+    String mes_operation_name = "";
+    String mes_img_url = "";
+    int mes_target = 0;
+    // For RFID
+    int current_scanned_rfid_tag_count = 0;
+    rfid_tag scanned_rfid_tags[100];
 } task_results;
 
 typedef struct message {
@@ -91,31 +127,6 @@ typedef struct device_config {
     char *defaultStaWifiPassword;
 } device_config;
 
-typedef struct rfid_tag {
-    String epc;
-    String productId;
-    String productSize;
-    String productColor;
-    String productImgUrl;
-    String shippedToId;
-    String brandName;
-    String poCode;
-    rfid_tag_status_t tag_status;
-} rfid_tag;
-
-typedef struct rfid_item {
-    String item_id;
-    String description;
-    rfid_tag rfid_data;
-} rfid_item;
-
-typedef struct rfid_scan_result {
-    bool success;
-    rfid_tag scan_data;
-    String timestamp;
-    byte scan_count;
-} rfid_scan_result;
-
 typedef struct screen_item_position {
     int x;
     int y;
@@ -129,5 +140,10 @@ typedef struct screen_selector {
     screen_item_position current_position;
     byte screen_item_index;
 } screen_selector;
+
+typedef struct http_response {
+    int status_code;
+    String payload;
+} http_response;
 
 #endif //RFID_STRUCTS_H

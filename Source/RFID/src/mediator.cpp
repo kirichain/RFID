@@ -9,27 +9,13 @@ Wifi wifi;
 DataExport dataExport;
 DataImport dataImport;
 Request request;
-Conveyor conveyor;
 Display display;
 FsEsp32 fsEsp32;
-User user;
-IAM iam;
-MeshNetwork meshNetwork;
 Operation operation;
 Peripherals peripherals;
 Buzzer buzzer;
 Rfid rfid;
-Socket socket;
-Warehouse warehouse;
-Package package;
-SdCard sdCard;
-QrCodeScanner qrCodeScanner;
-QrCode qrCode;
-OTA ota;
-MessageQueue messageQueue;
 MQTT mqtt;
-WebServer server;
-Queue taskQueue;
 
 Mediator::Mediator() {
     isTaskExecutable = false;
@@ -94,7 +80,7 @@ void Mediator::execute_task(task_t task) {
         case GET_MQTT_CONFIG_FROM_SERVER: {
             Serial.println(F("Execute task GET_MQTT_CONFIG_FROM_SERVER"));
             http_response mqtt_config_response = request.get(tpm_server_url, get_mqtt_config,
-                                                             "?macAddress=" + taskResults.mac_address, "keyCode",
+                                                             get_mqtt_config_query + taskResults.mac_address, "keyCode",
                                                              "PkerpVN2024*");
 
             taskArgs.mqttBrokerIp = extract_value_from_json_string(mqtt_config_response.payload.c_str(),
@@ -166,6 +152,9 @@ void Mediator::execute_task(task_t task) {
                     mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
                     if (mqtt.is_mes_package_selected) {
                         taskResults.selected_mes_package = mqtt.last_payload;
+                        taskResults.mes_operation_name = mqtt.mes_operation_name;
+                        taskResults.mes_target = mqtt.mes_target;
+                        taskResults.mes_img_url = mqtt.mes_img_url;
                         mqtt.is_mes_package_selected = false;
                     }
                     break;

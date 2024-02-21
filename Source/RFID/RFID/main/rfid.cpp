@@ -5,7 +5,7 @@
 #include "rfid.h"
 
 Rfid::Rfid() {
-
+    scanned_tag_count = 0;
 }
 
 void Rfid::init(byte rx_pin, byte tx_pin) {
@@ -41,7 +41,7 @@ String Rfid::read_response_async() {
     String response = "";
     bool startDetected = false;
     unsigned long lastReadTime = millis();
-    const unsigned long timeout = 1000; // Set a timeout period, e.g., 1000 milliseconds (1 second)
+    const unsigned long timeout = 1000; // Set a timeout period
     const String noTagResponse = "BB01FF000115167E"; // "No tags found" message without spaces
     int noTagCount = 0; // Counter for "no tags found" messages
 
@@ -68,7 +68,7 @@ String Rfid::read_response_async() {
                             Serial.println("No tag threshold exceeded. Stopping scan.");
                             //Serial.println(F("Stop scanning multi RFID tags"));
                             //send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-                            break; // Exit the loop after 5 "no tags found" messages
+                            break; // Exit the loop after 10 "no tags found" messages
                         }
                     } else {
                         noTagCount = 0; // Reset the counter if a tag is found
@@ -91,8 +91,8 @@ String Rfid::read_response_async() {
     return response;
 }
 
-String
-Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size) {
+String Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
+                           unsigned long timeout, rfid_response_type_t response_type) {
     String success_confirmation_string = "";
     if (wait_for_success_confirmation) {
         success_confirmation_string = byte_array_to_hex_string(success_confirmation, confirmation_size);
@@ -102,7 +102,7 @@ Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirm
     String response = "";
     bool startDetected = false;
     unsigned long lastReadTime = 0;
-    const unsigned long timeout = 3000; // Set a timeout period, e.g., 1000 milliseconds (1 second)
+    //const unsigned long timeout = 1000; // Set a timeout period
 
     // Read the response until no more data is received for the duration of the timeout
     while (true) {
@@ -127,11 +127,40 @@ Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirm
                             break; // Exit the loop if success confirmation string found
                         }
                     }
-                    Serial.println(response);
+
+                    // If the response type is EPC_READING, process the EPC
+                    if (response_type == EPC_READING) {
+                        if (is_valid_epc_response(response)) {
+                            Serial.println("Valid EPC response. Start appending");
+                            // Parse the EPC from the response
+                            Serial.println("Raw response: " + response);
+                            String epc = response.substring(16, 40);
+
+                            // Check for duplicatesW
+                            if (!is_duplicate_scan(epc)) {
+                                // If not a duplicate, add to scan_results and increment scanned_tag_count
+                                scan_results[scanned_tag_count].epc = epc;
+                                scanned_tag_count++;
+
+                                // Optionally print the new EPC
+                                Serial.print(F("New EPC scanned: "));
+                                Serial.println(epc);
+                            } else {
+                                Serial.print(F("Duplicate EPC: "));
+                                Serial.println(epc);
+                            }
+                        } else {
+                            Serial.println("Invalid EPC response or no tag read.");
+                        }
+                    } else {
+                        Serial.println(response);
+
+                    }
                     startDetected = false;
+                    response = "";
                 }
             }
-        } else if (millis() - lastReadTime > timeout && startDetected == false) {
+        } else if (millis() - lastReadTime > timeout && !startDetected) {
             // If no more data is received for the duration of the timeout, break the loop
             break;
         }
@@ -153,7 +182,7 @@ String Rfid::get_hardware_version() {
     Serial.println(F("Getting RFID hardware version"));
     Serial.println(F("Hardware version: "));
     send_command((uint8_t *) HARDWARE_VERSION_CMD, sizeof(HARDWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8));
+    Serial.println(read_response(false, nullptr, 8, 3000, NORMAL_READING));
     return "";
 }
 
@@ -161,7 +190,7 @@ String Rfid::get_hardware_version() {
 String Rfid::get_software_version() {
     Serial.println(F("Getting RFID software version"));
     send_command((uint8_t *) SOFTWARE_VERSION_CMD, sizeof(SOFTWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8));
+    Serial.println(read_response(false, nullptr, 8, 3000, NORMAL_READING));
     return "";
 }
 
@@ -186,12 +215,7 @@ void Rfid::print_rfid_tag_info() {
 
 void Rfid::polling_once() {
     send_command((uint8_t *) POLLING_ONCE_CMD, sizeof(POLLING_ONCE_CMD));
-    Serial.println(read_response_async());
-//    while (wait_msg()) {
-//        if (buffer[23] == 0x7e) {
-//            print_rfid_tag_info();
-//        }
-//    }
+    Serial.println(read_response(false, nullptr, 8, 100, EPC_READING));
 }
 
 void Rfid::polling_multi() {
@@ -201,17 +225,28 @@ void Rfid::polling_multi() {
     Serial.println(read_response_async());
 }
 
-void Rfid::scan_rfid_tag() const {
+void Rfid::scan_rfid_tag() {
     switch (scanning_mode) {
         case SINGLE_SCAN:
+            Serial.println(F("Start scanning RFID tags once"));
             polling_once();
+            Serial.print(F("Total scanned RFID tags currently: "));
+            Serial.println(scanned_tag_count);
+            Serial.println(F("Stop scanning RFID tags once"));
+            send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
+            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
+            for (byte i = 0; i < 100; ++i) {
+                Serial.print(scan_results[i].epc);
+                Serial.print(", ");
+            }
+            Serial.println();
             break;
         case MULTI_SCAN:
             Serial.println(F("Start scanning multi RFID tags"));
             polling_multi();
             Serial.println(F("Stop scanning multi RFID tags"));
             send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8));
+            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
             break;
     }
 }
@@ -229,7 +264,52 @@ void Rfid::set_tx_power(uint16_t db) {
     Serial.println(F("Start setting tx power"));
     send_command((uint8_t *) SET_TX_POWER, sizeof(SET_TX_POWER));
     Serial.print(F("Set TX power received: "));
-    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8));
+    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8, 3000, NORMAL_READING));
 }
 
+bool Rfid::is_duplicate_scan(const String &epc) {
+    for (int i = 0; i < scanned_tag_count; ++i) {
+        if (scan_results[i].epc.equalsIgnoreCase(epc)) {
+            return true;
+        }
+    }
+    return false;
+}
 
+// Method to validate the EPC response
+bool Rfid::is_valid_epc_response(const String &response) {
+    // Convert the response to uppercase for case-insensitive comparison
+    String upperResponse = response;
+    upperResponse.toUpperCase();
+
+    // Define the expected start and end markers of the EPC response
+    const String expectedStart = "BB0222";
+    const String expectedLength = "0011"; // Indicating 17 bytes follow
+    const String expectedEnd = "7E";
+
+    // Check if the response starts with the expected start sequence
+    if (!upperResponse.startsWith(expectedStart)) {
+        return false;
+    }
+
+    // Check if the response ends with the expected end sequence
+    if (!upperResponse.endsWith(expectedEnd)) {
+        return false;
+    }
+
+    // Check if the length field in the response matches the expected length
+//    int lengthIndex = expectedStart.length(); // The length field starts right after the expectedStart
+//    String lengthField = upperResponse.substring(lengthIndex, lengthIndex + 4);
+//    if (lengthField != expectedLength) {
+//        return false;
+//    }
+
+    // Calculate the expected response length: start (6) + length (4) + data (36) + end (2)
+    int expectedResponseLength = 48;
+    if (upperResponse.length() != expectedResponseLength) {
+        return false;
+    }
+
+    // If all checks pass, return true
+    return true;
+}

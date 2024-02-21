@@ -140,10 +140,12 @@ class Rfid {
 public:
     rfid_scanning_mode_t scanning_mode;
     uint8_t buffer[200] = {0};
+    rfid_tag scan_results[100];
+    int scanned_tag_count;
 
     Rfid();
 
-    static void init(byte rx_pin, byte tx_pin);
+    void init(byte rx_pin, byte tx_pin);
 
     static String hex2str(uint8_t num);
 
@@ -151,28 +153,32 @@ public:
 
     static String read_response_async();
 
-    static String
-    read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size);
+    String read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
+                         unsigned long timeout, rfid_response_type_t response_type);
 
     static void send_command(uint8_t *data, size_t size);
 
-    static String get_hardware_version();
+    String get_hardware_version();
 
-    static String get_software_version();
+    String get_software_version();
 
-    static void polling_once();
+    void polling_once();
 
     static void polling_multi();
 
     void print_rfid_tag_info();
 
-    void scan_rfid_tag() const;
+    void scan_rfid_tag();
 
     void set_scanning_mode(rfid_scanning_mode_t _scanning_mode);
 
-    static void set_tx_power(uint16_t db);
+    void set_tx_power(uint16_t db);
 
-    rfid_scan_result get_rfid_scan_result();
+    static rfid_scan_result get_rfid_scan_result();
+    
+    bool is_duplicate_scan(const String &epc);
+
+    static bool is_valid_epc_response(const String &response);
 };
 
 #endif //RFID_RFID_H

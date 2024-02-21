@@ -9,27 +9,13 @@ Wifi wifi;
 DataExport dataExport;
 DataImport dataImport;
 Request request;
-Conveyor conveyor;
 Display display;
 FsEsp32 fsEsp32;
-User user;
-IAM iam;
-MeshNetwork meshNetwork;
 Operation operation;
 Peripherals peripherals;
 Buzzer buzzer;
 Rfid rfid;
-Socket socket;
-Warehouse warehouse;
-Package package;
-SdCard sdCard;
-QrCodeScanner qrCodeScanner;
-QrCode qrCode;
-OTA ota;
-MessageQueue messageQueue;
 MQTT mqtt;
-WebServer server;
-Queue taskQueue;
 
 Mediator::Mediator() {
     isTaskExecutable = false;
@@ -61,10 +47,9 @@ void Mediator::init_services() {
     buzzer.welcome_sound();
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
-    // Init connection to MQTT broker
-    //mqtt.connect_to_broker(mqtt_tcp_server, mqtt_port);
     // Get mac address
     wifi.get_mac_addr();
+    taskResults.mac_address = wifi.mac_address;
 }
 
 void Mediator::execute_task(task_t task) {
@@ -92,6 +77,43 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task SEND_COMMUNICATION_MESSAGE"));
 
             break;
+        case GET_MQTT_CONFIG_FROM_SERVER: {
+            Serial.println(F("Execute task GET_MQTT_CONFIG_FROM_SERVER"));
+            http_response mqtt_config_response = request.get(tpm_server_url, get_mqtt_config,
+                                                             get_mqtt_config_query + taskResults.mac_address, "keyCode",
+                                                             "PkerpVN2024*");
+
+            taskArgs.mqttBrokerIp = extract_value_from_json_string(mqtt_config_response.payload.c_str(),
+                                                                   "\"tcpServer\"");
+            taskArgs.mqttBrokerPort = atoi(extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""));
+//            char *endPtr;
+//            long int portValue = strtol(
+//                    extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""), &endPtr, 10);
+//
+//            if (*endPtr != '\0') {
+//                // Conversion failed, handle the error
+//                Serial.println("Error converting port value");
+//            } else {
+//                // Conversion succeeded, assign the port value
+//                taskArgs.mqttBrokerPort = static_cast<int>(portValue);
+//            }
+            taskArgs.mqttLwtTopic = mqtt_lwt_topic;
+
+            // Print the extracted values
+            if ((taskArgs.mqttBrokerIp != nullptr) and (taskArgs.mqttBrokerPort != 0)) {
+                Serial.print("TCP Server: ");
+                Serial.println(taskArgs.mqttBrokerIp);
+                Serial.print("Port: ");
+                Serial.println(taskArgs.mqttBrokerPort);
+
+                execute_task(CONNECT_MQTT_BROKER);
+                taskArgs.mqtt_subscribed_topic = String(mqtt_mes_selection_topic) + taskResults.mac_address;
+                execute_task(SUBSCRIBE_MQTT_TOPIC);
+            } else {
+                Serial.println("TCP Server not found. Check HTTP response");
+            }
+            break;
+        }
         case INIT_MESSAGE_QUEUE:
             Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
             break;
@@ -101,20 +123,43 @@ void Mediator::execute_task(task_t task) {
         case PUBLISH_MQTT_MESSAGE:
             Serial.println(F("Execute task PUBLISH_MQTT_MESSAGE"));
             break;
-        case SUBSCRIBE_MQTT_TOPIC:
+        case SUBSCRIBE_MQTT_TOPIC: {
             Serial.println(F("Execute task SUBSCRIBE_TOPIC"));
-            mqtt.subscribe_topic("rfid/device/status/RFID-001");
+            if (!mqtt.is_broker_connected) {
+                Serial.println(F("Please wait to connect to MQTT first before subscribing"));
+                unsigned long elapsed_time = millis();
+                // Wait until MQTT is connected
+                while (millis() - elapsed_time <= 5000) {
+                    elapsed_time = millis();
+                    if (mqtt.is_broker_connected) break;
+                }
+                //Serial.println(F("Done"));
+                mqtt.subscribe_topic(taskArgs.mqtt_subscribed_topic.c_str());
+            }
             break;
+        }
         case CONNECT_MQTT_BROKER:
             Serial.println(F("Execute task CONNECT_MQTT_BROKER"));
-            mqtt.isBrokerConnected = false;
-//            while (!mqtt.isBrokerConnected) {
-            mqtt.connect_to_broker(taskArgs.mqttBrokerIp, taskArgs.mqttBrokerPort, taskArgs.mqttLwtTopic, "");
-//            }
+            mqtt.connect_to_broker(taskArgs.mqttBrokerIp, taskArgs.mqttBrokerPort, taskArgs.mqttLwtTopic,
+                                   wifi.mac_address);
             break;
         case HANDLE_MQTT_MESSAGE:
             Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
-            mqtt.handle_incoming_message();
+            switch (taskArgs.feature) {
+                case QR_CODE_SCANNING: {
+                    taskResults.selected_mes_package = "";
+                    // Wait until the message with according event arrives
+                    mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
+                    if (mqtt.is_mes_package_selected) {
+                        taskResults.selected_mes_package = mqtt.last_payload;
+                        taskResults.mes_operation_name = mqtt.mes_operation_name;
+                        taskResults.mes_target = mqtt.mes_target;
+                        taskResults.mes_img_url = mqtt.mes_img_url;
+                        mqtt.is_mes_package_selected = false;
+                    }
+                    break;
+                }
+            }
             break;
         case LOAD_CONFIG:
             Serial.println(F("Execute task LOAD_CONFIG"));
@@ -146,8 +191,10 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, "kiri", sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, "101conchodom", sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
 //            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
 //            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
@@ -159,8 +206,14 @@ void Mediator::execute_task(task_t task) {
             // Start to connect to Wi-Fi as STA credential
             if (wifi.init_sta_mode()) {
                 Serial.println(F("Init sta wifi successfully"));
+
+                // Get MQTT config from TPM server
+                execute_task(GET_MQTT_CONFIG_FROM_SERVER);
             } else {
-                Serial.println(F("Init sta wifi failed"));
+                Serial.println(F("Init sta wifi failed. Reset in 3s"));
+                delay(3000);
+                // Reset device
+                ESP.restart();
             }
             break;
         case TERMINATE_AP_WIFI:
@@ -189,14 +242,16 @@ void Mediator::execute_task(task_t task) {
             taskResults.currentOperatingMode = taskArgs.operatingMode;
             break;
         case RENDER_FEATURE:
-            if (taskArgs.feature != taskResults.currentFeature) {
+            static bool is_render_forced = false;
+            if ((taskArgs.feature != taskResults.currentFeature) or (is_render_forced)) {
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
                 display.render_feature(taskArgs.feature, taskResults);
                 // Check if this feature requires background tasks before rendering information, if yes, run tasks,
                 // then re-render
                 if (display.is_background_task_required) {
-                    display.render_feature(LOADING, taskResults);
+                    if (display.is_loading_animation_displayed)
+                        display.render_feature(LOADING, taskResults);
                     byte feature_background_task_index = 0;
                     while ((feature_background_task_index <= 9) and
                            (display.current_screen_background_tasks[feature_background_task_index] != NO_TASK)) {
@@ -213,28 +268,44 @@ void Mediator::execute_task(task_t task) {
                     display.is_background_task_required = false;
                     display.render_feature(taskArgs.feature, taskResults);
                     display.is_background_task_completed = false;
+                    display.is_loading_animation_displayed = false;
+                    is_render_forced = false;
                 }
-                // Update screen item index for screen selector
-                taskResults.currentScreenItemIndex = 0;
-                // Update screen item count for screen selector
-                taskResults.screenItemCount = display.screen_item_count;
-                // Update type of items on the screen
-                taskResults.feature_item_type = display.current_feature_item_type;
-                // Update list of features/tasks of items on the screen
-                switch (taskResults.feature_item_type) {
-                    case MENU_ICON:
-                        for (int i = 0; i < 10; ++i) {
-                            taskResults.screenFeatures[i] = display.current_screen_features[i];
-                        }
-                        break;
-                    case LIST_ITEM:
-                        taskResults.screenFeatures[0] = display.current_screen_features[0];
-                        break;
+
+                if (display.is_back_to_home) {
+                    display.is_back_to_home = false;
+                    taskResults.currentFeature = NO_FEATURE;
+                    taskArgs.feature = HOME_HANDHELD_2;
+                    execute_task(RENDER_FEATURE);
+                    //break;
+                } else {
+                    // Update screen item index for screen selector
+                    taskResults.currentScreenItemIndex = 0;
+                    // Update screen item count for screen selector
+                    taskResults.screenItemCount = display.screen_item_count;
+                    // Update type of items on the screen
+                    taskResults.feature_item_type = display.current_feature_item_type;
+                    // Update list of features/tasks of items on the screen
+                    switch (taskResults.feature_item_type) {
+                        case MENU_ICON:
+                            for (int i = 0; i < 10; ++i) {
+                                taskResults.screenFeatures[i] = display.current_screen_features[i];
+                            }
+                            break;
+                        case LIST_ITEM:
+                            taskResults.screenFeatures[0] = display.current_screen_features[0];
+                            break;
+                        case TASK_ITEM:
+                            for (int i = 0; i < 10; ++i) {
+                                taskResults.screenTasks[i] = display.current_screen_tasks[i];
+                            }
+                            break;
+                    }
+                    // Print screen item count of this feature (screen)
+                    Serial.print(F("Feature has : "));
+                    Serial.print(taskResults.screenItemCount);
+                    Serial.println(F(" items on the screen"));
                 }
-                // Print screen item count of this feature (screen)
-                Serial.print(F("Feature has : "));
-                Serial.print(taskResults.screenItemCount);
-                Serial.println(F(" items on the screen"));
             } else {
                 // Feature is not changed. Keep current rendering
                 //Serial.println(F("Feature is not changed. Keep current rendering"));
@@ -339,6 +410,11 @@ void Mediator::execute_task(task_t task) {
                             }
                             //peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
+                        case TASK_ITEM:
+                            // We just execute task which is associated with the clicked item. Render to next feature will be done in the task
+                            //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
+                            is_render_forced = true;
+                            break;
                     }
                     break;
                 case BACK_CANCEL:
@@ -398,10 +474,33 @@ void Mediator::execute_task(task_t task) {
             break;
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
-            //rfid.set_scanning_mode(SINGLE_SCAN);
-            rfid.set_scanning_mode(MULTI_SCAN);
+            rfid.set_scanning_mode(SINGLE_SCAN);
+            //rfid.set_scanning_mode(MULTI_SCAN);
             rfid.scan_rfid_tag();
+            taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+            //taskResults.current_scanned_rfid_tag_count = rfid.
             break;
+        case REGISTER_RFID_TAG: {
+            Serial.println(F("Execute task REGISTER_RFID_TAG"));
+            String registration_payload = R"({"mesKey": ")" + taskResults.selected_mes_package + R"(","tagIds": [)";
+            if (rfid.scanned_tag_count == 0) {
+                Serial.println(F("No scanned RFID tag. Back to home now"));
+            } else {
+                for (byte i = 0; i < 99; ++i) {
+                    if (rfid.scan_results[i].epc != "") {
+                        if ((rfid.scan_results[i + 1].epc != "") and (i != 99)) {
+                            registration_payload += "\"" + rfid.scan_results[i].epc + "\",";
+                        } else {
+                            registration_payload += "\"" + rfid.scan_results[i].epc + "\"]}";
+                        }
+                    }
+                }
+                request.post(base_api_server_url, register_new_rfid_tag, registration_payload, "keyCode",
+                             "PkerpVN2024*");
+                rfid.scanned_tag_count = 0;
+            }
+            break;
+        }
         case WRITE_RFID_TAG:
             Serial.println(F("Execute task WRITE_RFID_TAG"));
             break;
@@ -498,4 +597,28 @@ const char *Mediator::task_as_string(task_t task) {
 
 const char *Mediator::feature_as_string(feature_t feature) {
     return feature_names[feature];
+}
+
+const char *Mediator::extract_value_from_json_string(const char *data, const char *key) {
+    const char *start = strstr(data, key);
+    if (start != nullptr) {
+        start += strlen(key) + 2;  // Move past the key and the two quote characters and colon
+        const char *end = strchr(start, '\"');  // Find the closing quote character
+        size_t length = static_cast<size_t>(end - start);
+
+//        // Create a buffer to store the extracted value
+//        static char value[100];  // Adjust the buffer size as per your requirement
+//        strncpy(value, start, length);
+//        value[length] = '\0';  // Null-terminate the value string
+//        Serial.println(value);
+//        return value;
+
+        // Allocate memory for the extracted value
+        char* value = new char[length + 1];  // +1 for the null terminator
+        strncpy(value, start, length);
+        value[length] = '\0';  // Null-terminate the value string
+
+        return value;
+    }
+    return nullptr;  // Key not found
 }

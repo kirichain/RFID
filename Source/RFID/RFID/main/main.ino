@@ -32,16 +32,13 @@ void setup() {
 
 //    mediator.taskArgs.operatingMode = HANDHELD;
 //    mediator.execute_task(SET_OPERATING_MODE);
+    mediator.execute_task(INIT_STA_WIFI);
     mediator.taskArgs.feature = HOME_HANDHELD_2;
     mediator.execute_task(RENDER_FEATURE);
     mediator.set_current_feature();
     //mediator.execute_task(CHECK_CONNECTION);
     //mediator.execute_task(INIT_AP_WIFI);
-    mediator.execute_task(INIT_STA_WIFI);
-    mediator.taskArgs.mqttBrokerIp = mqtt_tcp_server;
-    mediator.taskArgs.mqttBrokerPort = mqtt_port;
-    mediator.taskArgs.mqttLwtTopic = mqtt_lwt_topic;
-    mediator.execute_task(CONNECT_MQTT_BROKER);
+
 //For testing, we execute task BLINK_LED and stop this task when we receive message from MQTT broker
 //    mediator.taskArgs.task = BLINK_SCREEN;
 //    mediator.set_current_task();
@@ -63,13 +60,12 @@ void loop() {
     mediator.taskArgs.task = mediator.taskResults.currentTask;
     mediator.set_current_task();
 
-    if ((mediator.isTaskExecutable) & (mediator.taskArgs.task != IDLE)) {
+    if ((mediator.isTaskExecutable) & (mediator.taskArgs.task != IDLE) & (mediator.taskArgs.task != NO_TASK)) {
         while ((!mediator.isTaskCompleted) & (!mediator.isTaskQueueEmpty)) {
             mediator.taskArgs.task = mediator.taskResults.currentTask;
             mediator.execute_task(mediator.taskArgs.task);
             mediator.execute_task(READ_NAVIGATION_BUTTON);
             mediator.execute_task(READ_SERIAL_COMMUNICATION_MESSAGE);
-            //mediator.execute_task(SUBSCRIBE_MQTT_TOPIC);
             mediator.execute_task(HANDLE_MQTT_MESSAGE);
             mediator.get_current_task_status();
             yield();

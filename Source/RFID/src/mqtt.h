@@ -23,7 +23,8 @@ private:
     String last_subscribed_topic;
 public:
     String last_payload;
-
+    String mes_operation_name, mes_img_url;
+    int mes_target;
     bool is_broker_connected;
     bool is_mes_package_selected;
     mqtt_event_t expected_event;
@@ -58,6 +59,8 @@ public:
                                  size_t total);
 
     void wait_for_mqtt_event(mqtt_event_t _event);
+
+    static String extract_value_from_json_string(const String &data, const String &key);
 };
 
 #endif //RFID_MQTT_H

@@ -18,6 +18,7 @@ enum feature_layout_t {
 enum feature_t {
     BOOT,
     LOADING,
+    QR_CODE_SCANNING,
     HOME_HANDHELD_1,
     HOME_HANDHELD_2,
     HOME_TERMINAL,
@@ -32,6 +33,8 @@ enum feature_t {
     RFID_SCAN_RESULT,
     RFID_MODIFY_TAG_DATA,
     RFID_REGISTER_TAG,
+    RFID_REGISTER_TAG_SCANNING_STARTING,
+    RFID_REGISTER_TAG_SCANNING_SUBMITTING,
     RFID_FACTORY_SELECT,
     RFID_WEEK_SELECT,
     RFID_PACKAGE_GROUPS_LIST,
@@ -66,6 +69,7 @@ enum task_t {
     BLINK_SCREEN,
     READ_SERIAL_COMMUNICATION_MESSAGE,
     SEND_SERIAL_COMMUNICATION_MESSAGE,
+    GET_MQTT_CONFIG_FROM_SERVER,
     INIT_MESSAGE_QUEUE,
     CLEAR_MESSAGE_QUEUE,
     PUBLISH_MQTT_MESSAGE,
@@ -120,7 +124,8 @@ enum task_t {
 
 enum feature_item_type_t {
     MENU_ICON,
-    LIST_ITEM
+    LIST_ITEM,
+    TASK_ITEM
 };
 
 enum feature_render_type_t {
@@ -146,8 +151,17 @@ enum rfid_scanning_mode_t {
     MULTI_SCAN
 };
 
+enum rfid_response_type_t {
+    EPC_READING,
+    NORMAL_READING
+};
 enum screen_selector_t {
     MENU_SELECTING,
     ITEM_LIST_SELECTING
+};
+
+enum mqtt_event_t {
+    MES_PACKAGE_SELECTED,
+    NONE
 };
 #endif //RFID_ENUMS_H

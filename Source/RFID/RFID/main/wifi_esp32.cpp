@@ -9,7 +9,6 @@ Wifi::Wifi() {
     currentApWifiPassword = nullptr;
     currentStaWifiSSID = nullptr;
     currentStaWifiPassword = nullptr;
-    mac_address = nullptr;
 }
 
 bool Wifi::init_ap_mode() const {
@@ -193,5 +192,6 @@ int Wifi::scan_wifi_networks() {
 String Wifi::get_mac_addr() {
     Serial.print(F("Mac address: "));
     Serial.println(WiFi.macAddress());
+    mac_address = WiFi.macAddress();
     return WiFi.macAddress();
 }

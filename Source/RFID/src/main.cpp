@@ -33,7 +33,6 @@ void setup() {
 //    mediator.taskArgs.operatingMode = HANDHELD;
 //    mediator.execute_task(SET_OPERATING_MODE);
     mediator.execute_task(INIT_STA_WIFI);
-
     mediator.taskArgs.feature = HOME_HANDHELD_2;
     mediator.execute_task(RENDER_FEATURE);
     mediator.set_current_feature();

@@ -505,8 +505,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.drawString("Server connected", 42, 10);
                 tft.setTextColor(0x573F);
                 tft.drawString("Connected", 185, 90);
-                tft.drawString("[ Target ]", 185, 110);
-                tft.drawString("[ Op Name ]", 92, 138);
+                tft.drawString(String(_taskResults.mes_target), 185, 110);
+                tft.drawString(_taskResults.mes_operation_name, 92, 138);
                 tft.drawString(_taskResults.selected_mes_package, 25, 163);
                 tft.fillRect(15, 185, 290, 4, TFT_YELLOW);
             } else {

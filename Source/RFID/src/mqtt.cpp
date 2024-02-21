@@ -137,26 +137,20 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
 
     if (String(topic) == "rfid/mes/" + mac_address) {
         if (expected_event == MES_PACKAGE_SELECTED) is_mes_package_selected = true;
-        String mes_package;
+        // Extract MES package, operation name, target and img url
+        last_payload = extract_value_from_json_string(raw_last_payload, "mesKey");
+        mes_operation_name = extract_value_from_json_string(raw_last_payload, "opName");
+        mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
+        mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
 
-        // Find the start position of the mesKey
-        int start = last_payload.indexOf(R"("mesKey":")");
-        if (start != -1) {
-            // Add length of "mesKey=" to start index
-            start += 10;
-
-            // Find the end of the mesKey value
-            int end = last_payload.indexOf("\"", start);
-            end = end == -1 ? last_payload.length() : end; // If no quote, then it's the end of the payload
-
-            // Extract the mesKey value
-            mes_package = last_payload.substring(start, end);
-
-            Serial.print(F("Extracted MES key: "));
-            Serial.println(mes_package);
-        }
-
-        last_payload = mes_package;
+        Serial.print(F("Extracted MES key: "));
+        Serial.println(last_payload);
+        Serial.print(F("Extracted MES operation name: "));
+        Serial.println(mes_operation_name);
+        Serial.print(F("Extracted MES img url: "));
+        Serial.println(mes_img_url);
+        Serial.print(F("Extracted MES target: "));
+        Serial.println(mes_target);
     }
 }
 
@@ -175,4 +169,15 @@ void MQTT::wait_for_mqtt_event(mqtt_event_t _event){
     expected_event = NONE;
 }
 
-
+String MQTT::extract_value_from_json_string(const String& data, const String& key) {
+    int start = data.indexOf(key);
+    if (start != -1) {
+        start += key.length() + 2;  // Move past the key and the two quote characters and colon
+        int end = data.indexOf('\"', start + 1);  // Find the closing quote character
+        if (end != -1) {
+            String value = data.substring(start + 1, end);
+            return value;
+        }
+    }
+    return "";  // Key not found or value not extracted
+}

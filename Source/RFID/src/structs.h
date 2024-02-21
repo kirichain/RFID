@@ -107,6 +107,9 @@ typedef struct task_results {
     String selected_list_items[10] = {""};
     // For MQTT events
     String selected_mes_package = "";
+    String mes_operation_name = "";
+    String mes_img_url = "";
+    int mes_target = 0;
     // For RFID
     int current_scanned_rfid_tag_count = 0;
     rfid_tag scanned_rfid_tags[100];

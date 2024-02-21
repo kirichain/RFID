@@ -6,24 +6,29 @@
 #define RFID_REQUEST_H
 
 #include "Arduino.h"
+//#include <WiFiClient.h>
+//#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 
-typedef struct http_response {
-    byte status_code;
-    String payload;
-} response;
+#include "structs.h"
+
+//#include
+extern HTTPClient http;
 
 class Request {
-private:
-    const String get_mqtt_config_query = "?macaddress=";
-    const String get_rfid_tag_info_query = "?mesKey=";
 public:
     Request();
 
-    response get(const String& query);
+    static bool ping(const String &host_name, const String &header, const String &header_value);
 
-    response post();
+    static http_response
+    get(const String &host_name, const String &path_name, const String &query, const String &header,
+        const String &header_value);
 
-    bool ping();
+    static http_response
+    post(const String &host_name, const String &path_name, const String &payload, const String &header,
+         const String &header_value);
+
 };
+
 #endif //RFID_REQUEST_H
