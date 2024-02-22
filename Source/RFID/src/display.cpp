@@ -7,6 +7,7 @@
 AnimatedGIF gif;
 TFT_eSPI tft = TFT_eSPI();
 QRcode_eSPI qrcode(&tft);
+PNG png;
 
 // This section is used for display GIF---------------------------------------------------
 #ifdef USE_DMA
@@ -507,13 +508,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.drawString("Connected", 185, 90);
                 tft.drawString(String(_taskResults.mes_target), 185, 110);
                 tft.drawString(_taskResults.mes_operation_name, 92, 138);
-                tft.drawString(_taskResults.selected_mes_package, 25, 163);
+                tft.drawString(_taskResults.selected_mes_package, 20, 163);
                 tft.fillRect(15, 185, 290, 4, TFT_YELLOW);
+                tft.pushImage(25, 61, 100, 100, _taskResults.mes_img_buffer);
             } else {
                 tft.drawString("Not connected", 185, 90);
                 tft.drawString("[ Target ]", 185, 110);
                 tft.drawString("[ Op Name ]", 92, 138);
-                tft.drawString("[ MES Package ]", 25, 163);
+                tft.drawString("[ MES Package ]", 20, 163);
                 tft.fillRect(15, 185, 290, 4, 0x5B0C);
             }
             // Update accordingly screen item
@@ -1559,6 +1561,12 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
     }
 }
 
+void Display::pngDraw(PNGDRAW *pDraw) {
+    uint16_t lineBuffer[70];
+    png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
+    tft.pushImage(0, 0, 70, 70, lineBuffer);
+}
+
 void GIFDraw(GIFDRAW *pDraw) {
     uint8_t *s;
     uint16_t *d, *usPalette;
@@ -1674,3 +1682,9 @@ void GIFDraw(GIFDRAW *pDraw) {
     }
 } /* GIFDraw() */
 
+void PNGDraw(PNGDRAW *pDraw) {
+    //uint16_t usPixels[320];
+
+    //png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+    //tft.drawRect(0, pDraw->y + 24, pDraw->iWidth, 1, usPixels);
+}

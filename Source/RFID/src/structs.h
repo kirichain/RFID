@@ -109,6 +109,9 @@ typedef struct task_results {
     String selected_mes_package = "";
     String mes_operation_name = "";
     String mes_img_url = "";
+    uint16_t mes_img_buffer[20000];
+    int mes_img_size;
+    int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
     // For RFID
     int current_scanned_rfid_tag_count = 0;
@@ -143,6 +146,7 @@ typedef struct screen_selector {
 
 typedef struct http_response {
     int status_code;
+    int content_length;
     String payload;
 } http_response;
 

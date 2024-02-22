@@ -81,11 +81,12 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task GET_MQTT_CONFIG_FROM_SERVER"));
             http_response mqtt_config_response = request.get(tpm_server_url, get_mqtt_config,
                                                              get_mqtt_config_query + taskResults.mac_address, "keyCode",
-                                                             "PkerpVN2024*");
+                                                             "PkerpVN2024*", false, 0, 0);
 
             taskArgs.mqttBrokerIp = extract_value_from_json_string(mqtt_config_response.payload.c_str(),
                                                                    "\"tcpServer\"");
-            taskArgs.mqttBrokerPort = atoi(extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""));
+            taskArgs.mqttBrokerPort = atoi(
+                    extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""));
 //            char *endPtr;
 //            long int portValue = strtol(
 //                    extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""), &endPtr, 10);
@@ -155,6 +156,11 @@ void Mediator::execute_task(task_t task) {
                         taskResults.mes_operation_name = mqtt.mes_operation_name;
                         taskResults.mes_target = mqtt.mes_target;
                         taskResults.mes_img_url = mqtt.mes_img_url;
+                        // Download MES img from url and display it
+                        request.get(
+                                base_api_server_url, get_resized_mes_img,
+                                get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                                taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
                         mqtt.is_mes_package_selected = false;
                     }
                     break;
@@ -614,7 +620,7 @@ const char *Mediator::extract_value_from_json_string(const char *data, const cha
 //        return value;
 
         // Allocate memory for the extracted value
-        char* value = new char[length + 1];  // +1 for the null terminator
+        char *value = new char[length + 1];  // +1 for the null terminator
         strncpy(value, start, length);
         value[length] = '\0';  // Null-terminate the value string
 

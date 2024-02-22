@@ -6,13 +6,10 @@
 #define RFID_REQUEST_H
 
 #include "Arduino.h"
-//#include <WiFiClient.h>
-//#include <WiFiClientSecure.h>
+#include <WiFiClient.h>
 #include <HTTPClient.h>
-
 #include "structs.h"
 
-//#include
 extern HTTPClient http;
 
 class Request {
@@ -23,7 +20,7 @@ public:
 
     static http_response
     get(const String &host_name, const String &path_name, const String &query, const String &header,
-        const String &header_value);
+        const String &header_value, bool is_buffer_used, uint16_t *buffer, int _size);
 
     static http_response
     post(const String &host_name, const String &path_name, const String &payload, const String &header,
