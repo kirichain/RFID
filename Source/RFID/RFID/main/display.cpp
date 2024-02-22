@@ -7,7 +7,6 @@
 AnimatedGIF gif;
 TFT_eSPI tft = TFT_eSPI();
 QRcode_eSPI qrcode(&tft);
-PNG png;
 
 // This section is used for display GIF---------------------------------------------------
 #ifdef USE_DMA
@@ -1562,12 +1561,6 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
     }
 }
 
-void Display::pngDraw(PNGDRAW *pDraw) {
-    uint16_t lineBuffer[70];
-    png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
-    tft.pushImage(0, 0, 70, 70, lineBuffer);
-}
-
 void GIFDraw(GIFDRAW *pDraw) {
     uint8_t *s;
     uint16_t *d, *usPalette;
@@ -1682,10 +1675,3 @@ void GIFDraw(GIFDRAW *pDraw) {
         }
     }
 } /* GIFDraw() */
-
-void PNGDraw(PNGDRAW *pDraw) {
-    //uint16_t usPixels[320];
-
-    //png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
-    //tft.drawRect(0, pDraw->y + 24, pDraw->iWidth, 1, usPixels);
-}

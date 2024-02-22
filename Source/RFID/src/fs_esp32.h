@@ -6,7 +6,6 @@
 #define RFID_FS_ESP32_H
 
 #include "Arduino.h"
-#include "ArduinoJson.h"
 #include "fs_esp32.h"
 //#include "LittleFS.h"
 //#include "FS.h"
