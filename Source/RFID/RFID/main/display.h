@@ -6,6 +6,7 @@
 #define RFID_DISPLAY_H
 
 #include "Arduino.h"
+#include "PNGdec.h"
 #include "qrcode_espi.h"
 #include "GIFDraw.h"
 #include "icons/loading_animation.h"
@@ -53,6 +54,8 @@
 #include "icons/red_x_icon.h"
 #include "icons/qr-code-placeholder-banner.h"
 
+extern TFT_eSPI tft;
+extern PNG png;
 void GIFDraw(GIFDRAW *pDraw);
 
 class Display {
@@ -313,6 +316,7 @@ public:
 
     void set_screen_selector_border_color(feature_t _next_feature);
 
+    static void pngDraw(PNGDRAW *pDraw);
 };
 
 #endif //RFID_DISPLAY_H

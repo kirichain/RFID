@@ -11,6 +11,8 @@
 #define default_wifi_password_1 "sfs#office!@"
 #define default_wifi_ssid_2 "ERP LTD"
 #define default_wifi_password_2 "erp@@2020"
+#define default_wifi_ssid_3 "kiri"
+#define default_wifi_password_3 "101conchodom"
 
 // Defined Server Information
 #define web_socket_server_url "xyz.com:80"
@@ -27,7 +29,7 @@
 #define get_mqtt_config_query "?macAddress="
 #define get_rfid_tag_info_query "?mesKey="
 #define get_resized_mes_img "/mpmts/minimizeImage"
-#define get_resized_mes_img_query "?url="
+#define get_resized_mes_img_query "?width=70&height=70&url="
 
 // Defined MQTT Configuration
 #define	mqtt_tcp_server "125.234.135.55"

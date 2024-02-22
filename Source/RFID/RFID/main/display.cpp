@@ -7,6 +7,7 @@
 AnimatedGIF gif;
 TFT_eSPI tft = TFT_eSPI();
 QRcode_eSPI qrcode(&tft);
+PNG png;
 
 // This section is used for display GIF---------------------------------------------------
 #ifdef USE_DMA
@@ -507,13 +508,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.drawString("Connected", 185, 90);
                 tft.drawString(String(_taskResults.mes_target), 185, 110);
                 tft.drawString(_taskResults.mes_operation_name, 92, 138);
-                tft.drawString(_taskResults.selected_mes_package, 25, 163);
+                tft.drawString(_taskResults.selected_mes_package, 20, 163);
                 tft.fillRect(15, 185, 290, 4, TFT_YELLOW);
+                tft.pushImage(25, 61, 70, 70, _taskResults.mes_img_buffer);
             } else {
                 tft.drawString("Not connected", 185, 90);
                 tft.drawString("[ Target ]", 185, 110);
                 tft.drawString("[ Op Name ]", 92, 138);
-                tft.drawString("[ MES Package ]", 25, 163);
+                tft.drawString("[ MES Package ]", 20, 163);
                 tft.fillRect(15, 185, 290, 4, 0x5B0C);
             }
             // Update accordingly screen item
@@ -768,7 +770,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString("SCAN RESULT", 75, 50);
             tft.fillRect(10, 81, 300, 389, 0x84B2);
             // Draw the product image
-            tft.fillRect(22, 93, 80, 80, TFT_GREEN);
+            tft.pushImage(22, 93, 70, 70, _taskResults.mes_img_buffer);
             // Draw package infomartion
             tft.setTextFont(2);
             tft.drawString("BuyerPO:", 112, 93);
@@ -793,10 +795,11 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.fillRect(22, 214, 275, 37, 0x8430);
             tft.drawString("Submitted/target", 37, 225);
-            tft.drawString("200/500", 198, 225);
+            tft.drawString(String(_taskResults.current_scanned_rfid_tag_count) + "/" + String(_taskResults.mes_target),
+                           198, 225);
             tft.fillRect(22, 256, 275, 37, 0x8430);
             tft.drawString("Standard", 37, 267);
-            tft.drawString("10", 224, 267);
+            tft.drawString("[ ]", 224, 267);
             // Current scan status
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.drawString("Current scan status", 22, 308);
@@ -807,7 +810,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString("Quantity in box", 37, 352);
             tft.setFreeFont(&FreeSansBold12pt7b);
             tft.setTextColor(0x350F);
-            tft.drawString("10/10", 178, 350);
+            tft.drawString(String(_taskResults.current_scanned_rfid_tag_count) + "/[ ]", 178, 350);
             iconWidth = 24;
             iconHeight = 24;
             put_icon(258, 349, "green_tick_icon");
@@ -818,7 +821,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Draw the clear button
             tft.fillRect(22, 425, 130, 40, 0x3250);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString("CLEAR", 55, 438);
+            tft.drawString("SCAN", 55, 438);
             // Update accordingly screen item
             _item_position = {22, 425, 130, 40};
             update_screen_item(screen_item_index, _item_position);
@@ -839,7 +842,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             update_screen_selector(0);
             // Reset current screen features
             memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = HOME_HANDHELD_2;
+            current_screen_features[0] = RFID_SCAN_RESULT;
             current_screen_features[1] = HOME_HANDHELD_2;
             // Reset display settings
             reset_display_setting();
@@ -888,7 +891,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     //tft.drawString(_taskResults.selected_list_items[3], 32, 138);
                     tft.drawString(_taskResults.selected_mes_package, 32, 130);
                     // Draw the product image
-                    tft.fillRect(22, 193, 80, 80, 0xDEDB);
+                    tft.pushImage(22, 193, 70, 70, _taskResults.mes_img_buffer);
                     // Draw package infomartion
                     tft.setTextFont(2);
                     tft.drawString("AO No: ", 112, 193);
@@ -1197,9 +1200,9 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setTextSize(1);
             //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 101);
             tft.drawString("MES Packages:", 32, 101);
-            tft.drawString(_taskResults.selected_list_items[3], 32, 125);
+            tft.drawString(_taskResults.selected_mes_package, 30, 125);
             // Draw the product image
-            tft.fillRect(22, 156, 80, 80, 0xDEDB);
+            tft.pushImage(22, 156, 70, 70, _taskResults.mes_img_buffer);
             // Draw package infomartion
             tft.setTextFont(2);
             tft.drawString("AO No: ", 112, 156);
@@ -1559,6 +1562,12 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
     }
 }
 
+void Display::pngDraw(PNGDRAW *pDraw) {
+    uint16_t lineBuffer[70];
+    png.getLineAsRGB565(pDraw, lineBuffer, PNG_RGB565_BIG_ENDIAN, 0xffffffff);
+    tft.pushImage(0, 0, 70, 70, lineBuffer);
+}
+
 void GIFDraw(GIFDRAW *pDraw) {
     uint8_t *s;
     uint16_t *d, *usPalette;
@@ -1674,3 +1683,9 @@ void GIFDraw(GIFDRAW *pDraw) {
     }
 } /* GIFDraw() */
 
+void PNGDraw(PNGDRAW *pDraw) {
+    //uint16_t usPixels[320];
+
+    //png.getLineAsRGB565(pDraw, usPixels, PNG_RGB565_LITTLE_ENDIAN, 0xffffffff);
+    //tft.drawRect(0, pDraw->y + 24, pDraw->iWidth, 1, usPixels);
+}

@@ -87,25 +87,17 @@ void Mediator::execute_task(task_t task) {
                                                                    "\"tcpServer\"");
             taskArgs.mqttBrokerPort = atoi(
                     extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""));
-//            char *endPtr;
-//            long int portValue = strtol(
-//                    extract_value_from_json_string(mqtt_config_response.payload.c_str(), "\"port\""), &endPtr, 10);
-//
-//            if (*endPtr != '\0') {
-//                // Conversion failed, handle the error
-//                Serial.println("Error converting port value");
-//            } else {
-//                // Conversion succeeded, assign the port value
-//                taskArgs.mqttBrokerPort = static_cast<int>(portValue);
-//            }
             taskArgs.mqttLwtTopic = mqtt_lwt_topic;
-
+            taskArgs.mes_api_host = extract_value_from_json_string(mqtt_config_response.payload.c_str(),
+                                                                   "\"mesAPIHost\"");
             // Print the extracted values
             if ((taskArgs.mqttBrokerIp != nullptr) and (taskArgs.mqttBrokerPort != 0)) {
                 Serial.print("TCP Server: ");
                 Serial.println(taskArgs.mqttBrokerIp);
                 Serial.print("Port: ");
                 Serial.println(taskArgs.mqttBrokerPort);
+                Serial.print("MES API Host: ");
+                Serial.println(taskArgs.mes_api_host);
 
                 execute_task(CONNECT_MQTT_BROKER);
                 taskArgs.mqtt_subscribed_topic = String(mqtt_mes_selection_topic) + taskResults.mac_address;
@@ -157,10 +149,9 @@ void Mediator::execute_task(task_t task) {
                         taskResults.mes_target = mqtt.mes_target;
                         taskResults.mes_img_url = mqtt.mes_img_url;
                         // Download MES img from url and display it
-                        request.get(
-                                base_api_server_url, get_resized_mes_img,
-                                get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
-                                taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
+                        request.get("http://203.113.151.196:8888", get_resized_mes_img,
+                                    get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                                    taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
                         mqtt.is_mes_package_selected = false;
                     }
                     break;
@@ -197,12 +188,12 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, "kiri", sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, "101conchodom", sizeof(taskArgs.wifi_sta_password));
-//            strncpy(taskArgs.wifi_sta_ssid, "SFS OFFICE", sizeof(taskArgs.wifi_sta_ssid));
-//            strncpy(taskArgs.wifi_sta_password, "sfs#office!@", sizeof(taskArgs.wifi_sta_password));
-//            strncpy(taskArgs.wifi_sta_ssid, "ERPLTD", sizeof(taskArgs.wifi_sta_ssid));
-//            strncpy(taskArgs.wifi_sta_password, "erp@@2020", sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_3, sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, default_wifi_password_3, sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
+//            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_2, sizeof(taskArgs.wifi_sta_ssid));
+//            strncpy(taskArgs.wifi_sta_password, default_wifi_password_2, sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';

@@ -20,7 +20,8 @@ http://tpm.pungkookvn.com/RFIotDevice/GetMqttConfig?macAddress=84:0D:8E:E6:20:E8
     "tcpServer": "125.234.135.55",
     "port": "1883",
     "username": "pk2",
-    "password": "abc123"
+    "password": "abc123",
+    "mesAPIHost": "http://mespk2.pungkookvn.com:8888"
 }
 
 ----Get RFID tags which are associated with MES package
@@ -40,7 +41,7 @@ http://mespk2.pungkookvn.com:8888/RFIotDevice/GetCardRegistration?mesKey=M_TNF-2
 }
 
 ----Register RFID tags which are associated with MES package
-http://mespk2.pungkookvn.com:8888//RFIotDevice/PostCardRegistration
+http://mespk2.pungkookvn.com:8888/RFIotDevice/PostCardRegistration
 // Method POST
 // Add header keyCode with value PkerpVN2024*, Content-Type with value application/xml
 // Response
@@ -52,3 +53,9 @@ http://mespk2.pungkookvn.com:8888//RFIotDevice/PostCardRegistration
         "bee93b92-eba4-4465-ae73-d8919ea39758"
     ]
 }
+
+----Get MES package image
+http://mespk2.pungkookvn.com:8888/mpmts/minimizeImage?url=http://203.113.151.204:8080/PKPDM/style/TNF/TNF1422/Images/TNF14221.png&width=70&height=70
+// Method GET
+//Response
+Stream of bytes (Array of image pixels)

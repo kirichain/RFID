@@ -47,7 +47,7 @@ typedef struct task_args {
     const char *mqttBrokerIp;
     const char *mqttLwtTopic;
     String mqtt_subscribed_topic;
-
+    String mes_api_host = "";
     int mqttBrokerPort;
     byte blinkLedPin;
     rfid_scanning_mode_t scanning_mode;
@@ -109,8 +109,7 @@ typedef struct task_results {
     String selected_mes_package = "";
     String mes_operation_name = "";
     String mes_img_url = "";
-    uint16_t mes_img_buffer[20000];
-    int mes_img_size;
+    uint16_t mes_img_buffer[9800];
     int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
     // For RFID
