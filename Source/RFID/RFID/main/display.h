@@ -267,8 +267,6 @@ public:
 
     static byte get_string_width(const char *string);
 
-    static byte get_font_height();
-
     const menu_icon *get_icon_by_name(const char *icon_name);
 
     void put_icon(int x, int y, const char *icon_name);
@@ -292,15 +290,7 @@ public:
 
     void draw_vertical_line() const;
 
-    void draw_grid() const;
-
-    void draw_titles() const;
-
     static void blink_screen(bool &isTaskCompleted);
-
-    void update_status(status_indicators _status);
-
-    static uint16_t convert_to_565_color(uint32_t hex_color);
 
     void reset_display_setting();
 

@@ -148,6 +148,16 @@ void Mediator::execute_task(task_t task) {
                         taskResults.mes_operation_name = mqtt.mes_operation_name;
                         taskResults.mes_target = mqtt.mes_target;
                         taskResults.mes_img_url = mqtt.mes_img_url;
+                        taskResults.ao_no = mqtt.ao_no;
+                        taskResults.target_qty = mqtt.target_qty;
+                        taskResults.delivery_date = mqtt.delivery_date;
+                        taskResults.destination = mqtt.destination;
+                        taskResults.style_text = mqtt.style_text;
+                        taskResults.buyer_style_text = mqtt.buyer_style_text;
+                        taskResults.line_name = mqtt.line_name;
+                        taskResults.style_color = mqtt.style_color;
+                        taskResults.buyer_po = mqtt.buyer_po;
+
                         // Download MES img from url and display it
                         request.get("http://203.113.151.196:8888", get_resized_mes_img,
                                     get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,

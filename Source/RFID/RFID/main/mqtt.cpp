@@ -143,6 +143,17 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
         mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
         mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
 
+        ao_no = extract_value_from_json_string(raw_last_payload, "aono");
+        target_qty = extract_value_from_json_string(raw_last_payload, "targetQty");
+        delivery_date = extract_value_from_json_string(raw_last_payload, "deliveryDate");
+        destination = extract_value_from_json_string(raw_last_payload, "destination");
+        style_text = extract_value_from_json_string(raw_last_payload, "styleText");
+        buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
+        line_name = extract_value_from_json_string(raw_last_payload, "lineNo");
+        style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
+        buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
+
+        // Print the extracted values
         Serial.print(F("Extracted MES key: "));
         Serial.println(last_payload);
         Serial.print(F("Extracted MES operation name: "));

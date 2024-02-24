@@ -23,7 +23,17 @@ private:
     String last_subscribed_topic;
 public:
     String last_payload;
-    String mes_operation_name, mes_img_url;
+    String mes_operation_name;
+    String mes_img_url;
+    String ao_no;
+    String target_qty;
+    String delivery_date;
+    String destination;
+    String style_text;
+    String buyer_style_text;
+    String line_name;
+    String style_color;
+    String buyer_po;
     int mes_target;
     bool is_broker_connected;
     bool is_mes_package_selected;

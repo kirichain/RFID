@@ -112,6 +112,15 @@ typedef struct task_results {
     uint16_t mes_img_buffer[9800];
     int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
+    String ao_no = "";
+    String target_qty = "";
+    String delivery_date = "";
+    String destination = "";
+    String style_text = "";
+    String buyer_style_text = "";
+    String line_name = "";
+    String style_color = "";
+    String buyer_po = "";
     // For RFID
     int current_scanned_rfid_tag_count = 0;
     rfid_tag scanned_rfid_tags[100];

@@ -61,9 +61,9 @@
 
 // Defined Navigation Button Pins
 #define leftUpNavButtonPinDefinition 4
-#define backCancelNavButtonPinDefinition 0
-#define menuSelectNavButtonPinDefinition 5
-#define rightDownNavButtonPinDefinition 35
+#define backCancelNavButtonPinDefinition 27
+#define menuSelectNavButtonPinDefinition 32
+#define rightDownNavButtonPinDefinition 33
 
 // Defined Buzzer Pin
 #define buzzerPinDefinition 15
