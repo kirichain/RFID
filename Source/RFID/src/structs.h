@@ -107,11 +107,9 @@ typedef struct task_results {
     String selected_list_items[10] = {""};
     // For MQTT events
     String selected_mes_package = "";
+    String selected_mes_package_group = "";
     String mes_operation_name = "";
     String mes_img_url = "";
-    uint16_t mes_img_buffer[9800];
-    int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
-    int mes_target = 0;
     String ao_no = "";
     String target_qty = "";
     String delivery_date = "";
@@ -121,6 +119,9 @@ typedef struct task_results {
     String line_name = "";
     String style_color = "";
     String buyer_po = "";
+    uint16_t mes_img_buffer[9800];
+    int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
+    int mes_target = 0;
     // For RFID
     int current_scanned_rfid_tag_count = 0;
     rfid_tag scanned_rfid_tags[100];

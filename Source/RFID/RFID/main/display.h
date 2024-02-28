@@ -52,8 +52,15 @@
 #include "icons/green_tick_icon.h"
 #include "icons/red_x_icon.h"
 #include "icons/qr-code-placeholder-banner.h"
+#include "icons/blurred_register_rfid_tag_button.h"
+#include "icons/blurred_scan_button.h"
+#include "icons/mes_package_dialog_banner.h"
+#include "icons/start_button.h"
+#include "icons/submit_button.h"
+#include "icons/company_logo.h"
 
 extern TFT_eSPI tft;
+
 void GIFDraw(GIFDRAW *pDraw);
 
 class Display {
@@ -87,7 +94,7 @@ public:
     const byte VIEWPORT_HEIGHT = HEADER_HEIGHT - NAV_BAR_HEIGHT;
 
     // Column widths based on the content
-    const byte COL_WIDTH_NO = 40;
+    const byte COL_WIDTH_NO = 43;
     const byte COL_WIDTH_EPC = 110;
     const byte COL_WIDTH_TIMESTAMP = 130;
     const byte COL_WIDTH_COUNT = SCREEN_WIDTH - COL_WIDTH_NO - COL_WIDTH_EPC - COL_WIDTH_TIMESTAMP;
@@ -131,7 +138,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 38; //  Number of icons
+    static const byte numIcons = 44; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -196,50 +203,62 @@ public:
             "outgoing_box_icon",
             "green_tick_icon",
             "red_x_icon",
-            "qr_code_placeholder_banner_icon"
+            "qr_code_placeholder_banner_icon",
+            "blurred_register_rfid_tag_button_icon",
+            "blurred_scan_button_icon",
+            "mes_package_dialog_banner_icon",
+            "start_button_icon",
+            "submit_button_icon",
+            "company_logo_icon"
     };
 
     // Map menu names to menu icon data arrays
     menu_icon icons[numIcons] = {
-            {"co-working_icon",                   co_working_icon},
-            {"connect-to-device_icon",            connect_to_device_icon},
-            {"connect-to-server_icon",            connect_to_server_icon},
-            {"scan-nearby-devices_icon",          scan_nearby_devices_icon},
-            {"rfid_icon",                         rfid_icon},
-            {"scan_icon",                         scan_icon},
-            {"scan-history_icon",                 scan_history_icon},
-            {"modify-rfid-tag_icon",              modify_rfid_tag_icon},
-            {"setting_icon",                      setting_icon},
-            {"wifi-setting_icon",                 wifi_setting_icon},
-            {"user_icon",                         user_icon},
-            {"login_icon",                        login_icon},
-            {"logout_icon",                       logout_icon},
-            {"database-setting_icon",             database_setting_icon},
-            {"import_icon",                       import_icon},
-            {"import-from-sd-card_icon",          import_from_sd_card_icon},
-            {"import-from-server_icon",           import_from_server_icon},
-            {"import-from-computer_icon",         import_from_computer_icon},
-            {"export_icon",                       export_icon},
-            {"package_icon",                      package_icon},
-            {"package-details_icon",              package_details_icon},
-            {"sync-data_icon",                    sync_data_icon},
-            {"register_rfid_tag_icon",            register_rfid_tag_icon},
-            {"wifi_connection_successful_icon",   wifi_connection_successful_icon},
-            {"wifi_connection_failed_icon",       wifi_connection_failed_icon},
-            {"server_connection_successful_icon", server_connection_successful_icon},
-            {"server_connection_failed_icon",     server_connection_failed_icon},
-            {"register_rfid_tag_button_icon",     register_rfid_tag_button_icon},
-            {"setting_button_icon",               setting_button_icon},
-            {"scan_button_icon",                  scan_button_icon},
-            {"incoming_packed_boxes_banner_icon", incoming_packed_boxes_banner_icon},
-            {"outgoing_packed_boxes_banner_icon", outgoing_packed_boxes_banner_icon},
-            {"product_counting_banner_icon",      product_counting_banner_icon},
-            {"incoming_box_icon",                 incoming_box_icon},
-            {"outgoing_box_icon",                 outgoing_box_icon},
-            {"green_tick_icon",                   green_tick_icon},
-            {"red_x_icon",                        red_x_icon},
-            {"qr_code_placeholder_banner_icon",   qr_code_placeholder_banner_icon}
-            };
+            {"co-working_icon",                       co_working_icon},
+            {"connect-to-device_icon",                connect_to_device_icon},
+            {"connect-to-server_icon",                connect_to_server_icon},
+            {"scan-nearby-devices_icon",              scan_nearby_devices_icon},
+            {"rfid_icon",                             rfid_icon},
+            {"scan_icon",                             scan_icon},
+            {"scan-history_icon",                     scan_history_icon},
+            {"modify-rfid-tag_icon",                  modify_rfid_tag_icon},
+            {"setting_icon",                          setting_icon},
+            {"wifi-setting_icon",                     wifi_setting_icon},
+            {"user_icon",                             user_icon},
+            {"login_icon",                            login_icon},
+            {"logout_icon",                           logout_icon},
+            {"database-setting_icon",                 database_setting_icon},
+            {"import_icon",                           import_icon},
+            {"import-from-sd-card_icon",              import_from_sd_card_icon},
+            {"import-from-server_icon",               import_from_server_icon},
+            {"import-from-computer_icon",             import_from_computer_icon},
+            {"export_icon",                           export_icon},
+            {"package_icon",                          package_icon},
+            {"package-details_icon",                  package_details_icon},
+            {"sync-data_icon",                        sync_data_icon},
+            {"register_rfid_tag_icon",                register_rfid_tag_icon},
+            {"wifi_connection_successful_icon",       wifi_connection_successful_icon},
+            {"wifi_connection_failed_icon",           wifi_connection_failed_icon},
+            {"server_connection_successful_icon",     server_connection_successful_icon},
+            {"server_connection_failed_icon",         server_connection_failed_icon},
+            {"register_rfid_tag_button_icon",         register_rfid_tag_button_icon},
+            {"setting_button_icon",                   setting_button_icon},
+            {"scan_button_icon",                      scan_button_icon},
+            {"incoming_packed_boxes_banner_icon",     incoming_packed_boxes_banner_icon},
+            {"outgoing_packed_boxes_banner_icon",     outgoing_packed_boxes_banner_icon},
+            {"product_counting_banner_icon",          product_counting_banner_icon},
+            {"incoming_box_icon",                     incoming_box_icon},
+            {"outgoing_box_icon",                     outgoing_box_icon},
+            {"green_tick_icon",                       green_tick_icon},
+            {"red_x_icon",                            red_x_icon},
+            {"qr_code_placeholder_banner_icon",       qr_code_placeholder_banner_icon},
+            {"blurred_register_rfid_tag_button_icon", blurred_register_rfid_tag_button_icon},
+            {"blurred_scan_button_icon",              blurred_scan_button_icon},
+            {"mes_package_dialog_banner_icon",        mes_package_dialog_banner_icon},
+            {"start_button_icon",                     start_button_icon},
+            {"submit_button_icon",                    submit_button_icon},
+            {"company_logo_icon",                     company_logo_icon}
+    };
 
     // Example history array
 //    rfid_scan_result history[14] = {

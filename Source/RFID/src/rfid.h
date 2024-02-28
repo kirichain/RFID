@@ -151,7 +151,7 @@ public:
 
     static String byte_array_to_hex_string(const uint8_t *byte_array, size_t array_length);
 
-    static String read_response_async();
+    String read_response_async();
 
     String read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
                          unsigned long timeout, rfid_response_type_t response_type);
@@ -164,7 +164,7 @@ public:
 
     void polling_once();
 
-    static void polling_multi();
+    void polling_multi();
 
     void print_rfid_tag_info();
 
@@ -179,6 +179,8 @@ public:
     bool is_duplicate_scan(const String &epc);
 
     static bool is_valid_epc_response(const String &response);
+
+    void stop_scanning();
 };
 
 #endif //RFID_RFID_H

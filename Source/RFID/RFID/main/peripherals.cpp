@@ -26,6 +26,7 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(backCancelNavButtonPin, INPUT_PULLUP);
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
+
     Serial.println("Initialized navigation buttons");
 }
 
@@ -38,7 +39,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     byte currentMenuSelectNavButtonState = digitalRead(menuSelectNavButtonPin);
     byte currentRightDownNavButtonState = digitalRead(rightDownNavButtonPin);
 
-    // Check for left up navigation button press
+    // Check if left up navigation button is pressed
     if (currentLeftUpNavButtonState != lastLeftUpNavButtonState) {
         if (currentLeftUpNavButtonState == LOW) {
             Serial.println(F("Left Up Navigation Button Pressed"));
@@ -56,7 +57,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
         delay(50); // Delay for debouncing
     }
 
-    // Check for back cancel navigation button press
+    // Check if back cancel navigation button is pressed
     if (currentBackCancelNavButtonState != lastBackCancelNavButtonState) {
         if (currentBackCancelNavButtonState == LOW) {
             Serial.println(F("Back Cancel Navigation Button Pressed"));
@@ -67,7 +68,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
         delay(50); // Delay for debouncing
     }
 
-    // Check for menu select navigation button press
+    // Check if menu select navigation button is pressed
     if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
         if (currentMenuSelectNavButtonState == LOW) {
             Serial.println(F("Menu Select Navigation Button Pressed"));
@@ -78,7 +79,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
         delay(50); // Delay for debouncing
     }
 
-    // Check for right down navigation button press
+    // Check if right down navigation button is pressed
     if (currentRightDownNavButtonState != lastRightDownNavButtonState) {
         if (currentRightDownNavButtonState == LOW) {
             Serial.println(F("Right Down Navigation Button Pressed"));

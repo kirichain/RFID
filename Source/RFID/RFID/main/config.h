@@ -61,12 +61,18 @@
 
 // Defined Navigation Button Pins
 #define leftUpNavButtonPinDefinition 4
-#define backCancelNavButtonPinDefinition 27
-#define menuSelectNavButtonPinDefinition 32
-#define rightDownNavButtonPinDefinition 33
+//27
+#define backCancelNavButtonPinDefinition 0
+//32
+#define menuSelectNavButtonPinDefinition 5
+//33
+#define rightDownNavButtonPinDefinition 32
+
+// Defined Gun Button Pin
+#define gunButtonPinDefinition 12
 
 // Defined Buzzer Pin
-#define buzzerPinDefinition 15
+#define buzzerPinDefinition 27
 
 // Defined RFID Module Configuration
 #define rfid_rx_pin 25

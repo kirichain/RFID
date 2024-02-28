@@ -40,10 +40,11 @@ void Mediator::init_services() {
     }
     display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
-                                        menuSelectNavButtonPinDefinition, rightDownNavButtonPinDefinition);
+                                        gunButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Set buzzer pin
     peripherals.set_digital_output(buzzerPinDefinition);
     // Play welcome sound using buzzer
+    buzzer.init(buzzerPinDefinition);
     buzzer.welcome_sound();
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
@@ -163,6 +164,9 @@ void Mediator::execute_task(task_t task) {
                                     get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
                                     taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
                         mqtt.is_mes_package_selected = false;
+
+                        // Play successful sound
+                        buzzer.successful_sound();
                     }
                     break;
                 }
@@ -200,10 +204,6 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task INIT_STA_WIFI"));
             strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_3, sizeof(taskArgs.wifi_sta_ssid));
             strncpy(taskArgs.wifi_sta_password, default_wifi_password_3, sizeof(taskArgs.wifi_sta_password));
-//            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
-//            strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
-//            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_2, sizeof(taskArgs.wifi_sta_ssid));
-//            strncpy(taskArgs.wifi_sta_password, default_wifi_password_2, sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
@@ -216,7 +216,9 @@ void Mediator::execute_task(task_t task) {
 
                 // Get MQTT config from TPM server
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
+                buzzer.successful_sound();
             } else {
+                buzzer.failure_sound();
                 Serial.println(F("Init sta wifi failed. Reset in 3s"));
                 delay(3000);
                 // Reset device
@@ -322,7 +324,7 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
             peripherals.init_navigation_buttons(menuSelectNavButtonPinDefinition,
                                                 leftUpNavButtonPinDefinition,
-                                                rightDownNavButtonPinDefinition,
+                                                gunButtonPinDefinition,
                                                 backCancelNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
@@ -484,8 +486,12 @@ void Mediator::execute_task(task_t task) {
             rfid.set_scanning_mode(SINGLE_SCAN);
             //rfid.set_scanning_mode(MULTI_SCAN);
             rfid.scan_rfid_tag();
-            taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-            //taskResults.current_scanned_rfid_tag_count = rfid.
+            if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
+                taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+                buzzer.successful_sound();
+            } else {
+                buzzer.failure_sound();
+            }
             break;
         case REGISTER_RFID_TAG: {
             Serial.println(F("Execute task REGISTER_RFID_TAG"));
@@ -506,6 +512,7 @@ void Mediator::execute_task(task_t task) {
                              "PkerpVN2024*");
                 rfid.scanned_tag_count = 0;
             }
+            buzzer.successful_sound();
             break;
         }
         case WRITE_RFID_TAG:

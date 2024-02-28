@@ -16,5 +16,9 @@ public:
     void init(byte _buzzerPin);
 
     void welcome_sound() const;
+
+    void successful_sound() const;
+
+    void failure_sound() const;
 };
 #endif //RFID_BUZZER_H

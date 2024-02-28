@@ -64,7 +64,7 @@ String Rfid::read_response_async() {
                         Serial.print("No tags found. Count: ");
                         Serial.println(noTagCount);
 
-                        if (noTagCount >= 10) {
+                        if (noTagCount >= 5) {
                             Serial.println("No tag threshold exceeded. Stopping scan.");
                             //Serial.println(F("Stop scanning multi RFID tags"));
                             //send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
@@ -72,7 +72,29 @@ String Rfid::read_response_async() {
                         }
                     } else {
                         noTagCount = 0; // Reset the counter if a tag is found
-                        Serial.println(response); // Print the tag data
+                        // If the response type is EPC_READING, process the EPC
+                        if (is_valid_epc_response(response)) {
+                            Serial.println("Valid EPC response. Start appending");
+                            // Parse the EPC from the response
+                            Serial.println("Raw response: " + response);
+                            String epc = response.substring(16, 40);
+
+                            // Check for duplicatesW
+                            if (!is_duplicate_scan(epc)) {
+                                // If not a duplicate, add to scan_results and increment scanned_tag_count
+                                scan_results[scanned_tag_count].epc = epc;
+                                scanned_tag_count++;
+
+                                // Optionally print the new EPC
+                                Serial.print(F("New EPC scanned: "));
+                                Serial.println(epc);
+                            } else {
+                                Serial.print(F("Duplicate EPC: "));
+                                Serial.println(epc);
+                            }
+                        } else {
+                            Serial.println("Invalid EPC response or no tag read.");
+                        }
                     }
                     startDetected = false; // Reset the start detected flag for the next tag or message
                     response = ""; // Clear the response for the next message
@@ -244,9 +266,7 @@ void Rfid::scan_rfid_tag() {
         case MULTI_SCAN:
             Serial.println(F("Start scanning multi RFID tags"));
             polling_multi();
-            Serial.println(F("Stop scanning multi RFID tags"));
-            send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
+            stop_scanning();
             break;
     }
 }
@@ -312,4 +332,10 @@ bool Rfid::is_valid_epc_response(const String &response) {
 
     // If all checks pass, return true
     return true;
+}
+
+void Rfid::stop_scanning() {
+    Serial.println(F("Stop scanning multi RFID tags"));
+    send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
+    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
 }
