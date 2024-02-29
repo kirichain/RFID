@@ -82,6 +82,9 @@ public:
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
+    // For QR code
+    String qr_code_type = "";
+
     // Items in list on screen with screen item type = LIST_ITEM
     String screen_item_list_type_items[40] = {""};
     String screen_item_list_type_quantities[40] = {""};

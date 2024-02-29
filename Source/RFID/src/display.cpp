@@ -443,41 +443,45 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 //                Serial.println(F("MES package has been selected. Back to home"));
 //                is_back_to_home = true;
 //            } else {
-                Serial.println(F("This is the first time QR_CODE_SCANNING feature is rendered"));
 
-                //is_background_task_required = true;
-                //is_back_to_home = true;
-                //is_loading_animation_displayed = false;
-                // Reset current screen background tasks
-                for (byte i = 0; i < 10; ++i) {
-                    current_screen_background_tasks[i] = NO_TASK;
-                }
+            //is_background_task_required = true;
+            //is_back_to_home = true;
+            //is_loading_animation_displayed = false;
+            // Reset current screen background tasks
+            for (byte i = 0; i < 10; ++i) {
+                current_screen_background_tasks[i] = NO_TASK;
+            }
 
-                //current_screen_background_tasks[0] = HANDLE_MQTT_MESSAGE;
-                //Put QR code placeholder-------------------------------
-                iconWidth = 230;
-                iconHeight = 268;
-                put_icon(45, 76, menu_icon_names[37]);
-                // Generate and display QR code on the screen, content is mac address
-                // mes-package/mes-package-group/shipment-plan
-                String qr_code_type = R"({"qrCodeType":")";
-                String type = "";
-                switch (_taskResults.currentScreenItemIndex) {
-                    case 0:
-                        type = "MES-PACKAGE";
-                        break;
-                    case 1:
-                        type = "MES-PACKAGE-GROUP";
-                        break;
-                    case 2:
-                        type = "SHIPMENT-PLAN";
-                        break;
-                }
-                String mac_addr = R"(","macAddress":")";
-                Serial.println(
-                        "Generated QR code string: " + qr_code_type + type + mac_addr + _taskResults.mac_address +
-                        "\"}");
-                qrcode.create(qr_code_type + type + mac_addr + _taskResults.mac_address + "\"}");
+            //current_screen_background_tasks[0] = HANDLE_MQTT_MESSAGE;
+            //Put QR code placeholder-------------------------------
+            iconWidth = 230;
+            iconHeight = 268;
+            put_icon(45, 76, menu_icon_names[37]);
+            // Generate and display QR code on the screen, content is mac address
+            // mes-package/mes-package-group/shipment-plan
+            String qr_code_type_string = R"({"qrCodeType":")";
+            qr_code_type = "";
+            switch (_taskResults.currentScreenItemIndex) {
+                case 0:
+                    qr_code_type = "MES-PACKAGE";
+                    _taskResults.selected_mes_package = "";
+                    Serial.println(F("Waiting for MES package message arrives"));
+                    break;
+                case 1:
+                    qr_code_type = "MES-PACKAGE-GROUP";
+                    _taskResults.selected_mes_package_group = "";
+                    Serial.println(F("Waiting for MES package group message arrives"));
+                    break;
+                case 2:
+                    qr_code_type = "SHIPMENT-PLAN";
+                    break;
+            }
+            String mac_addr = R"(","macAddress":")";
+            Serial.println(
+                    "Generated QR code string: " + qr_code_type_string + qr_code_type + mac_addr +
+                    _taskResults.mac_address +
+                    "\"}");
+            qrcode.create(qr_code_type_string + qr_code_type + mac_addr + _taskResults.mac_address + "\"}");
 //            }
             break;
         }
@@ -510,15 +514,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconHeight = 131;
             put_icon(10, 46, menu_icon_names[32]);
             tft.setFreeFont(&FreeSansBold9pt7b);
-//            tft.setTextColor(TFT_WHITE);
-//            tft.drawString("Product Counting", 100, 51);
-//            tft.setFreeFont(&FreeSans9pt7b);
-//            tft.setTextColor(0x6B4D);
-//            tft.drawString("(Factory line)", 100, 75);
-//            tft.drawString("IoT mode: ", 100, 100);
             tft.setTextColor(TFT_WHITE);
             tft.setTextFont(2);
             tft.setTextSize(1);
+            tft.fillRect(10, 173, 300, 4, 0x95B7);
             if (_taskResults.selected_mes_package != "") {
                 tft.fillRect(58, 10, 150, 20, headerColor);
                 tft.drawString("Server connected", 58, 10);
@@ -530,11 +529,13 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.fillRect(10, 173, 300, 4, 0x2E3B);
                 tft.pushImage(20, 56, 70, 70, _taskResults.mes_img_buffer);
             } else {
+                tft.fillRect(58, 10, 150, 20, headerColor);
+                tft.setTextColor(TFT_WHITE);
+                tft.drawString("Server not connected", 58, 10);
                 tft.drawString("Not connected", 185, 85);
                 tft.drawString("[ Target ]", 185, 105);
                 tft.drawString("[ Op Name ]", 20, 131);
                 tft.drawString("[ MES Package ]", 20, 153);
-                tft.fillRect(10, 173, 300, 4, 0x95B7);
             }
             // Update accordingly screen item
             _item_position = {10, 46, iconWidth, iconHeight};
@@ -545,11 +546,32 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconHeight = 102;
             // Put Incoming packed boxes banner--------------------------------------
             put_icon(10, 191, menu_icon_names[30]);
-            tft.drawString("[ Package groups: ]", 20, 273);
             // Update accordingly screen item
             _item_position = {10, 191, iconWidth, iconHeight};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
+            if (_taskResults.selected_mes_package_group != "") {
+                if (_taskResults.selected_mes_package == "") {
+                    tft.fillRect(58, 10, 150, 20, headerColor);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString("Server connected", 58, 10);
+                    tft.setTextColor(0x573F);
+                    tft.fillRect(185, 85, 100, 20, 0x1B2E);
+                    tft.drawString("Connected", 185, 85);
+                    tft.fillRect(10, 173, 300, 4, 0x2E3B);
+                    tft.pushImage(20, 56, 70, 70, _taskResults.mes_img_buffer);
+                }
+                tft.drawString(_taskResults.selected_mes_package_group, 20, 273);
+            } else {
+                tft.setTextColor(TFT_WHITE);
+                tft.drawString("[ Package groups: ]", 20, 273);
+                if (_taskResults.selected_mes_package == "") {
+                    tft.fillRect(58, 10, 150, 20, headerColor);
+                    tft.drawString("Server not connected", 58, 10);
+                    tft.fillRect(185, 85, 100, 20, 0x1B2E);
+                    tft.drawString("Not connected", 185, 85);
+                }
+            }
 
             // Put Outgoing packed boxes banner------------------------------------
             put_icon(10, 307, menu_icon_names[31]);
@@ -604,7 +626,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_screen_features[0] = QR_CODE_SCANNING;
             current_screen_features[1] = QR_CODE_SCANNING;
             current_screen_features[2] = QR_CODE_SCANNING;
-            if ((_taskResults.selected_mes_package != "") or (_taskResults.selected_mes_package_group != "")) {
+            if ((_taskResults.selected_mes_package != "") and (_taskResults.selected_mes_package_group != "")) {
                 current_screen_features[3] = RFID_REGISTER_TAG;
                 current_screen_features[4] = RFID_SCAN_DETAILS_REVIEW;
             }

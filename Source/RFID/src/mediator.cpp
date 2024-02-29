@@ -141,13 +141,10 @@ void Mediator::execute_task(task_t task) {
             //Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
             switch (taskArgs.feature) {
                 case QR_CODE_SCANNING: {
-                    if (taskResults.currentScreenItemIndex == 0) {
+                    if (display.qr_code_type == "MES-PACKAGE") {
                         taskResults.selected_mes_package = "";
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
-//                        while (!mqtt.is_mes_package_selected) {
-//                            yield();
-//                        }
                         if (mqtt.is_mes_package_selected) {
                             taskResults.selected_mes_package = mqtt.mes_package;
                             taskResults.mes_operation_name = mqtt.mes_operation_name;
@@ -174,14 +171,13 @@ void Mediator::execute_task(task_t task) {
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
+                            display.qr_code_type = "";
                         }
-                    } else if (taskResults.currentScreenItemIndex == 1) {
+                    } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
                         taskResults.selected_mes_package_group = "";
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
-                        while (!mqtt.is_mes_package_group_selected) {
-                            yield();
-                        }
+
                         if (mqtt.is_mes_package_group_selected) {
                             taskResults.selected_mes_package_group = mqtt.mes_package_group;
                             taskResults.mes_operation_name = mqtt.mes_operation_name;
@@ -208,6 +204,7 @@ void Mediator::execute_task(task_t task) {
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
+                            display.qr_code_type = "";
                         }
                     }
                     break;

@@ -139,6 +139,7 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
         String _type = extract_value_from_json_string(raw_last_payload, "type");
         Serial.println("Extracted MES type: " + _type);
         if ((expected_event == MES_PACKAGE_SELECTED) and (_type == "MES-PACKAGE")) {
+            Serial.println(F("MES package message has arrived"));
             is_mes_package_selected = true;
 
             // Extract MES package, operation name, target and img url
@@ -168,11 +169,13 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
             Serial.println(mes_target);
         }
         if ((expected_event == MES_PACKAGE_GROUP_SELECTED) and (_type == "MES-PACKAGEGROUP")) {
+            Serial.println(F("MES package group message has arrived"));
+
             is_mes_package_group_selected = true;
 
             // Extract MES package, operation name, target and img url
             mes_package_group = extract_value_from_json_string(raw_last_payload, "packageGroup");
-            mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
+            mes_img_url = extract_value_from_json_string(raw_last_payload, "imageUrl");
 
             ao_no = extract_value_from_json_string(raw_last_payload, "aono");
             style_text = extract_value_from_json_string(raw_last_payload, "style");
