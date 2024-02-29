@@ -430,26 +430,30 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         }
         case QR_CODE_SCANNING: {
             // Wait for mobile app to scan the QR code and select MES package, then back to home
-            if (is_background_task_completed) {
-                // Reset current screen tasks
-                memset(current_screen_tasks, NO_TASK, 10);
-                current_screen_tasks[0] = NO_TASK;
-                // Reset current screen features
-                memset(current_screen_features, NO_FEATURE, 10);
-                // Reset display settings
-                reset_display_setting();
-                // Back to home
-                Serial.println(F("MES package has been selected. Back to home"));
-            } else {
-                is_background_task_required = true;
-                is_back_to_home = true;
+//            if ((is_background_task_completed) and
+//                ((_taskResults.selected_mes_package != "") or (_taskResults.selected_mes_package_group != ""))) {
+//                // Reset current screen tasks
+//                memset(current_screen_tasks, NO_TASK, 10);
+//                current_screen_tasks[0] = NO_TASK;
+//                // Reset current screen features
+//                memset(current_screen_features, NO_FEATURE, 10);
+//                // Reset display settings
+//                reset_display_setting();
+//                // Back to home
+//                Serial.println(F("MES package has been selected. Back to home"));
+//                is_back_to_home = true;
+//            } else {
+                Serial.println(F("This is the first time QR_CODE_SCANNING feature is rendered"));
+
+                //is_background_task_required = true;
+                //is_back_to_home = true;
                 //is_loading_animation_displayed = false;
                 // Reset current screen background tasks
                 for (byte i = 0; i < 10; ++i) {
                     current_screen_background_tasks[i] = NO_TASK;
                 }
 
-                current_screen_background_tasks[0] = HANDLE_MQTT_MESSAGE;
+                //current_screen_background_tasks[0] = HANDLE_MQTT_MESSAGE;
                 //Put QR code placeholder-------------------------------
                 iconWidth = 230;
                 iconHeight = 268;
@@ -474,7 +478,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                         "Generated QR code string: " + qr_code_type + type + mac_addr + _taskResults.mac_address +
                         "\"}");
                 qrcode.create(qr_code_type + type + mac_addr + _taskResults.mac_address + "\"}");
-            }
+//            }
             break;
         }
         case HOME_HANDHELD_1: {

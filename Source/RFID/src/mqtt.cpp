@@ -136,48 +136,79 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
     }
 
     if (String(topic) == "rfid/mes/" + mac_address) {
-        if (expected_event == MES_PACKAGE_SELECTED) is_mes_package_selected = true;
-        // Extract MES package, operation name, target and img url
-        last_payload = extract_value_from_json_string(raw_last_payload, "mesKey");
-        mes_operation_name = extract_value_from_json_string(raw_last_payload, "opName");
-        mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
-        mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
+        String _type = extract_value_from_json_string(raw_last_payload, "type");
+        Serial.println("Extracted MES type: " + _type);
+        if ((expected_event == MES_PACKAGE_SELECTED) and (_type == "MES-PACKAGE")) {
+            is_mes_package_selected = true;
 
-        ao_no = extract_value_from_json_string(raw_last_payload, "aono");
-        target_qty = extract_value_from_json_string(raw_last_payload, "targetQty");
-        delivery_date = extract_value_from_json_string(raw_last_payload, "deliveryDate");
-        destination = extract_value_from_json_string(raw_last_payload, "destination");
-        style_text = extract_value_from_json_string(raw_last_payload, "styleText");
-        buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
-        line_name = extract_value_from_json_string(raw_last_payload, "lineNo");
-        style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
-        buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
+            // Extract MES package, operation name, target and img url
+            mes_package = extract_value_from_json_string(raw_last_payload, "mesKey");
+            mes_operation_name = extract_value_from_json_string(raw_last_payload, "opName");
+            mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
+            mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
 
-        // Print the extracted values
-        Serial.print(F("Extracted MES key: "));
-        Serial.println(last_payload);
-        Serial.print(F("Extracted MES operation name: "));
-        Serial.println(mes_operation_name);
-        Serial.print(F("Extracted MES img url: "));
-        Serial.println(mes_img_url);
-        Serial.print(F("Extracted MES target: "));
-        Serial.println(mes_target);
+            ao_no = extract_value_from_json_string(raw_last_payload, "aono");
+            target_qty = extract_value_from_json_string(raw_last_payload, "targetQty");
+            delivery_date = extract_value_from_json_string(raw_last_payload, "deliveryDate");
+            destination = extract_value_from_json_string(raw_last_payload, "destination");
+            style_text = extract_value_from_json_string(raw_last_payload, "styleText");
+            buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
+            line_name = extract_value_from_json_string(raw_last_payload, "lineNo");
+            style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
+            buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
+
+            // Print the extracted values
+            Serial.print(F("Extracted MES package: "));
+            Serial.println(mes_package);
+            Serial.print(F("Extracted MES operation name: "));
+            Serial.println(mes_operation_name);
+            Serial.print(F("Extracted MES img url: "));
+            Serial.println(mes_img_url);
+            Serial.print(F("Extracted MES target: "));
+            Serial.println(mes_target);
+        }
+        if ((expected_event == MES_PACKAGE_GROUP_SELECTED) and (_type == "MES-PACKAGEGROUP")) {
+            is_mes_package_group_selected = true;
+
+            // Extract MES package, operation name, target and img url
+            mes_package_group = extract_value_from_json_string(raw_last_payload, "packageGroup");
+            mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
+
+            ao_no = extract_value_from_json_string(raw_last_payload, "aono");
+            style_text = extract_value_from_json_string(raw_last_payload, "style");
+            buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyer");
+
+            // Print the extracted values
+            Serial.print(F("Extracted MES package group: "));
+            Serial.println(mes_package_group);
+            Serial.print(F("Extracted MES img url: "));
+            Serial.println(mes_img_url);
+        }
+
+        expected_event = NONE;
     }
 }
 
 void MQTT::wait_for_mqtt_event(mqtt_event_t _event){
     expected_event = _event;
-    switch (_event) {
-        case MES_PACKAGE_SELECTED:
-            while (!is_mes_package_selected) {
-                // Wait for message arrives to topic rfid/mes/{mac_address}
-                //Serial.println(F("Waiting for MES package selection"));
-                yield();
-            }
-            Serial.println(F("MES_PACKAGE_SELECTED event has arrived"));
-            break;
-    }
-    expected_event = NONE;
+//    switch (_event) {
+//        case MES_PACKAGE_SELECTED:
+//            while (!is_mes_package_selected) {
+//                // Wait for message arrives to topic rfid/mes/{mac_address}
+//                //Serial.println(F("Waiting for MES package selection"));
+//                yield();
+//            }
+//            Serial.println(F("MES_PACKAGE_SELECTED event has arrived"));
+//            break;
+//        case MES_PACKAGE_GROUP_SELECTED:
+//            while (!is_mes_package_group_selected) {
+//                // Wait for message arrives to topic rfid/mes/{mac_address}
+//                //Serial.println(F("Waiting for MES package group selection"));
+//                yield();
+//            }
+//            Serial.println(F("MES_PACKAGE_GROUP_SELECTED event has arrived"));
+//            break;
+//    }
 }
 
 String MQTT::extract_value_from_json_string(const String& data, const String& key) {

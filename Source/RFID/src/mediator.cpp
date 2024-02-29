@@ -38,14 +38,14 @@ void Mediator::init_services() {
     } else {
         display.init(PORTRAIT);
     }
-    display.render_feature(LOADING, taskResults);
-    peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
-                                        gunButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Set buzzer pin
     peripherals.set_digital_output(buzzerPinDefinition);
     // Play welcome sound using buzzer
     buzzer.init(buzzerPinDefinition);
     buzzer.welcome_sound();
+    display.render_feature(LOADING, taskResults);
+    peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
+                                        gunButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
     // Get mac address
@@ -71,12 +71,18 @@ void Mediator::execute_task(task_t task) {
             display.blink_screen(isTaskCompleted);
             break;
         case READ_SERIAL_COMMUNICATION_MESSAGE:
-            //Serial.println(F("Execute task RECEIVE_COMMUNICATION_MESSAGE"));
+            //Serial.println(F("Execute task READ_COMMUNICATION_MESSAGE"));
 
             break;
         case SEND_SERIAL_COMMUNICATION_MESSAGE:
             Serial.println(F("Execute task SEND_COMMUNICATION_MESSAGE"));
 
+            break;
+        case INIT_MESSAGE_QUEUE:
+            Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
+            break;
+        case CLEAR_MESSAGE_QUEUE:
+            Serial.println(F("Execute task CLEAR_MESSAGE_QUEUE"));
             break;
         case GET_MQTT_CONFIG_FROM_SERVER: {
             Serial.println(F("Execute task GET_MQTT_CONFIG_FROM_SERVER"));
@@ -108,12 +114,6 @@ void Mediator::execute_task(task_t task) {
             }
             break;
         }
-        case INIT_MESSAGE_QUEUE:
-            Serial.println(F("Execute task INIT_MESSAGE_QUEUE"));
-            break;
-        case CLEAR_MESSAGE_QUEUE:
-            Serial.println(F("Execute task CLEAR_MESSAGE_QUEUE"));
-            break;
         case PUBLISH_MQTT_MESSAGE:
             Serial.println(F("Execute task PUBLISH_MQTT_MESSAGE"));
             break;
@@ -138,35 +138,77 @@ void Mediator::execute_task(task_t task) {
                                    wifi.mac_address);
             break;
         case HANDLE_MQTT_MESSAGE:
-            Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
+            //Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
             switch (taskArgs.feature) {
                 case QR_CODE_SCANNING: {
-                    taskResults.selected_mes_package = "";
-                    // Wait until the message with according event arrives
-                    mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
-                    if (mqtt.is_mes_package_selected) {
-                        taskResults.selected_mes_package = mqtt.last_payload;
-                        taskResults.mes_operation_name = mqtt.mes_operation_name;
-                        taskResults.mes_target = mqtt.mes_target;
-                        taskResults.mes_img_url = mqtt.mes_img_url;
-                        taskResults.ao_no = mqtt.ao_no;
-                        taskResults.target_qty = mqtt.target_qty;
-                        taskResults.delivery_date = mqtt.delivery_date;
-                        taskResults.destination = mqtt.destination;
-                        taskResults.style_text = mqtt.style_text;
-                        taskResults.buyer_style_text = mqtt.buyer_style_text;
-                        taskResults.line_name = mqtt.line_name;
-                        taskResults.style_color = mqtt.style_color;
-                        taskResults.buyer_po = mqtt.buyer_po;
+                    if (taskResults.currentScreenItemIndex == 0) {
+                        taskResults.selected_mes_package = "";
+                        // Wait until the message with according event arrives
+                        mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
+//                        while (!mqtt.is_mes_package_selected) {
+//                            yield();
+//                        }
+                        if (mqtt.is_mes_package_selected) {
+                            taskResults.selected_mes_package = mqtt.mes_package;
+                            taskResults.mes_operation_name = mqtt.mes_operation_name;
+                            taskResults.mes_target = mqtt.mes_target;
+                            taskResults.mes_img_url = mqtt.mes_img_url;
+                            taskResults.ao_no = mqtt.ao_no;
+                            taskResults.target_qty = mqtt.target_qty;
+                            taskResults.delivery_date = mqtt.delivery_date;
+                            taskResults.destination = mqtt.destination;
+                            taskResults.style_text = mqtt.style_text;
+                            taskResults.buyer_style_text = mqtt.buyer_style_text;
+                            taskResults.line_name = mqtt.line_name;
+                            taskResults.style_color = mqtt.style_color;
+                            taskResults.buyer_po = mqtt.buyer_po;
 
-                        // Download MES img from url and display it
-                        request.get("http://203.113.151.196:8888", get_resized_mes_img,
-                                    get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
-                                    taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
-                        mqtt.is_mes_package_selected = false;
+                            // Download MES img from url and display it
+                            request.get("http://203.113.151.196:8888", get_resized_mes_img,
+                                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
+                            mqtt.is_mes_package_selected = false;
 
-                        // Play successful sound
-                        buzzer.successful_sound();
+                            // Play successful sound
+                            buzzer.successful_sound();
+                            // Back to home
+                            taskResults.currentFeature = NO_FEATURE;
+                            taskArgs.feature = HOME_HANDHELD_2;
+                        }
+                    } else if (taskResults.currentScreenItemIndex == 1) {
+                        taskResults.selected_mes_package_group = "";
+                        // Wait until the message with according event arrives
+                        mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
+                        while (!mqtt.is_mes_package_group_selected) {
+                            yield();
+                        }
+                        if (mqtt.is_mes_package_group_selected) {
+                            taskResults.selected_mes_package_group = mqtt.mes_package_group;
+                            taskResults.mes_operation_name = mqtt.mes_operation_name;
+                            taskResults.mes_target = mqtt.mes_target;
+                            taskResults.mes_img_url = mqtt.mes_img_url;
+                            taskResults.ao_no = mqtt.ao_no;
+                            taskResults.target_qty = mqtt.target_qty;
+                            taskResults.delivery_date = mqtt.delivery_date;
+                            taskResults.destination = mqtt.destination;
+                            taskResults.style_text = mqtt.style_text;
+                            taskResults.buyer_style_text = mqtt.buyer_style_text;
+                            taskResults.line_name = mqtt.line_name;
+                            taskResults.style_color = mqtt.style_color;
+                            taskResults.buyer_po = mqtt.buyer_po;
+
+                            // Download MES img from url and display it
+                            request.get("http://203.113.151.196:8888", get_resized_mes_img,
+                                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
+                            mqtt.is_mes_package_group_selected = false;
+
+                            // Play successful sound
+                            buzzer.successful_sound();
+                            // Back to home
+                            taskResults.currentFeature = NO_FEATURE;
+                            taskArgs.feature = HOME_HANDHELD_2;
+                        }
                     }
                     break;
                 }
@@ -609,7 +651,7 @@ const char *Mediator::task_as_string(task_t task) {
     return task_names[task];
 }
 
-const char *Mediator::feature_as_string(feature_t feature) {
+const char * Mediator::feature_as_string(feature_t feature) const {
     return feature_names[feature];
 }
 

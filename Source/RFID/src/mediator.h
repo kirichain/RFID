@@ -42,8 +42,7 @@ private:
     const char *feature_names[NUM_FEATURES] = {
             "BOOT", "LOADING", "QR_CODE_SCANNING", "HOME_HANDHELD_1", "HOME_HANDHELD_2", "HOME_TERMINAL", "SETUP",
             "SETUP_WIFI", "SETUP_USER_INFO", "SETUP_USER_INFO_LOGIN", "SETUP_USER_INFO_LOGOUT", "RFID", "RFID_SCAN",
-            "RFID_SCAN_HISTORY", "RFID_SCAN_RESULT", "RFID_MODIFY_TAG_DATA", "RFID_REGISTER_TAG",
-            "RFID_REGISTER_TAG_SCANNING_STARTING", "RFID_REGISTER_TAG_SCANNING_SUBMITTING", "RFID_FACTORY_SELECT",
+            "RFID_SCAN_HISTORY", "RFID_SCAN_RESULT", "RFID_MODIFY_TAG_DATA", "RFID_REGISTER_TAG", "RFID_FACTORY_SELECT",
             "RFID_WEEK_SELECT", "RFID_MES_PACKAGES_LIST", "RFID_PACKAGE_GROUPS_LIST", "RFID_BUYER_PO_LIST",
             "RFID_SCAN_DETAILS_REVIEW", "PACKAGE", "PACKAGE_DETAILS", "CO_WORKING", "CO_WORKING_SCAN_NEARBY_DEVICE",
             "CO_WORKING_CONNECT_TO_DEVICE", "CO_WORKING_CONNECT_TO_SERVER", "CO_WORKING_RUNNING", "DATABASE",
@@ -77,7 +76,7 @@ public:
 
     const char *task_as_string(task_t _task);
 
-    const char *feature_as_string(feature_t _feature);
+    const char * feature_as_string(feature_t _feature) const;
 
     static const char *extract_value_from_json_string(const char *data, const char *key);
 };

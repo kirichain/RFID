@@ -158,7 +158,7 @@ String Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_
                             Serial.println("Raw response: " + response);
                             String epc = response.substring(16, 40);
 
-                            // Check for duplicatesW
+                            // Check for duplicates
                             if (!is_duplicate_scan(epc)) {
                                 // If not a duplicate, add to scan_results and increment scanned_tag_count
                                 scan_results[scanned_tag_count].epc = epc;
@@ -254,9 +254,7 @@ void Rfid::scan_rfid_tag() {
             polling_once();
             Serial.print(F("Total scanned RFID tags currently: "));
             Serial.println(scanned_tag_count);
-            Serial.println(F("Stop scanning RFID tags once"));
-            send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-            Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
+            stop_scanning();
             for (byte i = 0; i < 100; ++i) {
                 Serial.print(scan_results[i].epc);
                 Serial.print(", ");

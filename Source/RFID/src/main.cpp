@@ -56,6 +56,7 @@ void loop() {
     mediator.set_current_feature();
     mediator.execute_task(READ_NAVIGATION_BUTTON);
     mediator.execute_task(READ_SERIAL_COMMUNICATION_MESSAGE);
+    mediator.execute_task(HANDLE_MQTT_MESSAGE);
 
     mediator.taskArgs.task = mediator.taskResults.currentTask;
     mediator.set_current_task();
