@@ -43,7 +43,6 @@
 #include "icons/server-connection-failed.h"
 #include "icons/register_rfid_tag_button.h"
 #include "icons/setting_button.h"
-#include "icons/scan_button.h"
 #include "icons/incoming-packed-boxes-banner.h"
 #include "icons/outgoing-packed-boxes-banner.h"
 #include "icons/product-counting-banner.h"
@@ -55,9 +54,12 @@
 #include "icons/blurred_register_rfid_tag_button.h"
 #include "icons/blurred_scan_button.h"
 #include "icons/mes_package_dialog_banner.h"
-#include "icons/start_button.h"
+#include "icons/start_scanning_button.h"
 #include "icons/submit_button.h"
+#include "icons/scan_button.h"
+#include "icons/text_scan_button.h"
 #include "icons/company_logo.h"
+#include "icons/clear_button.h"
 
 extern TFT_eSPI tft;
 
@@ -79,6 +81,7 @@ public:
     bool is_background_task_completed = false;
     bool is_loading_animation_displayed = false;
     bool is_back_to_home = false;
+    bool is_viewport_cleared = true;
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
 
@@ -141,7 +144,7 @@ public:
 //    const byte iconHeight = 96; // Height of the icon
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 44; //  Number of icons
+    static const byte numIcons = 47; //  Number of icons
     const byte textHeight = 10; // Height of the text area under the icon
 
     // Calculate the horizontal and vertical spacing between the icons
@@ -210,9 +213,11 @@ public:
             "blurred_register_rfid_tag_button_icon",
             "blurred_scan_button_icon",
             "mes_package_dialog_banner_icon",
-            "start_button_icon",
+            "start_scanning_button_icon",
+            "text_scan_button_icon",
+            "clear_button_icon",
             "submit_button_icon",
-            "company_logo_icon"
+            "company_logo_icon",
     };
 
     // Map menu names to menu icon data arrays
@@ -258,28 +263,12 @@ public:
             {"blurred_register_rfid_tag_button_icon", blurred_register_rfid_tag_button_icon},
             {"blurred_scan_button_icon",              blurred_scan_button_icon},
             {"mes_package_dialog_banner_icon",        mes_package_dialog_banner_icon},
-            {"start_button_icon",                     start_button_icon},
+            {"start_scanning_button_icon",            start_scanning_button_icon},
+            {"text_scan_button_icon",                 text_scan_button_icon},
+            {"clear_button_icon",                     clear_button_icon},
             {"submit_button_icon",                    submit_button_icon},
             {"company_logo_icon",                     company_logo_icon}
     };
-
-    // Example history array
-//    rfid_scan_result history[14] = {
-//            {true, {"EPC123456789", "PID123", "M",  "Red",     "img_url_1",  "STID123", "BrandA", "PO123456", ASSOCIATED},   "2024-01-02 10:00", 5},
-//            {true, {"EPC987654321", "PID987", "L",  "Blue",    "img_url_2",  "STID987", "BrandB", "PO654321", UNASSOCIATED}, "2024-01-02 09:45", 5},
-//            {true, {"EPC564738291", "PID564", "S",  "Green",   "img_url_3",  "STID564", "BrandC", "PO564738", ASSOCIATED},   "2024-01-02 09:30", 5},
-//            {true, {"EPC864213579", "PID864", "XL", "Black",   "img_url_4",  "STID864", "BrandD", "PO864213", UNASSOCIATED}, "2024-01-02 09:15", 5},
-//            {true, {"EPC975310864", "PID975", "M",  "Yellow",  "img_url_5",  "STID975", "BrandE", "PO975310", ASSOCIATED},   "2024-01-02 09:00", 5},
-//            {true, {"EPC472859106", "PID472", "L",  "White",   "img_url_6",  "STID472", "BrandF", "PO472859", UNASSOCIATED}, "2024-01-02 08:45", 5},
-//            {true, {"EPC582947015", "PID582", "S",  "Purple",  "img_url_7",  "STID582", "BrandG", "PO582947", ASSOCIATED},   "2024-01-02 08:30", 5},
-//            {true, {"EPC693840257", "PID693", "XL", "Orange",  "img_url_8",  "STID693", "BrandH", "PO693840", UNASSOCIATED}, "2024-01-02 08:15", 5},
-//            {true, {"EPC204857396", "PID204", "M",  "Pink",    "img_url_9",  "STID204", "BrandI", "PO204857", ASSOCIATED},   "2024-01-02 08:00", 5},
-//            {true, {"EPC918273645", "PID918", "L",  "Grey",    "img_url_10", "STID918", "BrandJ", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-//            {true, {"EPC918273645", "PID918", "S",  "Brown",   "img_url_11", "STID918", "BrandK", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-//            {true, {"EPC918273645", "PID918", "XL", "Cyan",    "img_url_12", "STID918", "BrandL", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-//            {true, {"EPC918273645", "PID918", "M",  "Magenta", "img_url_13", "STID918", "BrandM", "PO918273", ASSOCIATED},   "2024-01-02 07:45", 5},
-//            {true, {"EPC918273645", "PID918", "L",  "Lime",    "img_url_14", "STID918", "BrandN", "PO918273", UNASSOCIATED}, "2024-01-02 07:45", 5},
-//    };
 
     Display();
 

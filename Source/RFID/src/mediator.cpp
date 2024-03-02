@@ -156,9 +156,10 @@ void Mediator::execute_task(task_t task) {
                             taskResults.destination = mqtt.destination;
                             taskResults.style_text = mqtt.style_text;
                             taskResults.buyer_style_text = mqtt.buyer_style_text;
-                            taskResults.line_name = mqtt.line_name;
+                            taskResults.line_no = mqtt.line_no;
                             taskResults.style_color = mqtt.style_color;
                             taskResults.buyer_po = mqtt.buyer_po;
+                            taskResults.module_name = mqtt.module_name;
 
                             // Download MES img from url and display it
                             request.get("http://203.113.151.196:8888", get_resized_mes_img,
@@ -189,9 +190,10 @@ void Mediator::execute_task(task_t task) {
                             taskResults.destination = mqtt.destination;
                             taskResults.style_text = mqtt.style_text;
                             taskResults.buyer_style_text = mqtt.buyer_style_text;
-                            taskResults.line_name = mqtt.line_name;
+                            taskResults.line_no = mqtt.line_no;
                             taskResults.style_color = mqtt.style_color;
                             taskResults.buyer_po = mqtt.buyer_po;
+                            taskResults.module_name = mqtt.module_name;
 
                             // Download MES img from url and display it
                             request.get("http://203.113.151.196:8888", get_resized_mes_img,
@@ -291,6 +293,7 @@ void Mediator::execute_task(task_t task) {
             break;
         case RENDER_FEATURE:
             static bool is_render_forced = false;
+
             if ((taskArgs.feature != taskResults.currentFeature) or (is_render_forced)) {
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
@@ -331,9 +334,9 @@ void Mediator::execute_task(task_t task) {
                     taskResults.currentScreenItemIndex = 0;
                     // Update screen item count for screen selector
                     taskResults.screenItemCount = display.screen_item_count;
-                    // Update type of items on the screen
+                    // Update the type of items on the screen
                     taskResults.feature_item_type = display.current_feature_item_type;
-                    // Update list of features/tasks of items on the screen
+                    // Update the list of features/tasks of items on the screen
                     switch (taskResults.feature_item_type) {
                         case MENU_ICON:
                             for (int i = 0; i < 10; ++i) {
@@ -355,7 +358,8 @@ void Mediator::execute_task(task_t task) {
                     Serial.println(F(" items on the screen"));
                 }
             } else {
-                // Feature is not changed. Keep current rendering
+                // The Feature is not changed.
+                // Keep current rendering
                 //Serial.println(F("Feature is not changed. Keep current rendering"));
             }
             break;
@@ -405,6 +409,9 @@ void Mediator::execute_task(task_t task) {
                 case SELECT:
                     switch (taskResults.feature_item_type) {
                         case MENU_ICON:
+                            // Reset navigation history if we render home
+                            if (taskResults.currentFeature == HOME_HANDHELD_2) clear_navigation_history();
+
                             Serial.println(F("Retrieving corresponding feature now"));
                             Serial.print(F("Current screen item index: "));
                             Serial.println(taskResults.currentScreenItemIndex);
@@ -416,13 +423,13 @@ void Mediator::execute_task(task_t task) {
                                                                        taskResults.featureNavigationHistory,
                                                                        taskResults.featureNavigationHistorySize);
 
-                            // Set screen selector border color accordingly to next feature
+                            // Set screen selector border color accordingly to the next feature
                             display.set_screen_selector_border_color(taskArgs.feature);
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
                             //taskArgs.feature = taskResults.screenFeatures[0];
-                            // Append selected item in the list of this screen into selected list items array
+                            // Append selected item in the list of this screen into the selected list items array
                             if (taskResults.selected_list_items[0] == "") {
                                 taskResults.selected_list_items[0]
                                         = display.current_screen_list_items[taskResults.currentScreenItemIndex];
@@ -440,7 +447,7 @@ void Mediator::execute_task(task_t task) {
 
                             Serial.print(F("Submitted selected item in the list: "));
                             Serial.println(display.current_screen_list_items[taskResults.currentScreenItemIndex]);
-                            // Set current item index to 0 because we only have 1 screen to be rendered next
+                            // Set the current item index to 0 because we only have 1 screen to be rendered next
                             taskResults.currentScreenItemIndex = 0;
                             Serial.println(F("Retrieving corresponding task now"));
                             peripherals.retrieve_corresponding_feature(taskArgs.previousFeature,
@@ -459,22 +466,32 @@ void Mediator::execute_task(task_t task) {
                             //peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
                         case TASK_ITEM:
-                            // We just execute task which is associated with the clicked item. Render to next feature will be done in the task
+                            // We just execute the task which is associated with the clicked item.
+                            // Render to next feature will be done in the task
                             //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
                             is_render_forced = true;
                             break;
                     }
                     break;
                 case BACK_CANCEL:
-                    Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
-                                                                taskResults.currentFeature, taskArgs.feature,
-                                                                taskResults.currentScreenItemIndex,
-                                                                taskResults.screenFeatures, is_nav_button_pressed,
-                                                                taskResults.featureNavigationHistory,
-                                                                taskResults.featureNavigationHistorySize);
+                    // If we are in home, no back anymore
+                    if (taskResults.currentFeature != HOME_HANDHELD_2) {
+                        Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
+                                                                    taskResults.currentFeature, taskArgs.feature,
+                                                                    taskResults.currentScreenItemIndex,
+                                                                    taskResults.screenFeatures, is_nav_button_pressed,
+                                                                    taskResults.featureNavigationHistory,
+                                                                    taskResults.featureNavigationHistorySize);
 
-                    // Set screen selector border color accordingly to next feature
-                    display.set_screen_selector_border_color(taskArgs.feature);
+                        // Set screen selector border color accordingly to the next feature
+                        display.set_screen_selector_border_color(taskArgs.feature);
+                        if ((taskResults.currentFeature == RFID_SCAN_RESULT) or
+                            (taskResults.currentFeature == RFID_REGISTER_TAG)) {
+                            display.is_viewport_cleared = true;
+                        }
+                    } else {
+                        clear_navigation_history();
+                    }
             }
             break;
         }
@@ -523,6 +540,11 @@ void Mediator::execute_task(task_t task) {
         case READ_RFID_TAG:
             Serial.println(F("Execute task READ_RFID_TAG"));
             rfid.set_scanning_mode(SINGLE_SCAN);
+            // Reset scan result count if we are in RFID_REGISTER_TAG or RFID_SCAN_RESULT the first time
+            if (taskResults.is_the_first_scan) {
+                rfid.scanned_tag_count = 0;
+                taskResults.is_the_first_scan = false;
+            }
             //rfid.set_scanning_mode(MULTI_SCAN);
             rfid.scan_rfid_tag();
             if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
@@ -561,6 +583,17 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task SET_RFID_SCANNING_MODE"));
             rfid.set_scanning_mode(taskArgs.scanning_mode);
             break;
+        case RESET_SCANNED_RFID_TAG_COUNT: {
+            Serial.println(F("RESET_SCANNED_RFID_TAG_COUNT"));
+            // Reset scanned RFID tag count, matched-MES scanned RFID tag count
+            rfid.scanned_tag_count = 0;
+            taskResults.current_scanned_rfid_tag_count = 0;
+            taskResults.current_matched_mes_scanned_rfid_tag_count = 0;
+            for (byte i = 0; i < 100; ++i) {
+                taskResults.scanned_rfid_tags[i].epc = "";
+            }
+            break;
+        }
         case INSERT_DATA_ROW:
             Serial.println(F("Execute task INSERT_DATA_ROW"));
             break;
@@ -648,7 +681,7 @@ const char *Mediator::task_as_string(task_t task) {
     return task_names[task];
 }
 
-const char * Mediator::feature_as_string(feature_t feature) const {
+const char *Mediator::feature_as_string(feature_t feature) const {
     return feature_names[feature];
 }
 
@@ -660,7 +693,7 @@ const char *Mediator::extract_value_from_json_string(const char *data, const cha
         size_t length = static_cast<size_t>(end - start);
 
 //        // Create a buffer to store the extracted value
-//        static char value[100];  // Adjust the buffer size as per your requirement
+//        static char value[100]; // Adjust the buffer size as per your requirement
 //        strncpy(value, start, length);
 //        value[length] = '\0';  // Null-terminate the value string
 //        Serial.println(value);
@@ -674,4 +707,13 @@ const char *Mediator::extract_value_from_json_string(const char *data, const cha
         return value;
     }
     return nullptr;  // Key not found
+}
+
+void Mediator::clear_navigation_history() {
+    // Reset navigation history
+    for (byte i = 0; i < 10; ++i) {
+        taskResults.featureNavigationHistory[i] = NO_FEATURE;
+    }
+    taskResults.featureNavigationHistorySize = 1;
+    taskResults.featureNavigationHistory[1] = HOME_HANDHELD_2;
 }

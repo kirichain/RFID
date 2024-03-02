@@ -60,7 +60,7 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             // Set text color for the header
             tft.setTextColor(textColor, headerColor);
 
-            // Wifi and server status icons
+            // Wi-Fi and server status icons
             tft.pushImage(10, 11, 19, 14, company_logo_icon);
             tft.pushImage(39, 10, 16, 16, server_connection_successful_icon);
             tft.drawString("Server not connected", 58, 10);
@@ -79,10 +79,10 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             // Set text color for the header
             tft.setTextColor(textColor, headerColor);
 
-            // Draw WiFi status at the top-left
+            // Draw Wi-Fi status at the top-left
             tft.drawString(wifiStatus, 5, 5);
 
-            // Draw login status directly below WiFi status
+            // Draw login status directly below Wi-Fi status
             tft.drawString(loginStatus, 5, 20);
 
             // Draw date and time at the top-right
@@ -313,7 +313,7 @@ void Display::render_item_list(bool is_new_list_set, bool navigation_direction, 
     }
 
     // Just render 8 items per called time, as long as item content is not blank
-    // Neednt update screen item position again, just re-render content
+    // Needn't update screen item position again, just re-render content
     tft.setTextColor(TFT_WHITE);
     tft.setFreeFont(&FreeSans9pt7b);
     tft.setTextDatum(TL_DATUM);
@@ -387,10 +387,9 @@ byte Display::calculate_rows(byte iconCount, byte _numColumns) {
 }
 
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
-    static bool _is_viewport_cleared = true;
     // Clear the viewport
     //backgroundColor = 0x441C;
-    if (_is_viewport_cleared) {
+    if (is_viewport_cleared) {
         Serial.println("Viewport is cleared now");
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
 
@@ -429,52 +428,39 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case QR_CODE_SCANNING: {
-            // Wait for mobile app to scan the QR code and select MES package, then back to home
-            if (is_background_task_completed) {
-                // Reset current screen tasks
-                memset(current_screen_tasks, NO_TASK, 10);
-                current_screen_tasks[0] = NO_TASK;
-                // Reset current screen features
-                memset(current_screen_features, NO_FEATURE, 10);
-                // Reset display settings
-                reset_display_setting();
-                // Back to home
-                Serial.println(F("MES package has been selected. Back to home"));
-            } else {
-                is_background_task_required = true;
-                is_back_to_home = true;
-                //is_loading_animation_displayed = false;
-                // Reset current screen background tasks
-                for (byte i = 0; i < 10; ++i) {
-                    current_screen_background_tasks[i] = NO_TASK;
-                }
-
-                current_screen_background_tasks[0] = HANDLE_MQTT_MESSAGE;
-                //Put QR code placeholder-------------------------------
-                iconWidth = 230;
-                iconHeight = 268;
-                put_icon(45, 76, menu_icon_names[37]);
-                // Generate and display QR code on the screen, content is mac address
-                // mes-package/mes-package-group/shipment-plan
-                String qr_code_type = R"({"qrCodeType":")";
-                String type = "";
-                switch (_taskResults.currentScreenItemIndex) {
-                    case 0:
-                        type = "MES-PACKAGE";
-                        break;
-                    case 1:
-                        type = "MES-PACKAGE-GROUP";
-                        break;
-                    case 2:
-                        type = "SHIPMENT-PLAN";
-                        break;
-                }
-                String mac_addr = R"(","macAddress":")";
-                Serial.println(
-                        "Generated QR code string: " + qr_code_type + type + mac_addr + _taskResults.mac_address +
-                        "\"}");
-                qrcode.create(qr_code_type + type + mac_addr + _taskResults.mac_address + "\"}");
+            // Reset current screen background tasks
+            for (byte i = 0; i < 10; ++i) {
+                current_screen_background_tasks[i] = NO_TASK;
             }
+            //Put QR code placeholder-------------------------------
+            iconWidth = 230;
+            iconHeight = 268;
+            put_icon(45, 76, menu_icon_names[37]);
+            // Generate and display QR code on the screen, content is mac address
+            // mes-package/mes-package-group/shipment-plan
+            String qr_code_type_string = R"({"qrCodeType":")";
+            qr_code_type = "";
+            switch (_taskResults.currentScreenItemIndex) {
+                case 0:
+                    qr_code_type = "MES-PACKAGE";
+                    _taskResults.selected_mes_package = "";
+                    Serial.println(F("Waiting for MES package message arrives"));
+                    break;
+                case 1:
+                    qr_code_type = "MES-PACKAGE-GROUP";
+                    _taskResults.selected_mes_package_group = "";
+                    Serial.println(F("Waiting for MES package group message arrives"));
+                    break;
+                case 2:
+                    qr_code_type = "SHIPMENT-PLAN";
+                    break;
+            }
+            String mac_addr = R"(","macAddress":")";
+            Serial.println(
+                    "Generated QR code string: " + qr_code_type_string + qr_code_type + mac_addr +
+                    _taskResults.mac_address +
+                    "\"}");
+            qrcode.create(qr_code_type_string + qr_code_type + mac_addr + _taskResults.mac_address + "\"}");
             break;
         }
         case HOME_HANDHELD_1: {
@@ -506,31 +492,31 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconHeight = 131;
             put_icon(10, 46, menu_icon_names[32]);
             tft.setFreeFont(&FreeSansBold9pt7b);
-//            tft.setTextColor(TFT_WHITE);
-//            tft.drawString("Product Counting", 100, 51);
-//            tft.setFreeFont(&FreeSans9pt7b);
-//            tft.setTextColor(0x6B4D);
-//            tft.drawString("(Factory line)", 100, 75);
-//            tft.drawString("IoT mode: ", 100, 100);
             tft.setTextColor(TFT_WHITE);
             tft.setTextFont(2);
             tft.setTextSize(1);
+            tft.fillRect(10, 173, 300, 4, 0x95B7);
             if (_taskResults.selected_mes_package != "") {
                 tft.fillRect(58, 10, 150, 20, headerColor);
                 tft.drawString("Server connected", 58, 10);
                 tft.setTextColor(0x573F);
                 tft.drawString("Connected", 185, 85);
                 tft.drawString(String(_taskResults.mes_target), 185, 105);
-                tft.drawString("Op Name: " + _taskResults.mes_operation_name, 20, 131);
+                tft.setTextColor(0xa554);
+                tft.drawString("Op Name: ", 20, 131);
+                tft.setTextColor(0x573F);
+                tft.drawString(_taskResults.mes_operation_name, 80, 131);
                 tft.drawString(_taskResults.selected_mes_package, 20, 153);
                 tft.fillRect(10, 173, 300, 4, 0x2E3B);
                 tft.pushImage(20, 56, 70, 70, _taskResults.mes_img_buffer);
             } else {
+                tft.fillRect(58, 10, 150, 20, headerColor);
+                tft.setTextColor(TFT_WHITE);
+                tft.drawString("Server not connected", 58, 10);
                 tft.drawString("Not connected", 185, 85);
                 tft.drawString("[ Target ]", 185, 105);
                 tft.drawString("[ Op Name ]", 20, 131);
                 tft.drawString("[ MES Package ]", 20, 153);
-                tft.fillRect(10, 173, 300, 4, 0x95B7);
             }
             // Update accordingly screen item
             _item_position = {10, 46, iconWidth, iconHeight};
@@ -541,11 +527,32 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconHeight = 102;
             // Put Incoming packed boxes banner--------------------------------------
             put_icon(10, 191, menu_icon_names[30]);
-            tft.drawString("[ Package groups: ]", 20, 273);
             // Update accordingly screen item
             _item_position = {10, 191, iconWidth, iconHeight};
             update_screen_item(screen_item_index, _item_position);
             ++screen_item_index;
+            if (_taskResults.selected_mes_package_group != "") {
+                if (_taskResults.selected_mes_package == "") {
+                    tft.fillRect(58, 10, 150, 20, headerColor);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString("Server connected", 58, 10);
+                    tft.setTextColor(0x573F);
+                    tft.fillRect(185, 85, 100, 20, 0x1B2E);
+                    tft.drawString("Connected", 185, 85);
+                    tft.fillRect(10, 173, 300, 4, 0x2E3B);
+                    tft.pushImage(20, 56, 70, 70, _taskResults.mes_img_buffer);
+                }
+                tft.drawString(_taskResults.selected_mes_package_group, 20, 273);
+            } else {
+                tft.setTextColor(TFT_WHITE);
+                tft.drawString("[ Package groups: ]", 20, 273);
+                if (_taskResults.selected_mes_package == "") {
+                    tft.fillRect(58, 10, 150, 20, headerColor);
+                    tft.drawString("Server not connected", 58, 10);
+                    tft.fillRect(185, 85, 100, 20, 0x1B2E);
+                    tft.drawString("Not connected", 185, 85);
+                }
+            }
 
             // Put Outgoing packed boxes banner------------------------------------
             put_icon(10, 307, menu_icon_names[31]);
@@ -620,7 +627,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.fillRect(16, 81, 288, 79, TFT_WHITE);
             // Draw the user info avatar
             tft.fillRect(32, 96, 45, 45, TFT_BLUE);
-            // Draw package infomartion
+            // Draw package information
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(TFT_BLACK);
             tft.drawString("Nguyen Van A", 86, 96);
@@ -648,7 +655,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 Serial.println(F("Start listing all available Wi-Fi networks on the screen"));
                 byte wifi_network_index = 0;
                 byte wifi_network_count = 0;
-                // Print all available wifi networks
+                // Print all available Wi-Fi networks
                 tft.setTextColor(TFT_WHITE);
                 tft.setTextDatum(MC_DATUM);
                 tft.setFreeFont(&FreeSansBold12pt7b);
@@ -783,76 +790,82 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case RFID_SCAN_DETAILS_REVIEW: {
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(0x12AC);
-            tft.setTextDatum(TC_DATUM);
-            tft.drawString("REVIEW SCANNING DETAILS", SCREEN_WIDTH / 2, 50);
-            tft.setTextDatum(TL_DATUM);
-            tft.fillRect(10, 81, 300, 389, 0x1B2E);
-            //tft.fillRect(22, 93, 275, 32, 0x8430);
-            tft.fillRect(22, 93, 275, 54, 0x7556);
-            //tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("RECONFIRM MES PACKAGE", 41, 46);
+            tft.fillRect(10, 71, 300, 327, 0x1B2E); // Adjusted Y-coordinate from 81 to 71
+            iconWidth = 280;
+            iconHeight = 41;
+            put_icon(20, 91, menu_icon_names[40]); // Adjusted Y-coordinate from 101 to 91
+            //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91); // Commented out, adjusted to comment position
             tft.setTextFont(2);
             tft.setTextSize(1);
-            tft.setTextColor(0x09E8);
-            //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 101);
-            //tft.drawString("MES Packages:", 32, 101);
-            tft.drawString(_taskResults.selected_mes_package, 25, 111);
+            tft.setTextColor(TFT_WHITE);
+            //tft.drawString(_taskResults.selected_list_items[3], 32, 128); // Commented out, adjusted to comment position
+            tft.drawString(_taskResults.selected_mes_package, 20, 135); // Adjusted Y-coordinate from 145 to 135
             // Draw the product image
-            tft.pushImage(22, 156, 70, 70, _taskResults.mes_img_buffer);
+            tft.pushImage(20, 160, 70, 70, _taskResults.mes_img_buffer); // Adjusted Y-coordinate from 175 to 165
             // Draw package information
             tft.setTextFont(2);
-            tft.setTextColor(TFT_WHITE);
-            tft.drawString("AO No: ", 102, 156);
+            tft.setTextColor(0xa554);
+            tft.drawString("BuyerPO: ", 100, 160); // Adjusted Y-coordinate from 175 to 165
             tft.setFreeFont(&FreeSans9pt7b);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.ao_no, 170, 156); // Assuming that ao_no is a String
             tft.setTextColor(TFT_WHITE);
+            tft.drawString(_taskResults.buyer_po, 180, 160); // Adjusted Y-coordinate from 175 to 165
             tft.setTextFont(2);
-            tft.drawString("ADQty: ", 102, 178);
+            tft.setTextColor(0xa554);
+            tft.drawString("Line: ", 100, 180); // Adjusted Y-coordinate from 200 to 190
             tft.setFreeFont(&FreeSans9pt7b);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.target_qty, 170, 178); // Assuming that target_qty is a String
             tft.setTextColor(TFT_WHITE);
+            tft.drawString(_taskResults.line_no, 180, 180); // Adjusted Y-coordinate from 200 to 190
             tft.setTextFont(2);
-            tft.drawString("Delivery date: ", 102, 200);
+            tft.setTextColor(0xa554);
+            tft.drawString("Module name: ", 100, 200); // Adjusted Y-coordinate from 225 to 215
             tft.setFreeFont(&FreeSans9pt7b);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.delivery_date, 190, 200); // Assuming that delivery_data is a String
             tft.setTextColor(TFT_WHITE);
+            tft.drawString(_taskResults.module_name, 190, 200); // Adjusted Y-coordinate from 225 to 215
             tft.setTextFont(2);
-            tft.drawString("Destination: ", 102, 222);
+            tft.setTextColor(0xa554);
+            tft.drawString("MES package target: ", 100, 220); // Adjusted Y-coordinate from 248 to 238
             tft.setFreeFont(&FreeSans9pt7b);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.destination, 190, 222); // Assuming that destination is a String
             tft.setTextColor(TFT_WHITE);
-            tft.setFreeFont(&FreeSans9pt7b);
-            // More package information
+            tft.drawString(String(_taskResults.mes_target), 230, 220); // Adjusted Y-coordinate from 248 to 238
             tft.setTextFont(2);
-            tft.setTextSize(1);
-            tft.drawString("StyleName: ", 22, 247);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.style_text, 130, 247); // Assuming that style_text is a String
+            tft.setTextColor(0xa554);
+            tft.drawString("Op name: ", 20, 243); // Adjusted Y-coordinate from 272 to 262
             tft.setTextColor(TFT_WHITE);
-            tft.drawString("BuyerStyleName: ", 22, 272);
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.buyer_style_text, 130, 272); // Assuming that buyer_style_text is a String
+            tft.drawString( _taskResults.mes_operation_name, 120, 243);
+            tft.setTextColor(0xa554);
+            tft.drawString("Style: ", 20, 261); // Adjusted Y-coordinate from 296 to 286
             tft.setTextColor(TFT_WHITE);
-            tft.drawString("StyleColor: ", 22, 297); // Adjusted y position after removal of StyleSize
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.style_color, 130, 297); // Assuming that style_color is a String
+            tft.drawString( _taskResults.style_text, 120, 261);
+            tft.setTextColor(0xa554);
+            tft.drawString("Style color: ", 20, 279); // Adjusted Y-coordinate from 320 to 310
             tft.setTextColor(TFT_WHITE);
-            tft.drawString("LineNo: ", 22, 322); // Adjusted y position after removal of StyleSize
-            tft.setTextColor(0x573F);
-            tft.drawString(_taskResults.line_name, 130, 322); // Assuming that line_name is a String
+            tft.drawString( _taskResults.style_color, 120, 279);
+            tft.setTextColor(0xa554);
+            tft.drawString("AO No: ", 20, 297); // Adjusted Y-coordinate from 320 to 310
             tft.setTextColor(TFT_WHITE);
-            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString( _taskResults.ao_no, 120, 297);
+            tft.setTextColor(0xa554);
+            tft.drawString("TargetQty: ", 20, 315); // Adjusted Y-coordinate from 320 to 310
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString( _taskResults.target_qty, 120, 315);
+            tft.setTextColor(0xa554);
+            tft.drawString("Destination: ", 20, 333); // Adjusted Y-coordinate from 320 to 310
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString( _taskResults.destination, 120, 333);
+            tft.setTextColor(0xa554);
+            tft.drawString("Delivery data: ", 20, 351); // Adjusted Y-coordinate from 320 to 310
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString( _taskResults.delivery_date, 120, 351);
+            tft.fillRect(10, 398, 300, 4, 0x126b);
+
             // Draw the start scanning button
-            tft.fillRect(22, 418, 275, 40, 0x0A6A);
-            tft.setTextDatum(MC_DATUM);
-            tft.setTextColor(TFT_WHITE);
-            tft.drawString("START SCANNING", SCREEN_WIDTH / 2, 437);
+            iconWidth = 300;
+            iconHeight = 45;
+            put_icon(10, 423, menu_icon_names[41]);
 
             // Update accordingly screen item
-            screen_item_position _item_position = {22, 418, 275, 40};
+            screen_item_position _item_position = {10, 423, 300, 45};
             update_screen_item(0, _item_position);
             screen_selector_border_color = backgroundColor;
             screen_item_count = 1;
@@ -898,6 +911,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Reset RFID scan results
                     _taskResults.current_scanned_rfid_tag_count = 0;
+                    _taskResults.is_the_first_scan = true;
 
                     // Check provided arguments which are selected items from previous lists
                     Serial.println(F("Selected items from previous lists: "));
@@ -906,91 +920,98 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             Serial.println(_taskResults.selected_list_items[i]);
                     }
 
-                    tft.setFreeFont(&FreeSansBold12pt7b);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.setTextColor(0x12AC);
-                    tft.drawString("SCAN RESULT", 75, 50);
-                    tft.fillRect(10, 81, 300, 389, 0x1B2E);
+                    tft.drawString("SCAN RESULT", 100, 46);
+                    tft.fillRect(10, 71, 300, 112, 0x1B2E);
                     // Draw the product image
-                    tft.pushImage(22, 93, 70, 70, _taskResults.mes_img_buffer);
+                    tft.pushImage(22, 91, 70, 70, _taskResults.mes_img_buffer);
                     // Draw package information
                     tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString("BuyerPO:", 102, 93);
+                    tft.drawString("BuyerPO:", 102, 91);
                     tft.setFreeFont(&FreeSans9pt7b);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString(_taskResults.buyer_po, 170, 93); // Assuming that buyer_po is a String
+                    tft.drawString(_taskResults.buyer_po, 170, 91); // Assuming that buyer_po is a String
                     tft.setTextFont(2);
-                    tft.drawString("ADQty: ", 102, 115);
+                    tft.drawString("ADQty: ", 102, 113);
                     tft.setFreeFont(&FreeSans9pt7b);
-                    tft.drawString(_taskResults.target_qty, 170, 115); // Assuming that target_qty is a String
+                    tft.drawString(_taskResults.target_qty, 170, 113); // Assuming that target_qty is a String
                     tft.setTextFont(2);
-                    tft.drawString("Delivery date: ", 102, 137);
+                    tft.drawString("Delivery date: ", 102, 135);
                     tft.setFreeFont(&FreeSans9pt7b);
-                    tft.drawString(_taskResults.delivery_date, 190, 137); // Assuming that delivery_data is a String
+                    tft.drawString(_taskResults.delivery_date, 190, 135); // Assuming that delivery_data is a String
                     tft.setTextFont(2);
-                    tft.drawString("Destination: ", 102, 159);
+                    tft.drawString("Destination: ", 102, 157);
                     tft.setFreeFont(&FreeSans9pt7b);
-                    tft.drawString(_taskResults.destination, 190, 159); // Assuming that destination is a String
+                    tft.drawString(_taskResults.destination, 190, 157); // Assuming that destination is a String
                     tft.setFreeFont(&FreeSans9pt7b);
+                    tft.fillRect(10, 183, 300, 4, 0x126b);
+
                     // Submitted status
+                    tft.fillRect(10, 205, 300, 205, 0xdf7e);
                     tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.setTextColor(0x5D56);
-                    tft.drawString("Submitted status", 22, 187);
+                    tft.setTextColor(0x8c51);
+                    tft.drawString("Submitted status", 22, 224);
                     tft.setFreeFont(&FreeSans9pt7b);
-                    tft.setTextColor(0x1ACC);
-                    tft.fillRect(22, 214, 275, 37, 0x7556);
-                    tft.drawString("Submitted/target", 37, 225);
-                    tft.setTextColor(0x09E8);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.fillRect(22, 251, 276, 50, 0x1b2e);
+                    tft.drawString("Submitted/target", 42, 267);
+                    tft.setTextColor(0xe751);
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.drawString(
                             String(_taskResults.current_scanned_rfid_tag_count) + "/" + String(_taskResults.mes_target),
-                            198, 225);
+                            223, 267);
                     // Current scan status
                     tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.setTextColor(0x5D56);
-                    tft.drawString("Current scan status", 22, 275);
+                    tft.setTextColor(0x8c51);
+                    tft.drawString("Quantity scanned", 22, 315);
                     tft.setFreeFont(&FreeSans9pt7b);
-                    //tft.drawRect(22, 335, 275, 50, 0x8430);
-                    tft.fillRect(22, 302, 276, 50, TFT_WHITE);
-                    tft.setTextColor(0x5ACB);
-                    tft.drawString("Quantity", 37, 319);
+                    tft.drawRect(22, 342, 276, 50, 0x1b2e);
+                    tft.setTextColor(0x8c51);
+                    tft.drawString("Quantity", 42, 357);
                     tft.setFreeFont(&FreeSansBold12pt7b);
-                    tft.setTextColor(0x350F);
-                    tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 248, 319);
+                    tft.setTextColor(0x1b2e);
+                    tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 223, 357);
                     tft.setFreeFont(&FreeSans9pt7b);
 
-                    byte screen_item_index = 0;
-                    screen_item_position _item_position;
-                    // Draw the clear button
-                    tft.fillRect(22, 420, 130, 40, 0x0A6A);
-                    tft.setTextColor(TFT_WHITE);
-                    tft.drawString("SCAN", 65, 433);
-                    // Update accordingly screen item
-                    _item_position = {22, 420, 130, 40};
-                    update_screen_item(screen_item_index, _item_position);
-                    ++screen_item_index;
-                    // Draw the submit button
-                    tft.fillRect(168, 420, 130, 40, 0x0A6A);
-                    tft.setTextColor(TFT_WHITE);
-                    tft.drawString("SUBMIT", 200, 433);
-                    // Update accordingly screen item
-                    _item_position = {168, 420, 130, 40};
-                    update_screen_item(screen_item_index, _item_position);
-                    ++screen_item_index;
-                    screen_item_count = screen_item_index;
+                    iconWidth = 110;
+                    iconHeight = 45;
+                    put_icon(10, 425, menu_icon_names[42]);
+                    put_icon(200, 425, menu_icon_names[44]);
+                    iconWidth = 56;
+                    put_icon(132, 425, menu_icon_names[43]);
 
+                    // Update accordingly screen item
+                    iconWidth = 110;
+                    screen_item_position _item_position = {10, 425, iconWidth, iconHeight};
+                    update_screen_item(0, _item_position);
+
+                    iconWidth = 110;
+                    _item_position = {200, 425, iconWidth, iconHeight};
+                    update_screen_item(2, _item_position);
+
+                    iconWidth = 56;
+                    _item_position = {132, 425, iconWidth, iconHeight};
+                    update_screen_item(1, _item_position);
+
+                    screen_selector_border_color = backgroundColor;
+                    screen_item_count = 3;
                     // Start to set screen selector to the first one item
                     update_screen_selector(0);
+
+                    //current_feature_item_type = MENU_ICON;
                     // Reset current screen tasks
                     memset(current_screen_tasks, NO_TASK, 10);
                     current_screen_tasks[0] = READ_RFID_TAG;
+                    current_screen_tasks[1] = REGISTER_RFID_TAG;
+                    current_screen_tasks[2] = REGISTER_RFID_TAG;
                     current_feature_item_type = TASK_ITEM;
                     // Reset current screen features
                     memset(current_screen_features, NO_FEATURE, 10);
                     // Reset display settings
                     reset_display_setting();
-
-                    _is_viewport_cleared = false;
+                    is_viewport_cleared = false;
                 } else {
                     is_background_task_required = true;
                     // Reset current screen background tasks
@@ -1007,7 +1028,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             // Start submitting task
                             Serial.println(F("Start background submitting task"));
                             current_screen_background_tasks[0] = NO_TASK;
-                            _is_viewport_cleared = true;
+                            is_viewport_cleared = true;
                             is_back_to_home = true;
                             break;
                     }
@@ -1022,19 +1043,12 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             // Check if background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
                 // Just display the recently scanned result and increase total scans
-                // Assuming numScanned is an integer variable holding the number of scanned RFID tags
-                String displayStr = String(_taskResults.current_scanned_rfid_tag_count) + "/200";
-                // Set the font for the number display
                 tft.setFreeFont(&FreeSansBold12pt7b);
                 tft.setTextColor(0x350F);
-                // Calculate the width of the text to be removed
-                int width = tft.textWidth(displayStr);
                 // Clear the area where the "0/200" is displayed
-                tft.fillRect(218, 307, width, 50, TFT_WHITE);
+                tft.fillRect(235, 361, 70, 50, TFT_WHITE);
                 // Draw the new string with the updated count
-                tft.drawString(displayStr, 218, 321);
-
-                //_is_viewport_cleared = true;
+                tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
                 // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
             } else {
                 // Check if this is the first time this feature is rendered
@@ -1043,62 +1057,102 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Reset RFID scan results
                     _taskResults.current_scanned_rfid_tag_count = 0;
+                    _taskResults.is_the_first_scan = true;
 
-                    tft.setFreeFont(&FreeSansBold12pt7b);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.setTextColor(0x12AC);
-                    tft.drawString("RFID REGISTRATION", 38, 50);
-                    tft.fillRect(10, 81, 300, 184, 0x1B2E);
-                    tft.setFreeFont(&FreeSansBold12pt7b);
+                    tft.drawString("RFID REGISTRATION", 73, 46);
+                    tft.fillRect(10, 71, 300, 241, 0x1B2E); // Adjusted Y-coordinate from 81 to 71
                     iconWidth = 280;
                     iconHeight = 41;
-                    put_icon(20, 101, menu_icon_names[40]);
-                    //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 101);
+                    put_icon(20, 91, menu_icon_names[40]); // Adjusted Y-coordinate from 101 to 91
+                    //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91); // Commented out, adjusted to comment position
                     tft.setTextFont(2);
                     tft.setTextSize(1);
                     tft.setTextColor(TFT_WHITE);
-                    //tft.drawString(_taskResults.selected_list_items[3], 32, 138);
-                    tft.drawString(_taskResults.selected_mes_package, 20, 141);
+                    //tft.drawString(_taskResults.selected_list_items[3], 32, 128); // Commented out, adjusted to comment position
+                    tft.drawString(_taskResults.selected_mes_package, 20, 135); // Adjusted Y-coordinate from 145 to 135
                     // Draw the product image
-                    tft.pushImage(20, 175, 70, 70, _taskResults.mes_img_buffer);
-                    // Draw package infomartion
+                    tft.pushImage(20, 160, 70, 70, _taskResults.mes_img_buffer); // Adjusted Y-coordinate from 175 to 165
+                    // Draw package information
                     tft.setTextFont(2);
-                    tft.drawString("AO No: ", 100, 175);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.drawString(_taskResults.ao_no, 180, 175);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("BuyerPO: ", 100, 160); // Adjusted Y-coordinate from 175 to 165
+                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(_taskResults.buyer_po, 180, 160); // Adjusted Y-coordinate from 175 to 165
                     tft.setTextFont(2);
-                    tft.drawString("ADQty: ", 100, 200);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.drawString(_taskResults.target_qty, 180, 200);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Line: ", 100, 180); // Adjusted Y-coordinate from 200 to 190
+                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(_taskResults.line_no, 180, 180); // Adjusted Y-coordinate from 200 to 190
                     tft.setTextFont(2);
-                    tft.drawString("Delivery date: ", 100, 225);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.drawString(_taskResults.delivery_date, 200, 225);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Module name: ", 100, 200); // Adjusted Y-coordinate from 225 to 215
+                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(_taskResults.module_name, 190, 200); // Adjusted Y-coordinate from 225 to 215
                     tft.setTextFont(2);
-                    tft.drawString("Destination: ", 100, 250);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.drawString(_taskResults.destination, 200, 250);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("MES package target: ", 100, 220); // Adjusted Y-coordinate from 248 to 238
+                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(String(_taskResults.mes_target), 230, 220); // Adjusted Y-coordinate from 248 to 238
+                    tft.setTextFont(2);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Op name: ", 20, 243); // Adjusted Y-coordinate from 272 to 262
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString( _taskResults.mes_operation_name, 100, 243);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Style: ", 20, 261); // Adjusted Y-coordinate from 296 to 286
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString( _taskResults.style_text, 100, 261);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Style color: ", 20, 279); // Adjusted Y-coordinate from 320 to 310
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString( _taskResults.style_color, 100, 279);
+                    tft.fillRect(10, 312, 300, 4, 0x126b);
 
                     tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.fillRect(215, 328, 94, 27, 0xFE6C);
+                    tft.setTextColor(TFT_BLACK);
+                    tft.drawString("356", 245, 335);
                     tft.setTextColor(0x4228);
-                    tft.drawString("Total registered RFID tags:", 10, 280);
-                    tft.fillRect(10, 307, 300, 50, TFT_WHITE);
-                    tft.setTextColor(0x5ACB);
-                    tft.drawString("Pass", 30, 325);
+                    tft.setTextFont(2);
+                    tft.setTextSize(1);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.drawString("Total registered tags:", 10, 334);
+                    tft.fillRect(10, 361, 300, 50, TFT_WHITE);
+                    tft.setTextColor(0x8c51);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.drawString("Detected", 30, 379);
                     tft.setFreeFont(&FreeSansBold12pt7b);
                     tft.setTextColor(0x350F);
-                    tft.drawString("0/200", 218, 321);
+                    tft.drawString("", 218, 375);
 
-                    iconWidth = 140;
+                    iconWidth = 110;
                     iconHeight = 45;
-                    put_icon(10, 425, menu_icon_names[41]);
-                    put_icon(170, 425, menu_icon_names[42]);
+                    put_icon(10, 425, menu_icon_names[42]);
+                    put_icon(200, 425, menu_icon_names[44]);
+                    iconWidth = 56;
+                    put_icon(132, 425, menu_icon_names[43]);
+
                     // Update accordingly screen item
+                    iconWidth = 110;
                     screen_item_position _item_position = {10, 425, iconWidth, iconHeight};
                     update_screen_item(0, _item_position);
-                    _item_position = {170, 425, iconWidth, iconHeight};
+
+                    iconWidth = 110;
+                    _item_position = {200, 425, iconWidth, iconHeight};
+                    update_screen_item(2, _item_position);
+
+                    iconWidth = 56;
+                    _item_position = {132, 425, iconWidth, iconHeight};
                     update_screen_item(1, _item_position);
+
                     screen_selector_border_color = backgroundColor;
-                    screen_item_count = 2;
+                    screen_item_count = 3;
                     // Start to set screen selector to the first one item
                     update_screen_selector(0);
 
@@ -1107,13 +1161,13 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     memset(current_screen_tasks, NO_TASK, 10);
                     current_screen_tasks[0] = READ_RFID_TAG;
                     current_screen_tasks[1] = REGISTER_RFID_TAG;
+                    current_screen_tasks[2] = REGISTER_RFID_TAG;
                     current_feature_item_type = TASK_ITEM;
                     // Reset current screen features
                     memset(current_screen_features, NO_FEATURE, 10);
                     // Reset display settings
                     reset_display_setting();
-
-                    _is_viewport_cleared = false;
+                    is_viewport_cleared = false;
                 } else {
                     is_background_task_required = true;
                     // Reset current screen background tasks
@@ -1127,10 +1181,18 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             current_screen_background_tasks[0] = READ_RFID_TAG;
                             break;
                         case 1:
+                            // Start clearing scan result task
+                            Serial.println(F("Start background clearing scan result task"));
+                            current_screen_background_tasks[0] = REGISTER_RFID_TAG;
+                            is_viewport_cleared = true;
+                            is_back_to_home = true;
+                            break;
+                        case 2:
                             // Start submitting task
                             Serial.println(F("Start background submitting task"));
+                            // Clear scan result task
                             current_screen_background_tasks[0] = REGISTER_RFID_TAG;
-                            _is_viewport_cleared = true;
+                            is_viewport_cleared = true;
                             is_back_to_home = true;
                             break;
                     }
@@ -1643,7 +1705,7 @@ void GIFDraw(GIFDRAW *pDraw) {
             } // while looking for opaque pixels
             if (iCount) // any opaque pixels?
             {
-                // DMA would degrtade performance here due to short line segments
+                // DMA would degrade performance here due to short line segments
                 tft.setAddrWindow(pDraw->iX + x, y, iCount, 1);
                 tft.pushPixels(usTemp, iCount);
                 x += iCount;

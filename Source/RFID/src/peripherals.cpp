@@ -39,7 +39,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     byte currentMenuSelectNavButtonState = digitalRead(menuSelectNavButtonPin);
     byte currentRightDownNavButtonState = digitalRead(rightDownNavButtonPin);
 
-    // Check if left up navigation button is pressed
+    // Check if the left up navigation button is pressed
     if (currentLeftUpNavButtonState != lastLeftUpNavButtonState) {
         if (currentLeftUpNavButtonState == LOW) {
             Serial.println(F("Left Up Navigation Button Pressed"));
@@ -68,7 +68,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
         delay(50); // Delay for debouncing
     }
 
-    // Check if menu select navigation button is pressed
+    // Check if the menu select navigation button is pressed
     if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
         if (currentMenuSelectNavButtonState == LOW) {
             Serial.println(F("Menu Select Navigation Button Pressed"));

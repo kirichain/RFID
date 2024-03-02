@@ -154,9 +154,10 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
             destination = extract_value_from_json_string(raw_last_payload, "destination");
             style_text = extract_value_from_json_string(raw_last_payload, "styleText");
             buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
-            line_name = extract_value_from_json_string(raw_last_payload, "lineNo");
+            line_no = extract_value_from_json_string(raw_last_payload, "lineNo");
             style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
             buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
+            module_name = extract_value_from_json_string(raw_last_payload, "moduleName");
 
             // Print the extracted values
             Serial.print(F("Extracted MES package: "));
@@ -167,6 +168,8 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
             Serial.println(mes_img_url);
             Serial.print(F("Extracted MES target: "));
             Serial.println(mes_target);
+            Serial.print(F("Extracted MES module name: "));
+            Serial.println(module_name);
         }
         if ((expected_event == MES_PACKAGE_GROUP_SELECTED) and (_type == "MES-PACKAGEGROUP")) {
             Serial.println(F("MES package group message has arrived"));
@@ -224,5 +227,5 @@ String MQTT::extract_value_from_json_string(const String& data, const String& ke
             return value;
         }
     }
-    return "";  // Key not found or value not extracted
+    return "";  // Key not found or value isn't extracted
 }

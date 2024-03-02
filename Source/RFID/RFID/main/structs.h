@@ -116,13 +116,15 @@ typedef struct task_results {
     String destination = "";
     String style_text = "";
     String buyer_style_text = "";
-    String line_name = "";
+    String line_no = "";
     String style_color = "";
     String buyer_po = "";
+    String module_name = "";
     uint16_t mes_img_buffer[9800];
     int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
     // For RFID
+    bool is_the_first_scan = false;
     int current_scanned_rfid_tag_count = 0;
     rfid_tag scanned_rfid_tags[100];
 } task_results;

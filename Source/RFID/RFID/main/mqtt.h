@@ -23,6 +23,8 @@ private:
     String last_subscribed_topic;
 public:
     String last_payload;
+    String mes_package;
+    String mes_package_group;
     String mes_operation_name;
     String mes_img_url;
     String ao_no;
@@ -31,12 +33,14 @@ public:
     String destination;
     String style_text;
     String buyer_style_text;
-    String line_name;
+    String line_no;
     String style_color;
     String buyer_po;
+    String module_name;
     int mes_target;
     bool is_broker_connected;
     bool is_mes_package_selected;
+    bool is_mes_package_group_selected;
     mqtt_event_t expected_event;
 
     MQTT();

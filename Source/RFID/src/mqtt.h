@@ -33,9 +33,10 @@ public:
     String destination;
     String style_text;
     String buyer_style_text;
-    String line_name;
+    String line_no;
     String style_color;
     String buyer_po;
+    String module_name;
     int mes_target;
     bool is_broker_connected;
     bool is_mes_package_selected;
