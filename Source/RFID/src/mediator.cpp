@@ -123,7 +123,7 @@ void Mediator::execute_task(task_t task) {
                 Serial.println(F("Please wait to connect to MQTT first before subscribing"));
                 unsigned long elapsed_time = millis();
                 // Wait until MQTT is connected
-                while (millis() - elapsed_time <= 5000) {
+                while (millis() - elapsed_time <= 2000) {
                     elapsed_time = millis();
                     if (mqtt.is_broker_connected) break;
                 }
@@ -165,10 +165,24 @@ void Mediator::execute_task(task_t task) {
                             request.get("http://203.113.151.196:8888", get_resized_mes_img,
                                         get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
                                         taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
-                            mqtt.is_mes_package_selected = false;
+                            // Download registered RFID tags which are associated with this MES package before
+                            http_response list_response = request.get(taskArgs.mes_api_host,
+                                                                      get_registered_rfid_tag_list,
+                                                                      get_registered_rfid_tag_mes_key_query +
+                                                                      taskResults.selected_mes_package + "&" +
+                                                                      get_registered_rfid_tag_mes_type_query +
+                                                                      "MES-PACKAGE", "keyCode",
+                                                                      "PkerpVN2024*", false, nullptr, 0);
 
+                            // Extract all registered tags into the storing list
+                            extract_registered_rfid_tags(list_response.payload);
                             // Play successful sound
-                            buzzer.successful_sound();
+                            if (list_response.status_code == HTTP_CODE_OK) {
+                                buzzer.successful_sound();
+                            } else {
+                                buzzer.failure_sound();
+                            }
+                            mqtt.is_mes_package_selected = false;
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
@@ -196,13 +210,26 @@ void Mediator::execute_task(task_t task) {
                             taskResults.module_name = mqtt.module_name;
 
                             // Download MES img from url and display it
-                            request.get("http://203.113.151.196:8888", get_resized_mes_img,
+                            request.get(resized_image_server_url, get_resized_mes_img,
                                         get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
                                         taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
-                            mqtt.is_mes_package_group_selected = false;
-
+                            // Download registered RFID tags which are associated with this MES package before
+                            http_response list_response = request.get(taskArgs.mes_api_host,
+                                                                      get_registered_rfid_tag_list,
+                                                                      get_registered_rfid_tag_mes_key_query +
+                                                                      taskResults.selected_mes_package_group + "&" +
+                                                                      get_registered_rfid_tag_mes_type_query +
+                                                                      "MES-PACKAGEGROUP", "keyCode",
+                                                                      "PkerpVN2024*", false, nullptr, 0);
+                            // Extract all registered tags into the storing list
+                            extract_registered_rfid_tags(list_response.payload);
                             // Play successful sound
-                            buzzer.successful_sound();
+                            if (list_response.status_code == HTTP_CODE_OK) {
+                                buzzer.successful_sound();
+                            } else {
+                                buzzer.failure_sound();
+                            }
+                            mqtt.is_mes_package_group_selected = false;
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
@@ -547,11 +574,43 @@ void Mediator::execute_task(task_t task) {
             }
             //rfid.set_scanning_mode(MULTI_SCAN);
             rfid.scan_rfid_tag();
-            if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
-                taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                buzzer.successful_sound();
-            } else {
-                buzzer.failure_sound();
+            if (taskResults.currentFeature == RFID_REGISTER_TAG) {
+                if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
+                    taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+                    buzzer.successful_sound();
+                } else {
+                    buzzer.failure_sound();
+                }
+            } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
+                // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
+                // Default false
+                bool check = false;
+
+                for (int i = 0; i < 200; ++i) {
+                    for (int j = 0; j < 200; ++j) {
+                        if (is_epc_matched(rfid.scan_results[i].epc,
+                                           taskResults.registered_rfid_tags_from_server[j].epc) and
+                            (rfid.scan_results[i].epc != "") and
+                            (taskResults.registered_rfid_tags_from_server[j].epc != "") and
+                            (!rfid.scan_results[i].is_matched_check)) {
+                            rfid.scan_results[i].is_matched_check = true;
+                            Serial.print(F("RFID tag is registered before: "));
+                            Serial.println(rfid.scan_results[i].epc);
+                            check = true;
+                            ++taskResults.current_matched_mes_scanned_rfid_tag_count;
+                            buzzer.successful_sound();
+                            break;
+                        }
+                    }
+                }
+                // Totally scanned to be displayed
+                if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
+                    taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+                }
+                // If matched, sound
+                if (!check) {
+                    buzzer.failure_sound();
+                }
             }
             break;
         case REGISTER_RFID_TAG: {
@@ -560,20 +619,39 @@ void Mediator::execute_task(task_t task) {
             if (rfid.scanned_tag_count == 0) {
                 Serial.println(F("No scanned RFID tag. Back to home now"));
             } else {
-                for (byte i = 0; i < 99; ++i) {
+                for (int i = 0; i < 199; ++i) {
                     if (rfid.scan_results[i].epc != "") {
-                        if ((rfid.scan_results[i + 1].epc != "") and (i != 99)) {
+                        if ((rfid.scan_results[i + 1].epc != "") and (i != 199)) {
                             registration_payload += "\"" + rfid.scan_results[i].epc + "\",";
                         } else {
                             registration_payload += "\"" + rfid.scan_results[i].epc + "\"]}";
                         }
                     }
                 }
-                request.post(base_api_server_url, register_new_rfid_tag, registration_payload, "keyCode",
-                             "PkerpVN2024*");
+                http_response registration_response = request.post(taskArgs.mes_api_host, register_new_rfid_tag,
+                                                                   registration_payload, "keyCode",
+                                                                   "PkerpVN2024*");
+                if (registration_response.status_code == HTTP_CODE_OK) {
+                    buzzer.successful_sound();
+
+                    // Update registered tag list
+                    // Download registered RFID tags which are associated with this MES package before
+                    http_response list_response = request.get(taskArgs.mes_api_host,
+                                                              get_registered_rfid_tag_list,
+                                                              get_registered_rfid_tag_mes_key_query +
+                                                              taskResults.selected_mes_package + "&" +
+                                                              get_registered_rfid_tag_mes_type_query +
+                                                              "MES-PACKAGE", "keyCode",
+                                                              "PkerpVN2024*", false, nullptr, 0);
+
+                    // Extract all registered tags into the storing list
+                    extract_registered_rfid_tags(list_response.payload);
+                } else {
+                    buzzer.failure_sound();
+                }
                 rfid.scanned_tag_count = 0;
+                taskResults.current_scanned_rfid_tag_count = 0;
             }
-            buzzer.successful_sound();
             break;
         }
         case WRITE_RFID_TAG:
@@ -589,8 +667,11 @@ void Mediator::execute_task(task_t task) {
             rfid.scanned_tag_count = 0;
             taskResults.current_scanned_rfid_tag_count = 0;
             taskResults.current_matched_mes_scanned_rfid_tag_count = 0;
-            for (byte i = 0; i < 100; ++i) {
+            for (int i = 0; i < 200; ++i) {
                 taskResults.scanned_rfid_tags[i].epc = "";
+                taskResults.scanned_rfid_tags[i].is_matched_check = false;
+                rfid.scan_results[i].epc = "";
+                rfid.scan_results[i].is_matched_check = false;
             }
             break;
         }
@@ -716,4 +797,52 @@ void Mediator::clear_navigation_history() {
     }
     taskResults.featureNavigationHistorySize = 1;
     taskResults.featureNavigationHistory[1] = HOME_HANDHELD_2;
+}
+
+void Mediator::extract_registered_rfid_tags(String &payload) {
+    int startPos = payload.indexOf("\"tagIds\": [") + 11;
+    int endPos = payload.lastIndexOf("]");
+
+    String extracted_list = payload.substring(startPos, endPos);
+    extracted_list.trim();
+    Serial.println(F("Extracted registered tags list: "));
+    Serial.println(extracted_list);
+
+    // Counters for going through the list
+    int currentPos = 0;
+    int nextPos = 0;
+    int tagIndex = 0; // Index to keep track of the number of tags extracted
+
+    // Iterate over the string and extract every tag EPC
+    while (nextPos != -1 && tagIndex < 200) {
+        nextPos = extracted_list.indexOf(',', currentPos);
+
+        // Extract the current tag
+        String tag = (nextPos != -1) ? extracted_list.substring(currentPos, nextPos) : extracted_list.substring(
+                currentPos);
+        tag.trim(); // Trim whitespace
+        tag.replace("\"", ""); // Remove quotes
+
+        // Assign the tag to the array of rfid_tag structs
+        if (tag != "") {
+            taskResults.registered_rfid_tags_from_server[tagIndex].epc = tag;
+            // Increment the tag index
+            tagIndex++;
+        }
+
+        // Move to the next tag
+        currentPos = nextPos + 1;
+    }
+
+    // Optionally, print out the tags to verify
+    if (tagIndex != 0) taskResults.registered_rfid_tags_from_server_count = tagIndex;
+    Serial.println(F("All extracted tag epc(s):"));
+    for (int i = 0; i < tagIndex; i++) {
+        Serial.println(taskResults.registered_rfid_tags_from_server[i].epc);
+    }
+}
+
+bool Mediator::is_epc_matched(String &epc_to_be_compared, String &registered_epc) {
+    if (epc_to_be_compared.equalsIgnoreCase(registered_epc)) return true;
+    return false;
 }

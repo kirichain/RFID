@@ -55,6 +55,7 @@ typedef struct task_args {
 
 typedef struct rfid_tag {
     String epc = "";
+    bool is_matched_check = false;
 } rfid_tag;
 
 typedef struct rfid_item {
@@ -119,7 +120,9 @@ typedef struct task_results {
     bool is_the_first_scan = false;
     int current_scanned_rfid_tag_count = 0;
     int current_matched_mes_scanned_rfid_tag_count = 0;
-    rfid_tag scanned_rfid_tags[100];
+    int registered_rfid_tags_from_server_count = 0;
+    rfid_tag scanned_rfid_tags[200];
+    rfid_tag registered_rfid_tags_from_server[200];
 } task_results;
 
 typedef struct message {

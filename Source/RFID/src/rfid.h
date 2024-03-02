@@ -140,8 +140,8 @@ class Rfid {
 public:
     rfid_scanning_mode_t scanning_mode;
     uint8_t buffer[200] = {0};
-    rfid_tag scan_results[100];
-    int scanned_tag_count;
+    rfid_tag scan_results[200];
+    int scanned_tag_count = 0;
 
     Rfid();
 

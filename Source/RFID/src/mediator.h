@@ -81,6 +81,10 @@ public:
     static const char *extract_value_from_json_string(const char *data, const char *key);
 
     void clear_navigation_history();
+
+    void extract_registered_rfid_tags(String &payload);
+
+    static bool is_epc_matched(String &epc, String &registered_epc);
 };
 
 #endif //RFID_MEDIATOR_H

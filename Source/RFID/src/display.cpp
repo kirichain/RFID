@@ -833,31 +833,31 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setTextColor(0xa554);
             tft.drawString("Op name: ", 20, 243);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.mes_operation_name, 120, 243);
+            tft.drawString(_taskResults.mes_operation_name, 120, 243);
             tft.setTextColor(0xa554);
             tft.drawString("Style: ", 20, 261);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.style_text, 120, 261);
+            tft.drawString(_taskResults.style_text, 120, 261);
             tft.setTextColor(0xa554);
             tft.drawString("Style color: ", 20, 279);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.style_color, 120, 279);
+            tft.drawString(_taskResults.style_color, 120, 279);
             tft.setTextColor(0xa554);
             tft.drawString("AO No: ", 20, 297);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.ao_no, 120, 297);
+            tft.drawString(_taskResults.ao_no, 120, 297);
             tft.setTextColor(0xa554);
             tft.drawString("TargetQty: ", 20, 315);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.target_qty, 120, 315);
+            tft.drawString(_taskResults.target_qty, 120, 315);
             tft.setTextColor(0xa554);
             tft.drawString("Destination: ", 20, 333);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.destination, 120, 333);
+            tft.drawString(_taskResults.destination, 120, 333);
             tft.setTextColor(0xa554);
             tft.drawString("Delivery data: ", 20, 351);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString( _taskResults.delivery_date, 120, 351);
+            tft.drawString(_taskResults.delivery_date, 120, 351);
             tft.fillRect(10, 398, 300, 4, 0x126b);
 
             // Draw the start scanning button
@@ -886,7 +886,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             if (is_background_task_completed) {
                 // Update the "Submitted/target" field with the latest count
                 String submittedTargetStr =
-                        String(_taskResults.current_scanned_rfid_tag_count) + "/" + String(_taskResults.mes_target);
+                        String(_taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
+                        String(_taskResults.registered_rfid_tags_from_server_count);
                 tft.fillRect(223, 251, 60, 50, 0x1b2e); // Clear the previous area
                 tft.setTextColor(0xe751); // Color for the count
                 tft.setFreeFont(&FreeSansBold9pt7b);
@@ -961,7 +962,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextColor(0xe751);
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.drawString(
-                            String(_taskResults.current_scanned_rfid_tag_count) + "/" + String(_taskResults.mes_target),
+                            String(_taskResults.current_scanned_rfid_tag_count) + "/" +
+                            String(_taskResults.registered_rfid_tags_from_server_count),
                             223, 267);
                     // Current scan status
                     tft.setFreeFont(&FreeSansBold9pt7b);
@@ -1033,7 +1035,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                         case 2:
                             // Start submitting task
                             Serial.println(F("Start background submitting task"));
-                            current_screen_background_tasks[0] = NO_TASK;
+                            current_screen_background_tasks[0] = RESET_SCANNED_RFID_TAG_COUNT;
+                            current_screen_background_tasks[1] = NO_TASK;
                             is_viewport_cleared = true;
                             is_back_to_home = true;
                             break;
@@ -1109,21 +1112,21 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextColor(0xa554);
                     tft.drawString("Op name: ", 20, 243);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString( _taskResults.mes_operation_name, 100, 243);
+                    tft.drawString(_taskResults.mes_operation_name, 100, 243);
                     tft.setTextColor(0xa554);
                     tft.drawString("Style: ", 20, 261);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString( _taskResults.style_text, 100, 261);
+                    tft.drawString(_taskResults.style_text, 100, 261);
                     tft.setTextColor(0xa554);
                     tft.drawString("Style color: ", 20, 279);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString( _taskResults.style_color, 100, 279);
+                    tft.drawString(_taskResults.style_color, 100, 279);
                     tft.fillRect(10, 312, 300, 4, 0x126b);
 
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.fillRect(215, 328, 94, 27, 0xFE6C);
                     tft.setTextColor(TFT_BLACK);
-                    tft.drawString("356", 245, 335);
+                    tft.drawString(String(_taskResults.registered_rfid_tags_from_server_count), 245, 335);
                     tft.setTextColor(0x4228);
                     tft.setTextFont(2);
                     tft.setTextSize(1);
@@ -1196,6 +1199,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             Serial.println(F("Start background submitting task"));
                             // Clear scan result task
                             current_screen_background_tasks[0] = REGISTER_RFID_TAG;
+                            current_screen_background_tasks[1] = RESET_SCANNED_RFID_TAG_COUNT;
                             is_viewport_cleared = true;
                             is_back_to_home = true;
                             break;
