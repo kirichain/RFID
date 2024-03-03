@@ -7,17 +7,56 @@
 
 #include "enums.h"
 
-#define WIFI_STATUS_MAX_LEN 50
-#define DATE_TIME_MAX_LEN   30
-#define SERVER_STATUS_MAX_LEN 50
-#define LOGIN_STATUS_MAX_LEN  50
+// Constants
+#define WIFI_STATUS_MAX_LEN     50
+#define DATE_TIME_MAX_LEN       30
+#define SERVER_STATUS_MAX_LEN   50
+#define LOGIN_STATUS_MAX_LEN    50
 
-typedef struct menu_icon {
+// Struct Definitions
+
+typedef struct {
     const char *name;
     const uint16_t *icon_data;
 } menu_icon;
 
-typedef struct task_args {
+typedef struct {
+    char ssid[16];
+    int rssi;
+    char password[32];
+    char hostname[32];
+    char ip[32];
+} wifi_network_info;
+
+typedef struct {
+    String epc = "";
+    bool is_matched_check = false;
+} rfid_tag;
+
+typedef struct {
+    int status_code;
+    int content_length;
+    String payload;
+} http_response;
+
+// Struct for positions of items on a screen
+typedef struct {
+    int x;
+    int y;
+    int w;
+    int h;
+} screen_item_position;
+
+// Struct for screen selector state
+typedef struct {
+    screen_selector_t type;
+    screen_item_position old_position;
+    screen_item_position current_position;
+    byte screen_item_index;
+} screen_selector;
+
+// Struct for task arguments
+typedef struct {
     task_t task, previousTask;
     feature_t feature, previousFeature;
     operating_mode_t operatingMode;
@@ -36,20 +75,8 @@ typedef struct task_args {
     rfid_scanning_mode_t scanning_mode;
 } task_args;
 
-typedef struct rfid_tag {
-    String epc = "";
-    bool is_matched_check = false;
-} rfid_tag;
-
-typedef struct wifi_network_info {
-    char ssid[16];
-    int rssi;
-    char password[32];
-    char hostname[32];
-    char ip[32];
-} wifi_network_info;
-
-typedef struct task_results {
+// Struct for storing task results and state
+typedef struct {
     bool isFsLoaded;
     operating_mode_t savedOperatingModeInFs;
     operating_mode_t currentOperatingMode;
@@ -94,25 +121,5 @@ typedef struct task_results {
     rfid_tag scanned_rfid_tags[200];
     rfid_tag registered_rfid_tags_from_server[200];
 } task_results;
-
-typedef struct screen_item_position {
-    int x;
-    int y;
-    int w;
-    int h;
-} screen_item_position;
-
-typedef struct screen_selector {
-    screen_selector_t type;
-    screen_item_position old_position;
-    screen_item_position current_position;
-    byte screen_item_index;
-} screen_selector;
-
-typedef struct http_response {
-    int status_code;
-    int content_length;
-    String payload;
-} http_response;
 
 #endif //RFID_STRUCTS_H
