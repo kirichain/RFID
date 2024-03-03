@@ -140,8 +140,8 @@ class Rfid {
 public:
     rfid_scanning_mode_t scanning_mode;
     uint8_t buffer[200] = {0};
-    rfid_tag scan_results[100];
-    int scanned_tag_count;
+    rfid_tag scan_results[200];
+    int scanned_tag_count = 0;
 
     Rfid();
 
@@ -174,8 +174,6 @@ public:
 
     void set_tx_power(uint16_t db);
 
-    static rfid_scan_result get_rfid_scan_result();
-    
     bool is_duplicate_scan(const String &epc);
 
     static bool is_valid_epc_response(const String &response);

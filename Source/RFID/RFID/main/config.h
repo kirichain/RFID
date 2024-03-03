@@ -15,20 +15,18 @@
 #define default_wifi_password_3 "101conchodom"
 
 // Defined Server Information
-#define web_socket_server_url "xyz.com:80"
-#define web_socket_secure_server_url "xyz.com:443"
-#define base_server_url "pungkook.com"
 #define base_api_server_url "http://mespk2.pungkookvn.com:8888"
-#define ota_server_url "ota.pungkook.com"
 #define tpm_server_url "http://tpm.pungkookvn.com"
+#define resized_image_server_url "http://203.113.151.196:8888"
 
 // Defined API Endpoints & Queries
 #define get_mqtt_config "/RFIotDevice/GetMqttConfig"
-#define get_rfid_tag_info "/RFIotDevice/GetCardRegistration"
+#define get_registered_rfid_tag_list "/RFIotDevice/GetCardRegistration"
 #define register_new_rfid_tag "/RFIotDevice/PostCardRegistration"
-#define get_mqtt_config_query "?macAddress="
-#define get_rfid_tag_info_query "?mesKey="
 #define get_resized_mes_img "/mpmts/minimizeImage"
+#define get_mqtt_config_query "?macAddress="
+#define get_registered_rfid_tag_mes_key_query "?mesKey="
+#define get_registered_rfid_tag_mes_type_query "type="
 #define get_resized_mes_img_query "?width=70&height=70&url="
 
 // Defined MQTT Configuration
@@ -42,17 +40,17 @@
 #define mqtt_mes_selection_topic "rfid/mes/"
 
 // Defined FS Information
-#define fs_device_data_file "device_data.txt"
-#define fs_message_queue_file "message_queue.txt"
-#define fs_user_data_file "user_data.txt"
-#define fs_warehouse_file "warehouse_data.txt"
-#define fs_package_file "package_data.txt"
+//#define fs_device_data_file "device_data.txt"
+//#define fs_message_queue_file "message_queue.txt"
+//#define fs_user_data_file "user_data.txt"
+//#define fs_warehouse_file "warehouse_data.txt"
+//#define fs_package_file "package_data.txt"
 
 // Defined SD Card Information
-#define sd_card_csv_import_file "import.csv"
-#define sd_card_import_file "import.txt"
-#define sd_card_csv_export_file "export.csv"
-#define sd_card_export_file "export.txt"
+//#define sd_card_csv_import_file "import.csv"
+//#define sd_card_import_file "import.txt"
+//#define sd_card_csv_export_file "export.csv"
+//#define sd_card_export_file "export.txt"
 
 // Defined Display Configuration
 //#define display_size 3.5

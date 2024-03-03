@@ -53,7 +53,7 @@ http_response Request::get(const String &host_name, const String &path_name, con
                 int index = 0;
                 // Buffer to read
                 uint8_t buff[128] = {0};
-                // Array to store continuous group of 2 bytes, then we combine them to get the original byte
+                // Array to store the continuous group of 2 bytes; then we combine them to get the original byte
                 uint8_t buff2[2] = {0};
                 // uint16_t variable to store the original byte
                 uint16_t buff16 = 0;
@@ -69,7 +69,7 @@ http_response Request::get(const String &host_name, const String &path_name, con
                     //Serial.printf("Size available: %d\n", size);
                     //Serial.println();
                     if (size) {
-                        // read up to 128 byte
+                        // read up to 128 bytes
                         int c = stream->readBytes(buff, std::min((size_t) len, sizeof(buff)));
                         int i = 0;
                         while (i < c) {

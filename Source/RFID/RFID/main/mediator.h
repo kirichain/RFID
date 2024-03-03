@@ -9,10 +9,7 @@
 #include "structs.h"
 #include "buzzer.h"
 #include "config.h"
-#include "data_export.h"
-#include "data_import.h"
 #include "display.h"
-#include "fs_esp32.h"
 #include "mqtt.h"
 #include "operation.h"
 #include "peripherals.h"
@@ -32,7 +29,7 @@ private:
             "INIT_AP_WIFI", "INIT_STA_WIFI", "TERMINATE_AP_WIFI", "TERMINATE_STA_WIFI", "SCAN_WIFI_NETWORKS",
             "GET_OPERATING_MODE", "SET_OPERATING_MODE", "RENDER_FEATURE", "GET_CURRENT_FEATURE",
             "READ_NAVIGATION_BUTTON", "INIT_NAVIGATION_BUTTON", "SET_CURRENT_FEATURE", "SET_TASK", "SET_TASK_STATUS",
-            "GET_TASK_STATUS", "GET_RFID_SCAN_DATA", "IMPORT_DATA_FROM_SD_CARD", "IMPORT_DATA_FROM_SERVER",
+            "GET_TASK_STATUS", "GET_RFID_SCAN_DATA", "RESET_SCANNED_RFID_TAG_COUNT", "IMPORT_DATA_FROM_SD_CARD", "IMPORT_DATA_FROM_SERVER",
             "EXPORT_DATA_TO_SD_CARD", "EXPORT_DATA_TO_SERVER", "SYNC_DATA_TO_SERVER", "SYNC_DATA_TO_DEVICE",
             "READ_RFID_TAG", "WRITE_RFID_TAG", "SET_RFID_SCANNING_MODE", "REGISTER_RFID_TAG", "INSERT_DATA_ROW",
             "UPDATE_DATA_ROW", "DELETE_DATA_ROW", "SAVE_DATA_COLLECTION", "DELETE_DATA_COLLECTION",
@@ -81,6 +78,10 @@ public:
     static const char *extract_value_from_json_string(const char *data, const char *key);
 
     void clear_navigation_history();
+
+    void extract_registered_rfid_tags(String &payload);
+
+    static bool is_epc_matched(String &epc, String &registered_epc);
 };
 
 #endif //RFID_MEDIATOR_H

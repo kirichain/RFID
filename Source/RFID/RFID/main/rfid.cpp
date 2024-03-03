@@ -255,7 +255,7 @@ void Rfid::scan_rfid_tag() {
             Serial.print(F("Total scanned RFID tags currently: "));
             Serial.println(scanned_tag_count);
             stop_scanning();
-            for (byte i = 0; i < 100; ++i) {
+            for (int i = 0; i < 200; ++i) {
                 Serial.print(scan_results[i].epc);
                 Serial.print(", ");
             }
@@ -267,11 +267,6 @@ void Rfid::scan_rfid_tag() {
             stop_scanning();
             break;
     }
-}
-
-rfid_scan_result Rfid::get_rfid_scan_result() {
-    rfid_scan_result _rfid_scan_result;
-    return _rfid_scan_result;
 }
 
 void Rfid::set_scanning_mode(rfid_scanning_mode_t _scanning_mode) {

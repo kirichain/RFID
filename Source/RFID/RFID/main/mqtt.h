@@ -37,10 +37,13 @@ public:
     String style_color;
     String buyer_po;
     String module_name;
+
     int mes_target;
+
     bool is_broker_connected;
     bool is_mes_package_selected;
     bool is_mes_package_group_selected;
+
     mqtt_event_t expected_event;
 
     MQTT();

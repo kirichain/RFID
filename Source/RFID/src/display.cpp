@@ -44,7 +44,7 @@ void Display::init(feature_layout_t _feature_layout) {
     gif.begin(BIG_ENDIAN_PIXELS);
 }
 
-void Display::draw_layout(feature_layout_t _feature_layout) {
+void Display::draw_layout(feature_layout_t _feature_layout) const {
     // Clear the screen before drawing the layout
     tft.fillScreen(backgroundColor);
 
@@ -58,7 +58,7 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.fillRect(0, 0, SCREEN_WIDTH, HEADER_HEIGHT, headerColor);
 
             // Set text color for the header
-            tft.setTextColor(textColor, headerColor);
+            tft.setTextColor(TFT_WHITE, headerColor);
 
             // Wi-Fi and server status icons
             tft.pushImage(10, 11, 19, 14, company_logo_icon);
@@ -77,7 +77,7 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.fillRect(0, 0, SCREEN_HEIGHT, HEADER_HEIGHT, headerColor);
 
             // Set text color for the header
-            tft.setTextColor(textColor, headerColor);
+            tft.setTextColor(TFT_WHITE, headerColor);
 
             // Draw Wi-Fi status at the top-left
             tft.drawString(wifiStatus, 5, 5);
@@ -86,15 +86,15 @@ void Display::draw_layout(feature_layout_t _feature_layout) {
             tft.drawString(loginStatus, 5, 20);
 
             // Draw date and time at the top-right
-            dateTimeWidthLandscape = get_string_width(dateTime);
-            tft.drawString(dateTime, SCREEN_HEIGHT - dateTimeWidthLandscape - 5, 5);
-
-            // Draw server status directly below date and time
-            serverStatusWidthLandscape = get_string_width(serverStatus);
-            tft.drawString(serverStatus, SCREEN_HEIGHT - serverStatusWidthLandscape - 5, 20);
+//            dateTimeWidthLandscape = get_string_width(dateTime);
+//            tft.drawString(dateTime, SCREEN_HEIGHT - dateTimeWidthLandscape - 5, 5);
+//
+//            // Draw server status directly below date and time
+//            serverStatusWidthLandscape = get_string_width(serverStatus);
+//            tft.drawString(serverStatus, SCREEN_HEIGHT - serverStatusWidthLandscape - 5, 20);
 
             // Draw viewport below the header
-            tft.drawRect(0, HEADER_HEIGHT, SCREEN_HEIGHT, SCREEN_WIDTH - HEADER_HEIGHT, borderColor);
+            tft.drawRect(0, HEADER_HEIGHT, SCREEN_HEIGHT, SCREEN_WIDTH - HEADER_HEIGHT, headerColor);
             break;
     }
 }
