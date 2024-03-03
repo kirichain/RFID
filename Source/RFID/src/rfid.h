@@ -174,8 +174,6 @@ public:
 
     void set_tx_power(uint16_t db);
 
-    static rfid_scan_result get_rfid_scan_result();
-    
     bool is_duplicate_scan(const String &epc);
 
     static bool is_valid_epc_response(const String &response);

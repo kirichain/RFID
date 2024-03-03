@@ -17,21 +17,6 @@ typedef struct menu_icon {
     const uint16_t *icon_data;
 } menu_icon;
 
-typedef struct status_indicators {
-    char wifiStatus[WIFI_STATUS_MAX_LEN];
-    char dateTime[DATE_TIME_MAX_LEN];
-    char serverStatus[SERVER_STATUS_MAX_LEN];
-    char loginStatus[LOGIN_STATUS_MAX_LEN];
-} status_indicators;
-
-typedef struct data_row {
-    int timestamp;
-} data_row;
-
-typedef struct data_collection {
-    data_row _row;
-} data_collection;
-
 typedef struct task_args {
     task_t task, previousTask;
     feature_t feature, previousFeature;
@@ -41,8 +26,6 @@ typedef struct task_args {
     char wifi_sta_ssid[32];
     char wifi_sta_password[32];
     char wifi_hostname[32];
-    data_row dataRow;
-    data_collection dataCollection;
     char *mqtt_topic;
     const char *mqttBrokerIp;
     const char *mqttLwtTopic;
@@ -57,19 +40,6 @@ typedef struct rfid_tag {
     String epc = "";
     bool is_matched_check = false;
 } rfid_tag;
-
-typedef struct rfid_item {
-    String item_id;
-    String description;
-    rfid_tag rfid_data;
-} rfid_item;
-
-typedef struct rfid_scan_result {
-    bool success;
-    rfid_tag scan_data;
-    String timestamp;
-    byte scan_count;
-} rfid_scan_result;
 
 typedef struct wifi_network_info {
     char ssid[16];
@@ -124,18 +94,6 @@ typedef struct task_results {
     rfid_tag scanned_rfid_tags[200];
     rfid_tag registered_rfid_tags_from_server[200];
 } task_results;
-
-typedef struct message {
-    int timestamp;
-    char *content;
-} message;
-
-typedef struct device_config {
-    char *defaultApWifiSSID;
-    char *defaultApWifiPassword;
-    char *defaultStaWifiSSID;
-    char *defaultStaWifiPassword;
-} device_config;
 
 typedef struct screen_item_position {
     int x;

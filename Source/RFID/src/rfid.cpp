@@ -269,11 +269,6 @@ void Rfid::scan_rfid_tag() {
     }
 }
 
-rfid_scan_result Rfid::get_rfid_scan_result() {
-    rfid_scan_result _rfid_scan_result;
-    return _rfid_scan_result;
-}
-
 void Rfid::set_scanning_mode(rfid_scanning_mode_t _scanning_mode) {
     scanning_mode = _scanning_mode;
 }

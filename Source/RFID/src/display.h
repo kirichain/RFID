@@ -68,7 +68,6 @@ void GIFDraw(GIFDRAW *pDraw);
 class Display {
 public:
     feature_layout_t feature_layout;
-    status_indicators status;
     screen_selector current_screen_selector;
     screen_item_position screen_items[10];
     byte screen_item_count;
@@ -282,24 +281,7 @@ public:
 
     void put_icon(int x, int y, const char *icon_name);
 
-    void put_text(int x, int y, const char *content) const;
-
-    void draw_icon_with_label(int x, int y, byte iconIndex, const char *iconNames[]);
-
-    void render_icons_grid(const byte *iconIndices, byte _numIcons, feature_render_type_t render_type);
-
-    void render_item_list(bool is_new_list_set, bool navigation_direction, bool is_page_displayed, int item_count,
-                          uint16_t item_background_color);
-
-    static byte calculate_columns(byte iconCount);
-
-    static byte calculate_rows(byte iconCount, byte numColumns);
-
     void render_feature(feature_t _feature, task_results &_taskResults);
-
-    void draw_history_item(byte index, const rfid_scan_result &item) const;
-
-    void draw_vertical_line() const;
 
     static void blink_screen(bool &isTaskCompleted);
 

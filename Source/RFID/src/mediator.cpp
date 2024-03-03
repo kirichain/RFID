@@ -6,11 +6,8 @@
 
 Ws2812b ws2812b;
 Wifi wifi;
-DataExport dataExport;
-DataImport dataImport;
 Request request;
 Display display;
-FsEsp32 fsEsp32;
 Operation operation;
 Peripherals peripherals;
 Buzzer buzzer;
@@ -412,26 +409,11 @@ void Mediator::execute_task(task_t task) {
                     // We just traverse through screen items for both cases
                     display.clear_screen_selector();
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
-                    if (display.current_feature_item_type == LIST_ITEM) {
-                        // We traverse through screen items and update items on screen base on item index and page
-                        if (taskResults.currentScreenItemIndex == 7 && previous_screen_item_index == 0) {
-                            Serial.println(F("We re going up in the list"));
-                            display.render_item_list(false, true, true, 40, 0x528B);
-                        }
-                    }
                     break;
                 case RIGHT_DOWN:
                     // We just traverse through screen items for both cases
                     display.clear_screen_selector();
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
-                    if (display.current_feature_item_type == LIST_ITEM) {
-                        // LIST_ITEM
-                        // We traverse through screen items and update items on screen base on item index and page
-                        if (taskResults.currentScreenItemIndex == 0 && previous_screen_item_index == 7) {
-                            Serial.println(F("We re going down in the list"));
-                            display.render_item_list(false, false, true, 40, 0x528B);
-                        }
-                    }
                     break;
                 case SELECT:
                     switch (taskResults.feature_item_type) {
