@@ -99,12 +99,6 @@ void Display::draw_layout(feature_layout_t _feature_layout) const {
     }
 }
 
-byte Display::get_string_width(const char *string) {
-    // The width of the string is now calculated based on the actual font
-    byte stringWidth = tft.textWidth(string);
-    return stringWidth;
-}
-
 const menu_icon *Display::get_icon_by_name(const char *icon_name) {
     for (uint16_t i = 0; i < numIcons; ++i) {
         if (strcmp(icons[i].name, icon_name) == 0) {
@@ -133,7 +127,6 @@ void Display::put_icon(int x, int y, const char *icon_name) {
 
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
-    //backgroundColor = 0x441C;
     if (is_viewport_cleared) {
         Serial.println("Viewport is cleared now");
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
@@ -345,33 +338,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
-        case RFID_SCAN: {
-            byte button_radius = 60;
-            byte text_padding = 20;
-            // Draw a blue circle button
-            tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, button_radius, TFT_BLUE);
-            // Draw the text below the button
-            tft.setFreeFont(&FreeSans12pt7b);
-            tft.setTextColor(TFT_WHITE);
-            // Assuming your library provides a way to set text alignment
-            tft.setTextDatum(MC_DATUM); // MC_DATUM typically means Middle-Center datum point
-            // Draw the button text centered below the circle button
-            tft.drawString("Press select to start scanning", SCREEN_WIDTH / 2,
-                           SCREEN_HEIGHT / 2 + button_radius + text_padding);
-
-            // When the user presses the select button, change the circle to green
-            // and update the text (this part should be uncommented when implementing the interaction)
-            //
-            // tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, BUTTON_RADIUS, TFT_GREEN);
-            // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
-            // tft.print("Press cancel to stop scanning");
-            reset_display_setting();
-            current_feature_item_type = LIST_ITEM;
-            // Reset current screen tasks
-            memset(current_screen_tasks, NO_TASK, 10);
-            current_screen_tasks[0] = READ_RFID_TAG;
-            break;
-        }
         case RFID_SCAN_DETAILS_REVIEW: {
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(0x12AC);
@@ -392,19 +358,19 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.setTextFont(2);
             tft.setTextColor(0xa554);
             tft.drawString("BuyerPO: ", 100, 157);
-            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextFont(2);
             tft.setTextColor(TFT_WHITE);
             tft.drawString(_taskResults.buyer_po, 180, 157);
             tft.setTextFont(2);
             tft.setTextColor(0xa554);
             tft.drawString("Line: ", 100, 177);
-            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextFont(2);
             tft.setTextColor(TFT_WHITE);
             tft.drawString(_taskResults.line_no, 180, 177);
             tft.setTextFont(2);
             tft.setTextColor(0xa554);
             tft.drawString("Module name: ", 100, 197);
-            tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextFont(2);
             tft.setTextColor(TFT_WHITE);
             tft.drawString(_taskResults.module_name, 190, 197);
             tft.setTextFont(2);
@@ -510,19 +476,19 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("BuyerPO:", 102, 88);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.buyer_po, 170, 88);
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("Line: ", 102, 108);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.line_no, 170, 108);
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("Module name: ", 102, 128);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.module_name, 190, 128);
                     tft.setTextFont(2);
@@ -668,19 +634,19 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("BuyerPO: ", 100, 157);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.buyer_po, 180, 157);
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("Line: ", 100, 177);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.line_no, 180, 177);
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("Module name: ", 100, 197);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.module_name, 190, 197);
                     tft.setTextFont(2);

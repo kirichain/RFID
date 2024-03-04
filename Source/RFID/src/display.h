@@ -97,13 +97,6 @@ public:
     const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
     const byte VIEWPORT_HEIGHT = HEADER_HEIGHT - NAV_BAR_HEIGHT;
 
-    // RFID scan result layout
-    const byte RFID_SCAN_RESULT_HEADER_HEIGHT = 80;
-    const byte RFID_SCAN_RESULT_PRODUCT_INFO_HEIGHT = 150;
-    const byte RFID_SCAN_RESULT_TAG_INFO_HEIGHT =
-            VIEWPORT_HEIGHT - RFID_SCAN_RESULT_HEADER_HEIGHT - RFID_SCAN_RESULT_PRODUCT_INFO_HEIGHT -
-            RFID_SCAN_RESULT_TAG_INFO_HEIGHT;
-
     // Define colors for different UI elements
     uint32_t headerColor = 0x3B2D;
     uint32_t backgroundColor = 0x84B2;
@@ -225,8 +218,6 @@ public:
     void init(feature_layout_t _feature_layout);
 
     void draw_layout(feature_layout_t _feature_layout) const;
-
-    static byte get_string_width(const char *string);
 
     const menu_icon *get_icon_by_name(const char *icon_name);
 
