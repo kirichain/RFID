@@ -127,6 +127,7 @@ void Display::put_icon(int x, int y, const char *icon_name) {
 
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
+    //backgroundColor = 0x441C;
     if (is_viewport_cleared) {
         Serial.println("Viewport is cleared now");
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
@@ -338,6 +339,33 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case HOME_TERMINAL:
             // Code to handle HOME_TERMINAL feature
             break;
+        case RFID_SCAN: {
+            byte button_radius = 60;
+            byte text_padding = 20;
+            // Draw a blue circle button
+            tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, button_radius, TFT_BLUE);
+            // Draw the text below the button
+            tft.setFreeFont(&FreeSans12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            // Assuming your library provides a way to set text alignment
+            tft.setTextDatum(MC_DATUM); // MC_DATUM typically means Middle-Center datum point
+            // Draw the button text centered below the circle button
+            tft.drawString("Press select to start scanning", SCREEN_WIDTH / 2,
+                           SCREEN_HEIGHT / 2 + button_radius + text_padding);
+
+            // When the user presses the select button, change the circle to green
+            // and update the text (this part should be uncommented when implementing the interaction)
+            //
+            // tft.fillCircle(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, BUTTON_RADIUS, TFT_GREEN);
+            // tft.setCursor(SCREEN_WIDTH / 2 - TEXT_OFFSET, SCREEN_HEIGHT / 2 + BUTTON_RADIUS + TEXT_PADDING);
+            // tft.print("Press cancel to stop scanning");
+            reset_display_setting();
+            current_feature_item_type = LIST_ITEM;
+            // Reset current screen tasks
+            memset(current_screen_tasks, NO_TASK, 10);
+            current_screen_tasks[0] = READ_RFID_TAG;
+            break;
+        }
         case RFID_SCAN_DETAILS_REVIEW: {
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(0x12AC);
@@ -346,11 +374,11 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             iconWidth = 280;
             iconHeight = 41;
             put_icon(20, 91, menu_icon_names[40]);
-            //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91);
+            //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91); // Commented out, adjusted to comment position
             tft.setTextFont(2);
             tft.setTextSize(1);
             tft.setTextColor(TFT_WHITE);
-            //tft.drawString(_taskResults.selected_list_items[3], 32, 128);
+            //tft.drawString(_taskResults.selected_list_items[3], 32, 128); // Commented out, adjusted to comment position
             tft.drawString(_taskResults.selected_mes_package, 20, 135);
             // Draw the product image
             tft.pushImage(20, 160, 70, 70, _taskResults.mes_img_buffer);
@@ -445,13 +473,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                 // Update the "Quantity" field with the latest count
                 String quantityStr = String(_taskResults.current_scanned_rfid_tag_count);
-                tft.fillRect(223, 343, 60, 48, 0xdf7e);
+                tft.fillRect(223, 343, 60, 48, 0xdf7e); // Clear the previous area
                 tft.setFreeFont(&FreeSansBold12pt7b);
                 tft.setTextColor(0x1b2e);
                 tft.drawString(quantityStr, 223, 357);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
                 // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
             } else {
                 // Check if this is the first time this feature is rendered
@@ -608,9 +633,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.fillRect(235, 361, 70, 50, TFT_WHITE);
                 // Draw the new string with the updated count
                 tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
                 // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
             } else {
                 // Check if this is the first time this feature is rendered
@@ -628,11 +650,11 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     iconWidth = 280;
                     iconHeight = 41;
                     put_icon(20, 91, menu_icon_names[40]);
-                    //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91);
+                    //tft.drawString("Package groups: " + _taskResults.selected_list_items[2], 32, 91); // Commented out, adjusted to comment position
                     tft.setTextFont(2);
                     tft.setTextSize(1);
                     tft.setTextColor(TFT_WHITE);
-                    //tft.drawString(_taskResults.selected_list_items[3], 32, 128);
+                    //tft.drawString(_taskResults.selected_list_items[3], 32, 128); // Commented out, adjusted to comment position
                     tft.drawString(_taskResults.selected_mes_package, 20, 135);
                     // Draw the product image
                     tft.pushImage(20, 160, 70, 70, _taskResults.mes_img_buffer);

@@ -547,7 +547,7 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task SYNC_DATA_TO_DEVICE"));
             break;
         case READ_RFID_TAG:
-            //Serial.println(F("Execute task READ_RFID_TAG"));
+            Serial.println(F("Execute task READ_RFID_TAG"));
             rfid.set_scanning_mode(SINGLE_SCAN);
             // Reset scan result count if we are in RFID_REGISTER_TAG or RFID_SCAN_RESULT the first time
             if (taskResults.is_the_first_scan) {
@@ -561,7 +561,7 @@ void Mediator::execute_task(task_t task) {
                     taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
                     buzzer.successful_sound();
                 } else {
-                    //buzzer.failure_sound();
+                    buzzer.failure_sound();
                 }
             } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
                 // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
