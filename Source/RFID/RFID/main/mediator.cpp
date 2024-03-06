@@ -124,9 +124,8 @@ void Mediator::execute_task(task_t task) {
                     elapsed_time = millis();
                     if (mqtt.is_broker_connected) break;
                 }
-                //Serial.println(F("Done"));
-                mqtt.subscribe_topic(taskArgs.mqtt_subscribed_topic.c_str());
             }
+            mqtt.subscribe_topic(taskArgs.mqtt_subscribed_topic.c_str());
             break;
         }
         case CONNECT_MQTT_BROKER:
@@ -140,6 +139,7 @@ void Mediator::execute_task(task_t task) {
                 case QR_CODE_SCANNING: {
                     if (display.qr_code_type == "MES-PACKAGE") {
                         taskResults.selected_mes_package = "";
+
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
                         if (mqtt.is_mes_package_selected) {
@@ -170,12 +170,12 @@ void Mediator::execute_task(task_t task) {
                                                                       get_registered_rfid_tag_mes_type_query +
                                                                       "MES-PACKAGE", "keyCode",
                                                                       "PkerpVN2024*", false, nullptr, 0);
-
-                            // Extract all registered tags into the storing list
-                            extract_registered_rfid_tags(list_response.payload);
                             // Play successful sound
                             if (list_response.status_code == HTTP_CODE_OK) {
                                 buzzer.successful_sound();
+
+                                // Extract all registered tags into the storing list
+                                extract_registered_rfid_tags(list_response.payload);
                             } else {
                                 buzzer.failure_sound();
                             }
@@ -184,12 +184,13 @@ void Mediator::execute_task(task_t task) {
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
+                            mqtt.reset_saved_data();
                         }
                     } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
                         taskResults.selected_mes_package_group = "";
+
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
-
                         if (mqtt.is_mes_package_group_selected) {
                             taskResults.selected_mes_package_group = mqtt.mes_package_group;
                             taskResults.mes_operation_name = mqtt.mes_operation_name;
@@ -218,11 +219,12 @@ void Mediator::execute_task(task_t task) {
                                                                       get_registered_rfid_tag_mes_type_query +
                                                                       "MES-PACKAGEGROUP", "keyCode",
                                                                       "PkerpVN2024*", false, nullptr, 0);
-                            // Extract all registered tags into the storing list
-                            extract_registered_rfid_tags(list_response.payload);
                             // Play successful sound
                             if (list_response.status_code == HTTP_CODE_OK) {
                                 buzzer.successful_sound();
+
+                                // Extract all registered tags into the storing list
+                                extract_registered_rfid_tags(list_response.payload);
                             } else {
                                 buzzer.failure_sound();
                             }
@@ -231,6 +233,7 @@ void Mediator::execute_task(task_t task) {
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
+                            mqtt.reset_saved_data();
                         }
                     }
                     break;
@@ -249,9 +252,59 @@ void Mediator::execute_task(task_t task) {
         case SAVE_FS:
             Serial.println(F("Execute task SAVE_FS"));
             break;
-        case CHECK_CONNECTION:
-            Serial.println(F("Execute task CHECK_CONNECTION"));
+        case CHECK_WIFI_CONNECTION: {
+            static unsigned long last_millis = millis();
+            static unsigned long last_reconnect_millis = millis();
+            const unsigned long blink_interval = 500;
+            const unsigned long reconnect_interval = 5000;
+            static bool is_reconnected = false;
+
+            //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
+            if (WiFi.status() == WL_CONNECTED) {
+                // Wi-Fi is connected
+                //Serial.println(F("Wi-Fi is connected"));
+                display.iconWidth = 16;
+                display.iconHeight = 16;
+                display.put_icon(294, 10, display.menu_icon_names[23]);
+
+                // Because we have had a reconnection, we need re-subscribe to MQTT broker
+                if (is_reconnected) {
+                    is_reconnected = false;
+                    if (taskArgs.mes_api_host != "") {
+                        mqtt.is_broker_connected = false;
+                        execute_task(CONNECT_MQTT_BROKER);
+                        execute_task(SUBSCRIBE_MQTT_TOPIC);
+                        buzzer.successful_sound();
+                    } else {
+                        execute_task(INIT_STA_WIFI);
+                    }
+                }
+            } else {
+                if (!is_reconnected) {
+                    buzzer.failure_sound();
+                    is_reconnected = true;
+                }
+                //Serial.println(F("Wi-Fi is not connected"));
+                display.iconWidth = 16;
+                display.iconHeight = 16;
+                // Blink the icon
+                unsigned long current_millis = millis();
+                if (current_millis - last_millis >= blink_interval) {
+                    last_millis = current_millis;
+                    display.put_icon(294, 10, display.menu_icon_names[24]);
+                }
+                if (current_millis - last_millis >= blink_interval / 2) {
+                    display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
+                }
+
+                // Try to reconnect
+                if (current_millis - last_reconnect_millis >= reconnect_interval) {
+                    last_reconnect_millis = current_millis;
+                    wifi.init_sta_mode();
+                }
+            }
             break;
+        }
         case INIT_AP_WIFI:
             Serial.println(F("Execute task INIT_AP_WIFI"));
             strncpy(taskArgs.wifi_ap_ssid, "RFID-001", sizeof(taskArgs.wifi_ap_ssid));
@@ -278,16 +331,15 @@ void Mediator::execute_task(task_t task) {
             // Start to connect to Wi-Fi as STA credential
             if (wifi.init_sta_mode()) {
                 Serial.println(F("Init sta wifi successfully"));
-
-                // Get MQTT config from TPM server
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
                 buzzer.successful_sound();
             } else {
                 buzzer.failure_sound();
-                Serial.println(F("Init sta wifi failed. Reset in 3s"));
-                delay(3000);
-                // Reset device
-                ESP.restart();
+//                Serial.println(F("Init sta Wi-Fi failed. Reset in 3s"));
+//                delay(3000);
+//                // Reset device
+//                ESP.restart();
+                Serial.println(F("Init sta wifi failed"));
             }
             break;
         case TERMINATE_AP_WIFI:
@@ -547,7 +599,7 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task SYNC_DATA_TO_DEVICE"));
             break;
         case READ_RFID_TAG:
-            Serial.println(F("Execute task READ_RFID_TAG"));
+            //Serial.println(F("Execute task READ_RFID_TAG"));
             rfid.set_scanning_mode(SINGLE_SCAN);
             // Reset scan result count if we are in RFID_REGISTER_TAG or RFID_SCAN_RESULT the first time
             if (taskResults.is_the_first_scan) {
@@ -561,7 +613,7 @@ void Mediator::execute_task(task_t task) {
                     taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
                     buzzer.successful_sound();
                 } else {
-                    buzzer.failure_sound();
+                    //buzzer.failure_sound();
                 }
             } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
                 // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
@@ -817,7 +869,7 @@ void Mediator::extract_registered_rfid_tags(String &payload) {
     }
 
     // Optionally, print out the tags to verify
-    if (tagIndex != 0) taskResults.registered_rfid_tags_from_server_count = tagIndex;
+    taskResults.registered_rfid_tags_from_server_count = tagIndex;
     Serial.println(F("All extracted tag epc(s):"));
     for (int i = 0; i < tagIndex; i++) {
         Serial.println(taskResults.registered_rfid_tags_from_server[i].epc);

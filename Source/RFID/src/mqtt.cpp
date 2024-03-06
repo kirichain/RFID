@@ -19,6 +19,11 @@ MQTT::MQTT() {
 }
 
 void MQTT::onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
+    if (reason == AsyncMqttClientDisconnectReason::TCP_DISCONNECTED) {
+        Serial.println("MQTT disconnected due to TCP disconnection");
+//        mqttClient.disconnect(true);
+//        return;
+    }
     Serial.println(F("Disconnected from MQTT. Try reconnecting"));
     mqttClient.connect();
 }
@@ -95,17 +100,18 @@ MQTT::onMqttMessage(char *topic, char *payload, AsyncMqttClientMessageProperties
 
 bool
 MQTT::connect_to_broker(const char *server_ip, int server_port, const char *_lwt_topic, const String &_mac_address) {
+    mqttClient.disconnect(true);
     lwt_topic = _lwt_topic + _mac_address;
     mac_address = _mac_address;
     lwt_payload = String(R"({"mac": ")") + mac_address + String(R"(", "status": "OFF"})");
-
     mqttClient.setServer(server_ip, server_port);
     mqttClient.setWill(lwt_topic.c_str(), 0, true, lwt_payload.c_str(), 0);
     mqttClient.onConnect(MQTT::onMqttConnectStatic);
     mqttClient.onDisconnect(onMqttDisconnect);
     mqttClient.onMessage(MQTT::onMqttMessageStatic);
     mqttClient.onSubscribe(MQTT::onMqttSubscribeStatic);
-    Serial.println(F("Connecting to MQTT broker..."));
+    Serial.print(F("Connecting to MQTT broker...: "));
+    Serial.println(server_ip);
     mqttClient.connect();
     return true;
 }
@@ -228,4 +234,23 @@ String MQTT::extract_value_from_json_string(const String& data, const String& ke
         }
     }
     return "";  // Key not found or value isn't extracted
+}
+
+void MQTT::reset_saved_data() {
+    last_payload = "";
+    mes_package = "";
+    mes_package_group = "";
+    mes_operation_name = "";
+    mes_img_url = "";
+    ao_no = "";
+    target_qty = "";
+    delivery_date = "";
+    destination = "";
+    style_text = "";
+    buyer_style_text = "";
+    line_no = "";
+    style_color = "";
+    buyer_po = "";
+    module_name = "";
+    mes_target = 0;
 }

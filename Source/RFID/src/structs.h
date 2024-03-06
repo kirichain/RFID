@@ -7,12 +7,6 @@
 
 #include "enums.h"
 
-// Constants
-#define WIFI_STATUS_MAX_LEN     50
-#define DATE_TIME_MAX_LEN       30
-#define SERVER_STATUS_MAX_LEN   50
-#define LOGIN_STATUS_MAX_LEN    50
-
 // Struct Definitions
 
 typedef struct {

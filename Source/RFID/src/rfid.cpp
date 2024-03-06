@@ -118,8 +118,8 @@ String Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_
     String success_confirmation_string = "";
     if (wait_for_success_confirmation) {
         success_confirmation_string = byte_array_to_hex_string(success_confirmation, confirmation_size);
-//        Serial.print(F("Success confirmation string: "));
-//        Serial.println(success_confirmation_string);
+        Serial.print(F("Success confirmation string: "));
+        Serial.println(success_confirmation_string);
     }
     String response = "";
     bool startDetected = false;
@@ -281,6 +281,8 @@ void Rfid::set_tx_power(uint16_t db) {
     send_command((uint8_t *) SET_TX_POWER, sizeof(SET_TX_POWER));
     Serial.print(F("Set TX power received: "));
     Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8, 3000, NORMAL_READING));
+//    Serial.println(F("Start setting high sensitivity"));
+//    send_command((uint8_t *) SET_HIGH_SENSITIVITY, sizeof(SET_HIGH_SENSITIVITY));
 }
 
 bool Rfid::is_duplicate_scan(const String &epc) {

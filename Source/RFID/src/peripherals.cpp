@@ -56,7 +56,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = LEFT_UP;
         }
         lastLeftUpNavButtonState = currentLeftUpNavButtonState;
-        //delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if back cancel navigation button is pressed
@@ -67,7 +67,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = BACK_CANCEL;
         }
         lastBackCancelNavButtonState = currentBackCancelNavButtonState;
-        //delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if the menu select navigation button is pressed
@@ -110,7 +110,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = RIGHT_DOWN;
         }
         lastRightDownNavButtonState = currentRightDownNavButtonState;
-        //delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
     return button_type;
 }

@@ -34,6 +34,8 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
                                                    feature_item_type_t &feature_item_type) {
     button_type_t button_type = NOT_PRESSED;
 
+    static unsigned long last_millis = millis();
+
     byte currentLeftUpNavButtonState = digitalRead(leftUpNavButtonPin);
     byte currentBackCancelNavButtonState = digitalRead(backCancelNavButtonPin);
     byte currentMenuSelectNavButtonState = digitalRead(menuSelectNavButtonPin);
@@ -54,7 +56,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = LEFT_UP;
         }
         lastLeftUpNavButtonState = currentLeftUpNavButtonState;
-        delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if back cancel navigation button is pressed
@@ -65,7 +67,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = BACK_CANCEL;
         }
         lastBackCancelNavButtonState = currentBackCancelNavButtonState;
-        delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if the menu select navigation button is pressed
@@ -76,7 +78,21 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = SELECT;
         }
         lastMenuSelectNavButtonState = currentMenuSelectNavButtonState;
-        delay(50); // Delay for debouncing
+        //delay(50); // Delay for debouncing
+    } else {
+        // Check if button is being kept pressing
+        if (currentMenuSelectNavButtonState == LOW) {
+            if ((unsigned long) millis() - last_millis >= 300) {
+                Serial.println(F("Menu Select Navigation Button Is Being Kept Pressing"));
+
+                button_type = SELECT;
+
+                last_millis = millis();
+            }
+        } else {
+            last_millis = millis();
+            // User has released the button, reset the timer
+        }
     }
 
     // Check if right down navigation button is pressed
@@ -94,7 +110,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = RIGHT_DOWN;
         }
         lastRightDownNavButtonState = currentRightDownNavButtonState;
-        delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
     return button_type;
 }

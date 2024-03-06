@@ -60,6 +60,7 @@
 #include "icons/text_scan_button.h"
 #include "icons/company_logo.h"
 #include "icons/clear_button.h"
+#include "icons/none_wifi.h"
 
 extern TFT_eSPI tft;
 
@@ -161,6 +162,7 @@ public:
             "clear_button_icon",
             "submit_button_icon",
             "company_logo_icon",
+            "none_wifi_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -210,7 +212,8 @@ public:
             {"text_scan_button_icon",                 text_scan_button_icon},
             {"clear_button_icon",                     clear_button_icon},
             {"submit_button_icon",                    submit_button_icon},
-            {"company_logo_icon",                     company_logo_icon}
+            {"company_logo_icon",                     company_logo_icon},
+            {"none_wifi_icon",                        none_wifi_icon}
     };
 
     Display();

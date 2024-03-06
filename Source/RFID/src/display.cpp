@@ -64,7 +64,7 @@ void Display::draw_layout(feature_layout_t _feature_layout) const {
             tft.pushImage(10, 11, 19, 14, company_logo_icon);
             tft.pushImage(39, 10, 16, 16, server_connection_successful_icon);
             tft.drawString("Server not connected", 58, 10);
-            tft.pushImage(294, 10, 16, 16, wifi_connection_successful_icon);
+            tft.pushImage(294, 10, 16, 16, wifi_connection_failed_icon);
 
             // Draw date and time aligned to the top-right of the header
             tft.setTextDatum(TR_DATUM); // Align to the top-right
@@ -678,13 +678,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.fillRect(215, 328, 94, 27, 0xFE6C);
+                    tft.setTextColor(0x4228);
+                    tft.drawString("Total registered tags:", 10, 334);
                     tft.setTextColor(TFT_BLACK);
                     tft.drawString(String(_taskResults.registered_rfid_tags_from_server_count), 245, 335);
-                    tft.setTextColor(0x4228);
-                    tft.setTextFont(2);
-                    tft.setTextSize(1);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.drawString("Total registered tags:", 10, 334);
                     tft.fillRect(10, 361, 300, 50, TFT_WHITE);
                     tft.setTextColor(0x8c51);
                     tft.setFreeFont(&FreeSansBold9pt7b);

@@ -78,6 +78,8 @@ public:
     void wait_for_mqtt_event(mqtt_event_t _event);
 
     static String extract_value_from_json_string(const String &data, const String &key);
+
+    void reset_saved_data();
 };
 
 #endif //RFID_MQTT_H
