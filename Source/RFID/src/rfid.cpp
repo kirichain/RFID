@@ -123,9 +123,7 @@ void Rfid::read_multi_scan_response() {
     //return response;
 }
 
-void Rfid::read_single_scan_response(bool wait_for_success_confirmation, uint8_t *success_confirmation,
-                                     size_t confirmation_size,
-                                     unsigned long timeout, rfid_response_type_t response_type) {
+void Rfid::read_single_scan_response() {
     clean_buffer();
 
     uint8_t buffer_index = 0;
@@ -134,106 +132,34 @@ void Rfid::read_single_scan_response(bool wait_for_success_confirmation, uint8_t
     static bool is_tag_not_found = false;
 
     // Read data from RFID module when this method is called
-    if (Serial2.available()) {
-        byte readByte = Serial2.read();
-        buffer[buffer_index] = readByte;
-        ++buffer_index;
-        // Check if the end byte is detected
-        if (readByte == 0x7e) {
-            is_end_byte_detected = true;
-        }
-    }
-
-    // Check if we have a valid response frame, 0xbb...........0x7e
-    if (buffer[0] == 0xbb && buffer[buffer_index - 1] == 0x7e) {
-        is_end_byte_detected = true;
-        // Check if response is tag not found
-        if (buffer_index == sizeof(RFID_TAG_NOT_FOUND) &&
-            memcmp(buffer, RFID_TAG_NOT_FOUND, sizeof(RFID_TAG_NOT_FOUND)) == 0) {
-            is_tag_not_found = true;
-        } else {
-            // We have a new tag, print its EPC
-            print_epc(buffer, buffer_index);
-        }
-    }
-
-    String success_confirmation_string = "";
-    if (wait_for_success_confirmation) {
-        success_confirmation_string = byte_array_to_hex_string(success_confirmation, confirmation_size);
-        //Serial.print(F("Success confirmation string: "));
-        //Serial.println(success_confirmation_string);
-    }
-    String response = "";
-    bool startDetected = false;
-    unsigned long lastReadTime = 0;
-    //const unsigned long timeout = 1000; // Set a timeout period
-
-    // Read the response until no more data is received for the duration of the timeout
-    while (true) {
+    while (Serial2.available()) {
         if (Serial2.available()) {
             byte readByte = Serial2.read();
-            lastReadTime = millis(); // Update the last read time
+            buffer[buffer_index] = readByte;
+            ++buffer_index;
+            // Check if the end byte is detected
+            if (readByte == 0x7e) {
+                is_end_byte_detected = true;
 
-            if (readByte == 0xBB) { // Check if the start byte is detected
-                startDetected = true;
-                response = "";
-                response += "BB"; // Include the start byte in the response
-            } else if (startDetected) {
-                char hexBuffer[4];
-                sprintf(hexBuffer, "%02X", readByte);
-                response += hexBuffer;
-
-                if (readByte == 0x7E) { // Check if the end byte is detected
-                    if (wait_for_success_confirmation) {
-                        if (response.equalsIgnoreCase(success_confirmation_string)) {
-                            Serial.print(F("Got success confirmation string: "));
-                            Serial.println(success_confirmation_string);
-                            break; // Exit the loop if success confirmation string found
-                        }
-                    }
-
-                    // If the response type is EPC_READING, process the EPC
-                    if (response_type == EPC_READING) {
-                        if (is_valid_epc_response(response)) {
-                            //Serial.println("Valid EPC response. Start appending if not duplicated");
-                            // Parse the EPC from the response
-                            //Serial.println("Raw response: " + response);
-                            String epc = response.substring(16, 40);
-
-                            // Check for duplicates
-                            if (!is_duplicate_scan(epc)) {
-                                // If not a duplicate, add to scan_results and increment scanned_tag_count
-                                scan_results[scanned_tag_count].epc = epc;
-                                scanned_tag_count++;
-
-                                // Optionally print the new EPC
-                                //Serial.println(F("New scanned EPC: "));
-                                Serial.println(epc);
-                            } else {
-                                Serial.println(F("Duplicated EPC: "));
-                                //Serial.println(epc);
-                            }
-                        } else {
-                            //Serial.println("Invalid EPC response or no tag read.");
-                        }
-                        // Stop the task so user will need keep pressing button for continuous scanning
-                        //break;
+                // Check if we have a valid response frame, 0xbb...........0x7e
+                if (buffer[0] == 0xbb && buffer[buffer_index - 1] == 0x7e) {
+                    // Check if response is tag not found
+                    if (buffer_index == sizeof(RFID_TAG_NOT_FOUND) &&
+                        memcmp(buffer, RFID_TAG_NOT_FOUND, sizeof(RFID_TAG_NOT_FOUND)) == 0) {
+                        is_tag_not_found = true;
+                        break;
                     } else {
-                        //Serial.println(response);
+                        // We have a new tag, print its EPC
+                        print_epc(buffer, buffer_index);
                     }
-                    // Comment these below if we use break above
-                    startDetected = false;
-                    response = "";
                 }
             }
-        } else if (millis() - lastReadTime > timeout && !startDetected) {
-            // If no more data is received for the duration of the timeout, break the loop
-            break;
         }
-        delay(10); // Small delay to prevent reading too fast
     }
-    //Serial.print(F("Last response from RFID module: "));
-    //return response; // Return the last response, if needed
+
+    // Reset bool
+    is_end_byte_detected = false;
+    is_tag_not_found = false;
 }
 
 bool Rfid::read_response(unsigned long timeout) {
@@ -294,7 +220,7 @@ void Rfid::get_software_version() {
 
 void Rfid::polling_once() {
     send_command((uint8_t *) POLLING_ONCE_CMD, sizeof(POLLING_ONCE_CMD));
-    read_single_scan_response(false, (uint8_t *) RFID_TAG_NOT_FOUND, 8, 1000, EPC_READING);
+    read_single_scan_response();
     //Serial.println(read_response(false, nullptr, 8, 20, EPC_READING));
 }
 

@@ -178,8 +178,7 @@ public:
 
     void stop_scanning();
 
-    void read_single_scan_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
-                                   unsigned long timeout, rfid_response_type_t response_type);
+    void read_single_scan_response();
 
     void clean_buffer();
 
