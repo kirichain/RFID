@@ -140,8 +140,8 @@ const uint8_t SUCCESSFULLY_SET_TX_POWER[] = {0xBB, 0x01, 0xB6, 0x00, 0x01, 0x00,
 class Rfid {
 public:
     rfid_scanning_mode_t scanning_mode;
-    uint8_t buffer[200] = {0};
     rfid_tag scan_results[200];
+    uint8_t buffer[256] = {0};
     int scanned_tag_count = 0;
 
     Rfid();
@@ -152,22 +152,19 @@ public:
 
     static String byte_array_to_hex_string(const uint8_t *byte_array, size_t array_length);
 
-    String read_response_async();
+    void read_multi_scan_response();
 
-    String read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
-                         unsigned long timeout, rfid_response_type_t response_type);
+    bool read_response(unsigned long timeout);
 
     static void send_command(uint8_t *data, size_t size);
 
-    String get_hardware_version();
+    void get_hardware_version();
 
-    String get_software_version();
+    void get_software_version();
 
     void polling_once();
 
     void polling_multi();
-
-    void print_rfid_tag_info();
 
     void scan_rfid_tag();
 
@@ -180,6 +177,13 @@ public:
     static bool is_valid_epc_response(const String &response);
 
     void stop_scanning();
+
+    void read_single_scan_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
+                                   unsigned long timeout, rfid_response_type_t response_type);
+
+    void clean_buffer();
+
+    static void print_epc(const uint8_t *buffer, uint8_t buffer_size);
 };
 
 #endif //RFID_RFID_H
