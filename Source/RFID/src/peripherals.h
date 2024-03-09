@@ -13,6 +13,8 @@ private:
     byte leftUpNavButtonPin, backCancelNavButtonPin, menuSelectNavButtonPin, rightDownNavButtonPin;
     byte lastMenuSelectNavButtonState, lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
 public:
+    static volatile bool isMenuSelectButtonReleased;
+
     Peripherals();
 
     void init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCancelNavButtonPin, byte _menuSelectNavButtonPin,

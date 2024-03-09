@@ -434,25 +434,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case RFID_SCAN_RESULT: {
             // Check if the background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
-                // Update the "Submitted/target" field with the latest count
-                String submittedTargetStr =
-                        String(_taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
-                        String(_taskResults.registered_rfid_tags_from_server_count);
-                tft.fillRect(223, 251, 60, 50, 0x1b2e); // Clear the previous area
-                tft.setTextColor(0xe751); // Color for the count
-                tft.setFreeFont(&FreeSansBold9pt7b);
-                tft.drawString(submittedTargetStr, 223, 267);
-
-                // Update the "Quantity" field with the latest count
-                String quantityStr = String(_taskResults.current_scanned_rfid_tag_count);
-                tft.fillRect(223, 343, 60, 48, 0xdf7e);
-                tft.setFreeFont(&FreeSansBold12pt7b);
-                tft.setTextColor(0x1b2e);
-                tft.drawString(quantityStr, 223, 357);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
-                // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+                update_rfid_match_check_scan_result(_taskResults);
             } else {
                 // Check if this is the first time this feature is rendered
                 if (_taskResults.currentFeature == RFID_SCAN_DETAILS_REVIEW) {
@@ -601,17 +583,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case RFID_REGISTER_TAG: {
             // Check if the background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
-                // Just display the recently scanned result and increase total scans
-                tft.setFreeFont(&FreeSansBold12pt7b);
-                tft.setTextColor(0x350F);
-                // Clear the area where the "0/200" is displayed
-                tft.fillRect(235, 361, 70, 50, TFT_WHITE);
-                // Draw the new string with the updated count
-                tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
-                // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+                update_rfid_registration_scan_result(_taskResults);
             } else {
                 // Check if this is the first time this feature is rendered
                 if (_taskResults.currentScreenItemIndex == 3) {
@@ -758,6 +730,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
             break;
         }
+        case SETTING_WIFI: {
+
+            break;
+        }
         default:
             // Code to handle unknown feature
             break;
@@ -885,6 +861,41 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
     }
 }
 
+void Display::update_rfid_registration_scan_result(task_results &_taskResults) {
+    // Just display the recently scanned result and increase total scans
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.setTextColor(0x350F);
+    // Clear the area where the "0/200" is displayed
+    tft.fillRect(235, 361, 70, 50, TFT_WHITE);
+    // Draw the new string with the updated count
+    tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
+    // Start to set screen selector to the first one item
+    clear_screen_selector();
+    update_screen_selector(0);
+    // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+}
+
+void Display::update_rfid_match_check_scan_result(task_results &_taskResults) {
+    // Update the "Submitted/target" field with the latest count
+    String submittedTargetStr =
+            String(_taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
+            String(_taskResults.registered_rfid_tags_from_server_count);
+    tft.fillRect(223, 251, 60, 50, 0x1b2e); // Clear the previous area
+    tft.setTextColor(0xe751); // Color for the count
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.drawString(submittedTargetStr, 223, 267);
+
+    // Update the "Quantity" field with the latest count
+    String quantityStr = String(_taskResults.current_scanned_rfid_tag_count);
+    tft.fillRect(223, 343, 60, 48, 0xdf7e);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.setTextColor(0x1b2e);
+    tft.drawString(quantityStr, 223, 357);
+    // Start to set screen selector to the first one item
+    clear_screen_selector();
+    update_screen_selector(0);
+    // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+}
 void GIFDraw(GIFDRAW *pDraw) {
     uint8_t *s;
     uint16_t *d, *usPalette;

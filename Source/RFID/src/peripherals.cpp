@@ -3,6 +3,12 @@
 //
 #include "peripherals.h"
 
+volatile bool Peripherals::isMenuSelectButtonReleased = false;
+
+void IRAM_ATTR select_button_on_released_isr() {
+    Peripherals::isMenuSelectButtonReleased = true;
+}
+
 Peripherals::Peripherals() {
     lastLeftUpNavButtonState = 0;
     lastBackCancelNavButtonState = 0;
@@ -27,14 +33,13 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
 
+    attachInterrupt(digitalPinToInterrupt(menuSelectNavButtonPin), select_button_on_released_isr, RISING);
     Serial.println("Initialized navigation buttons");
 }
 
 button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
                                                    feature_item_type_t &feature_item_type) {
     button_type_t button_type = NOT_PRESSED;
-
-    static unsigned long last_millis = millis();
 
     byte currentLeftUpNavButtonState = digitalRead(leftUpNavButtonPin);
     byte currentBackCancelNavButtonState = digitalRead(backCancelNavButtonPin);
@@ -44,7 +49,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     // Check if the left up navigation button is pressed
     if (currentLeftUpNavButtonState != lastLeftUpNavButtonState) {
         if (currentLeftUpNavButtonState == LOW) {
-            Serial.println(F("Left Up Navigation Button Pressed"));
+            Serial.println(F("Left Up Navigation Button Has Been Pressed"));
             if (currentScreenItemIndex > 0) {
                 --currentScreenItemIndex;
             } else {
@@ -62,7 +67,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     // Check if back cancel navigation button is pressed
     if (currentBackCancelNavButtonState != lastBackCancelNavButtonState) {
         if (currentBackCancelNavButtonState == LOW) {
-            Serial.println(F("Back Cancel Navigation Button Pressed"));
+            Serial.println(F("Back Cancel Navigation Button Has Been Pressed"));
 
             button_type = BACK_CANCEL;
         }
@@ -73,32 +78,29 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     // Check if the menu select navigation button is pressed
     if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
         if (currentMenuSelectNavButtonState == LOW) {
-            Serial.println(F("Menu Select Navigation Button Pressed"));
+            Serial.println(F("Menu Select Navigation Button Has Been Pressed"));
 
             button_type = SELECT;
         }
+//        else {
+//            Serial.println(F("Menu Select Navigation Button Has Been Released"));
+//
+//            button_type = NOT_PRESSED;
+//        }
         lastMenuSelectNavButtonState = currentMenuSelectNavButtonState;
-        //delay(50); // Delay for debouncing
+        delay(50); // Delay for debouncing
     } else {
-        // Check if button is being kept pressing
+        // Button is being pressed, return state SELECT
         if (currentMenuSelectNavButtonState == LOW) {
-            if ((unsigned long) millis() - last_millis >= 300) {
-                Serial.println(F("Menu Select Navigation Button Is Being Kept Pressing"));
-
-                button_type = SELECT;
-
-                last_millis = millis();
-            }
-        } else {
-            last_millis = millis();
-            // User has released the button, reset the timer
+            button_type = SELECT;
         }
+        delay(50); // Delay for debouncing
     }
 
     // Check if right down navigation button is pressed
     if (currentRightDownNavButtonState != lastRightDownNavButtonState) {
         if (currentRightDownNavButtonState == LOW) {
-            Serial.println(F("Right Down Navigation Button Pressed"));
+            Serial.println(F("Right Down Navigation Button Has Been Pressed"));
             if (currentScreenItemIndex < screenItemCount - 1) {
                 ++currentScreenItemIndex;
             } else {

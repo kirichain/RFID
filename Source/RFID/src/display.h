@@ -241,6 +241,10 @@ public:
     void clear_screen_selector() const;
 
     void set_screen_selector_border_color(feature_t _next_feature);
+
+    void update_rfid_registration_scan_result(task_results &_taskResults);
+
+    void update_rfid_match_check_scan_result(task_results &_taskResults);
 };
 
 #endif //RFID_DISPLAY_H
