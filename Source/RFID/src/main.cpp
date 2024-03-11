@@ -64,9 +64,9 @@ void loop() {
     if ((mediator.isTaskExecutable) && (mediator.taskArgs.task != NO_TASK) && (mediator.taskArgs.task != IDLE)) {
         Serial.println(F("Task execution starts"));
         while ((!mediator.isTaskCompleted)) {
+            mediator.execute_task(READ_NAVIGATION_BUTTON);
             mediator.taskArgs.task = mediator.taskResults.currentTask;
             mediator.execute_task(mediator.taskArgs.task);
-            mediator.execute_task(READ_NAVIGATION_BUTTON);
 //            mediator.execute_task(READ_SERIAL_COMMUNICATION_MESSAGE);
 //            mediator.execute_task(HANDLE_MQTT_MESSAGE);
 //            mediator.get_current_task_status();

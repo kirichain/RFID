@@ -53,7 +53,6 @@ void Mediator::init_services() {
 void Mediator::execute_task(task_t task) {
 //    isTaskExecutable = false;
 //    isTaskCompleted = true;
-//    isTaskQueueEmpty = false;
     switch (task) {
         case IDLE:
             Serial.println(F("Idling"));
@@ -449,16 +448,13 @@ void Mediator::execute_task(task_t task) {
                                                 backCancelNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
-            if (Peripherals::isMenuSelectButtonReleased) {
-                Serial.println("Menu Select button has been released");
-                Peripherals::isMenuSelectButtonReleased = false;
-                isTaskExecutable = false;
-                isTaskCompleted = true;
-                return;
-            }
+//            if (Peripherals::isMenuSelectButtonReleased) {
+//                Peripherals::isMenuSelectButtonReleased = false;
+//                isTaskExecutable = false;
+//                isTaskCompleted = true;
+//                return;
+//            }
             // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
-            // Get navigation direction
-            // To store current screen item index with LIST_ITEM type
             byte previous_screen_item_index = taskResults.currentScreenItemIndex;
             button_type_t is_nav_button_pressed = peripherals.read_navigation_buttons(
                     taskResults.currentScreenItemIndex,
