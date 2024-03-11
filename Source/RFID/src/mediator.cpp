@@ -36,10 +36,10 @@ void Mediator::init_services() {
         display.init(PORTRAIT);
     }
     // Set buzzer pin
-    peripherals.set_digital_output(buzzerPinDefinition);
+//    peripherals.set_digital_output(buzzerPinDefinition);
     // Play welcome sound using buzzer
-    buzzer.init(buzzerPinDefinition);
-    buzzer.welcome_sound();
+//    buzzer.init(buzzerPinDefinition);
+//    buzzer.welcome_sound();
     display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         gunButtonPinDefinition, rightDownNavButtonPinDefinition);
@@ -267,8 +267,8 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_3, sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, default_wifi_password_3, sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
