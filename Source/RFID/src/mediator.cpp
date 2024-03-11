@@ -442,10 +442,10 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
-            peripherals.init_navigation_buttons(menuSelectNavButtonPinDefinition,
-                                                leftUpNavButtonPinDefinition,
+            peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition,
+                                                backCancelNavButtonPinDefinition,
                                                 gunButtonPinDefinition,
-                                                backCancelNavButtonPinDefinition);
+                                                rightDownNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
 //            if (Peripherals::isMenuSelectButtonReleased) {
