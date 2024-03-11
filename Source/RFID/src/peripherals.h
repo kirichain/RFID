@@ -8,18 +8,12 @@
 #include "Arduino.h"
 #include "enums.h"
 
-const unsigned long DEBOUNCE_DELAY = 50; // Debounce delay in milliseconds
-
 class Peripherals {
 private:
-    byte leftUpNavButtonPin, backCancelNavButtonPin, rightDownNavButtonPin;
-    byte lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
+    byte leftUpNavButtonPin, backCancelNavButtonPin, menuSelectNavButtonPin, rightDownNavButtonPin;
+    byte lastMenuSelectNavButtonState, lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
 public:
     static volatile bool isMenuSelectButtonReleased;
-    static volatile bool isMenuSelectButtonPressed;
-    static unsigned long lastSelectButtonDebounceTime;
-    static byte menuSelectNavButtonPin;
-    static byte lastMenuSelectNavButtonState;
 
     Peripherals();
 
@@ -41,7 +35,8 @@ public:
     retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
                                    byte &screenItemIndex, feature_t (&screenFeatures)[10], button_type_t &button_type,
                                    feature_t (&navigation_history)[10], byte &navigation_history_size);
-};
 
+    void reset_button_state();
+};
 
 #endif //RFID_PERIPHERALS_H

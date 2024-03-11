@@ -45,6 +45,8 @@ void Mediator::init_services() {
                                         gunButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
+    // Stop RFID module if it still is scanning
+    rfid.stop_scanning();
     // Get mac address
     wifi.get_mac_addr();
     taskResults.mac_address = wifi.mac_address;
@@ -53,6 +55,7 @@ void Mediator::init_services() {
 void Mediator::execute_task(task_t task) {
 //    isTaskExecutable = false;
 //    isTaskCompleted = true;
+//    isTaskQueueEmpty = false;
     switch (task) {
         case IDLE:
             Serial.println(F("Idling"));
@@ -448,13 +451,19 @@ void Mediator::execute_task(task_t task) {
                                                 rightDownNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
-//            if (Peripherals::isMenuSelectButtonReleased) {
-//                Peripherals::isMenuSelectButtonReleased = false;
-//                isTaskExecutable = false;
-//                isTaskCompleted = true;
-//                return;
-//            }
+            if (Peripherals::isMenuSelectButtonReleased) {
+                Serial.println("Menu Select button has been released");
+                Peripherals::isMenuSelectButtonReleased = false;
+                isTaskExecutable = false;
+                isTaskCompleted = true;
+                // Stop the RFID module
+                rfid.stop_scanning();
+                peripherals.reset_button_state();
+                return;
+            }
             // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
+            // Get navigation direction
+            // To store current screen item index with LIST_ITEM type
             byte previous_screen_item_index = taskResults.currentScreenItemIndex;
             button_type_t is_nav_button_pressed = peripherals.read_navigation_buttons(
                     taskResults.currentScreenItemIndex,
@@ -621,21 +630,19 @@ void Mediator::execute_task(task_t task) {
                 if (taskResults.is_the_first_scan) {
                     rfid.scanned_tag_count = 0;
                     taskResults.is_the_first_scan = false;
-                    // Stop the module
-                    rfid.stop_scanning();
                 }
                 //rfid.set_scanning_mode(SINGLE_SCAN);
                 rfid.set_scanning_mode(MULTI_SCAN);
                 rfid.scan_rfid_tag();
             } else if (isTaskExecutable && !isTaskCompleted) {
-                Serial.println(F("Scanning"));
+                // Serial.println(F("Scanning"));
                 // We re scanning, read scan result
                 rfid.read_multi_scan_response(Peripherals::isMenuSelectButtonReleased);
                 // We re scanning, update the counted tags
                 if (taskResults.currentFeature == RFID_REGISTER_TAG) {
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                        buzzer.successful_sound();
+                        //buzzer.successful_sound();
                         display.update_rfid_registration_scan_result(taskResults);
                     } else {
                         //buzzer.failure_sound();
@@ -734,6 +741,7 @@ void Mediator::execute_task(task_t task) {
                 rfid.scan_results[i].epc = "";
                 rfid.scan_results[i].is_matched_check = false;
             }
+            delay(500);
             break;
         }
         case INSERT_DATA_ROW:

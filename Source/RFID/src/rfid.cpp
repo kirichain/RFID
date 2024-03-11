@@ -37,7 +37,8 @@ void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) 
     uint8_t prevScannedTagCount = scanned_tag_count;
 
     // Read data from RFID module when this method is called
-    while (millis() - start_time < timeout && !_isMenuSelectButtonReleased && (scanned_tag_count == prevScannedTagCount)) {
+    while (millis() - start_time < timeout && !_isMenuSelectButtonReleased &&
+           (scanned_tag_count == prevScannedTagCount)) {
         if (Serial2.available()) {
             byte readByte = Serial2.read();
             //Serial.print(readByte, HEX);
@@ -52,7 +53,7 @@ void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) 
                 if (buffer[0] == 0xbb && buffer[1] == 0x02 && buffer[2] == 0x22 &&
                     buffer_index == NOTICE_FRAME_LENGTH) {
                     // We have a valid notice frame with the expected length, print its EPC
-//                    print_raw_read(buffer, buffer_index);
+                    print_raw_read(buffer, buffer_index);
 //                    print_epc(buffer, buffer_index);
                     store_epc(buffer, buffer_index);
                     // Reset buffer index for the next reading
@@ -333,10 +334,10 @@ bool Rfid::is_duplicate_scan(const String &epc) {
 void Rfid::stop_scanning() {
     Serial.println(F("Stop scanning multi RFID tags"));
     send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-    if (read_response(500)) {
+    if (read_response(5000)) {
         Serial.println(F("Stopped scanning multi RFID tags"));
     } else {
-        Serial.println(F("Failed to stopp scanning multi RFID tags"));
+        Serial.println(F("Failed to stop scanning multi RFID tags"));
     }
     //Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
 }
