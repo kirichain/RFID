@@ -26,7 +26,8 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(backCancelNavButtonPin, INPUT_PULLUP);
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
-
+    Serial.println(F("Back button is "));
+    Serial.println(backCancelNavButtonPin);
     Serial.println("Initialized navigation buttons");
 }
 
@@ -38,7 +39,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     byte currentBackCancelNavButtonState = digitalRead(backCancelNavButtonPin);
     byte currentMenuSelectNavButtonState = digitalRead(menuSelectNavButtonPin);
     byte currentRightDownNavButtonState = digitalRead(rightDownNavButtonPin);
-
+    
     // Check if the left up navigation button is pressed
     if (currentLeftUpNavButtonState != lastLeftUpNavButtonState) {
         if (currentLeftUpNavButtonState == LOW) {
