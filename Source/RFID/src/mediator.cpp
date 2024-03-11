@@ -459,7 +459,6 @@ void Mediator::execute_task(task_t task) {
                 // Stop the RFID module
                 rfid.stop_scanning();
                 peripherals.reset_button_state();
-                display.is_background_task_completed = true;
                 return;
             }
             // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
@@ -643,7 +642,7 @@ void Mediator::execute_task(task_t task) {
                 if (taskResults.currentFeature == RFID_REGISTER_TAG) {
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                        buzzer.successful_sound();
+                        //buzzer.successful_sound();
                         display.update_rfid_registration_scan_result(taskResults);
                     } else {
                         //buzzer.failure_sound();
@@ -673,12 +672,11 @@ void Mediator::execute_task(task_t task) {
                     // Totally scanned to be displayed
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                        buzzer.successful_sound();
                         display.update_rfid_match_check_scan_result(taskResults);
                     }
                     // If not matched, sound
                     if (!check) {
-                        //buzzer.failure_sound();
+                        buzzer.failure_sound();
                     }
                 }
             }
