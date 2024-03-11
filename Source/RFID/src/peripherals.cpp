@@ -55,7 +55,7 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(Peripherals::menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
 
-    //attachInterrupt(digitalPinToInterrupt(Peripherals::menuSelectNavButtonPin), select_button_isr, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(Peripherals::menuSelectNavButtonPin), select_button_isr, CHANGE);
     Serial.println("Initialized navigation buttons");
 }
 
@@ -67,8 +67,6 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     byte currentBackCancelNavButtonState = digitalRead(backCancelNavButtonPin);
     //byte currentMenuSelectNavButtonState = digitalRead(Peripherals::menuSelectNavButtonPin);
     byte currentRightDownNavButtonState = digitalRead(rightDownNavButtonPin);
-    Serial.println(F("Back button is "));
-    Serial.println(backCancelNavButtonPin);
 
     // Check if the left up navigation button is pressed
     if (currentLeftUpNavButtonState != lastLeftUpNavButtonState) {
@@ -99,18 +97,18 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
         delay(50); // Delay for debouncing
     }
 
-//    //Check if the menu select navigation button is pressed or released
-//    if (isMenuSelectButtonPressed) {
-//        Serial.println(F("Menu Select Navigation Button Has Been Pressed"));
-//        button_type = SELECT;
-//
-//        isMenuSelectButtonPressed = false;
-//    } else if (isMenuSelectButtonReleased) {
-//        Serial.println(F("Menu Select Navigation Button Has Been Released"));
-//        button_type = NOT_PRESSED;
-//
-//        isMenuSelectButtonReleased = false;
-//    }
+    //Check if the menu select navigation button is pressed or released
+    if (isMenuSelectButtonPressed) {
+        Serial.println(F("Menu Select Navigation Button Has Been Pressed"));
+        button_type = SELECT;
+
+        isMenuSelectButtonPressed = false;
+    } else if (isMenuSelectButtonReleased) {
+        Serial.println(F("Menu Select Navigation Button Has Been Released"));
+        button_type = NOT_PRESSED;
+
+        isMenuSelectButtonReleased = false;
+    }
 
 //    if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
 //        if (currentMenuSelectNavButtonState == LOW) {
