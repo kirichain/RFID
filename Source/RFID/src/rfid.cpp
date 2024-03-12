@@ -53,7 +53,7 @@ void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) 
                 if (buffer[0] == 0xbb && buffer[1] == 0x02 && buffer[2] == 0x22 &&
                     buffer_index == NOTICE_FRAME_LENGTH) {
                     // We have a valid notice frame with the expected length, print its EPC
-                    print_raw_read(buffer, buffer_index);
+//                    print_raw_read(buffer, buffer_index);
 //                    print_epc(buffer, buffer_index);
                     store_epc(buffer, buffer_index);
                     // Reset buffer index for the next reading
@@ -123,7 +123,7 @@ void Rfid::read_single_scan_response() {
                 if (buffer[0] == 0xbb && buffer[1] == 0x02 && buffer[2] == 0x22 &&
                     buffer_index == NOTICE_FRAME_LENGTH) {
                     // We have a valid notice frame with the expected length, print its EPC
-                    print_raw_read(buffer, buffer_index);
+//                    print_raw_read(buffer, buffer_index);
 //                    print_epc(buffer, buffer_index);
                     store_epc(buffer, buffer_index);
                     // Reset buffer index for the next reading
@@ -320,6 +320,11 @@ void Rfid::set_tx_power(uint16_t db) {
     }
 //    Serial.println(F("Start setting high sensitivity"));
 //    send_command((uint8_t *) SET_HIGH_SENSITIVITY, sizeof(SET_HIGH_SENSITIVITY));
+//    if (read_response(500)) {
+//        Serial.println(F("Set high sensitivity successfully"));
+//    } else {
+//        Serial.println(F("Set high sensitivity failed"));
+//    }
 }
 
 bool Rfid::is_duplicate_scan(const String &epc) {

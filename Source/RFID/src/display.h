@@ -24,7 +24,6 @@
 #include "icons/scan-history.h"
 #include "icons/modify-rfid-tag.h"
 #include "icons/register_rfid_tag.h"
-#include "icons/setting.h"
 #include "icons/wifi-setting.h"
 #include "icons/user.h"
 #include "icons/login.h"
@@ -61,6 +60,12 @@
 #include "icons/company_logo.h"
 #include "icons/clear_button.h"
 #include "icons/none_wifi.h"
+#include "icons/setting_icon.h"
+#include "icons/wifi_setting_ssid_banner.h"
+#include "icons/sound_setting_banner.h"
+#include "icons/wifi_setting_guide_banner.h"
+#include "icons/back_home_button.h"
+#include "icons/sound.h"
 
 extern TFT_eSPI tft;
 
@@ -112,7 +117,7 @@ public:
     // Constants for the grid layout
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 47; //  Number of icons
+    static const byte numIcons = 53; //  Number of icons
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[numIcons] = {
@@ -162,7 +167,12 @@ public:
             "clear_button_icon",
             "submit_button_icon",
             "company_logo_icon",
-            "none_wifi_icon"
+            "none_wifi_icon",
+            "wifi_setting_ssid_banner_icon",
+            "sound_setting_banner_icon",
+            "wifi_setting_guide_banner_icon",
+            "back_home_button_icon",
+            "sound_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -213,7 +223,12 @@ public:
             {"clear_button_icon",                     clear_button_icon},
             {"submit_button_icon",                    submit_button_icon},
             {"company_logo_icon",                     company_logo_icon},
-            {"none_wifi_icon",                        none_wifi_icon}
+            {"none_wifi_icon",                        none_wifi_icon},
+            {"wifi_setting_ssid_banner_icon",         wifi_setting_ssid_banner_icon},
+            {"sound_setting_banner_icon",             sound_setting_banner_icon},
+            {"wifi_setting_guide_banner_icon",        wifi_setting_guide_banner_icon},
+            {"back_home_button_icon",                 back_home_button_icon},
+            {"sound_icon",                            sound_icon}
     };
 
     Display();
@@ -238,7 +253,7 @@ public:
 
     void update_screen_selector(byte _screen_item_index);
 
-    void clear_screen_selector() const;
+    void clear_screen_selector(task_results &_taskResults);
 
     void set_screen_selector_border_color(feature_t _next_feature);
 

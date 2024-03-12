@@ -451,16 +451,17 @@ void Mediator::execute_task(task_t task) {
                                                 rightDownNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
+            // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
             if (Peripherals::isMenuSelectButtonReleased) {
-                Serial.println("Menu Select button has been released");
                 Peripherals::isMenuSelectButtonReleased = false;
-                isTaskExecutable = false;
-                isTaskCompleted = true;
-                // Stop the RFID module
-                rfid.stop_scanning();
+                if (!isTaskCompleted) {
+                    isTaskExecutable = false;
+                    isTaskCompleted = true;
+                    // Stop the RFID module if it is still working
+                    rfid.stop_scanning();
+                }
                 return;
             }
-            // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
             // Get navigation direction
             // To store current screen item index with LIST_ITEM type
             byte previous_screen_item_index = taskResults.currentScreenItemIndex;
@@ -472,12 +473,25 @@ void Mediator::execute_task(task_t task) {
             switch (is_nav_button_pressed) {
                 case LEFT_UP:
                     // We just traverse through screen items for both cases
-                    display.clear_screen_selector();
+                    if (taskResults.currentFeature == HOME_HANDHELD_2) {
+                        if (taskResults.currentScreenItemIndex == 4) {
+                            display.screen_selector_border_color = 0x3b2d;
+                        }
+                        if (taskResults.currentScreenItemIndex == 2) {
+                            if (taskResults.screenItemCount == 4) {
+                                display.screen_selector_border_color = 0x3b2d;
+                            }
+                        }
+                    }
+                    display.clear_screen_selector(taskResults);
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
                     break;
                 case RIGHT_DOWN:
                     // We just traverse through screen items for both cases
-                    display.clear_screen_selector();
+                    if (taskResults.currentFeature == HOME_HANDHELD_2 && taskResults.currentScreenItemIndex == 0) {
+                        display.screen_selector_border_color = 0x3b2d;
+                    }
+                    display.clear_screen_selector(taskResults);
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
                     break;
                 case SELECT:
@@ -499,6 +513,9 @@ void Mediator::execute_task(task_t task) {
 
                             // Set screen selector border color accordingly to the next feature
                             display.set_screen_selector_border_color(taskArgs.feature);
+
+                            // Clear setting icon if not in homepage
+                            if (taskArgs.feature != HOME_HANDHELD_2) tft.fillRect(252, 10, 18, 18, display.headerColor);
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -548,7 +565,6 @@ void Mediator::execute_task(task_t task) {
                     }
                     break;
                 case BACK_CANCEL:
-                    Serial.println(F("Back"));
                     // If we are in home, no back anymore
                     if (taskResults.currentFeature != HOME_HANDHELD_2) {
                         Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,

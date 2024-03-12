@@ -28,16 +28,6 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(backCancelNavButtonPin, INPUT_PULLUP);
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
-
-    Serial.println("Initialized navigation buttons");
-    Serial.print(F("Button pin: "));
-    Serial.println(leftUpNavButtonPin);
-    Serial.print(F("Button pin: "));
-    Serial.println(backCancelNavButtonPin);
-    Serial.print(F("Button pin: "));
-    Serial.println(menuSelectNavButtonPin);
-    Serial.print(F("Button pin: "));
-    Serial.println(rightDownNavButtonPin);
 }
 
 button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
@@ -98,7 +88,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
 
             button_type = SELECT;
         }
-        delay(50); // Delay for debouncing
+//        delay(10); // Delay for debouncing
     }
 
     // Check if right down navigation button is pressed
