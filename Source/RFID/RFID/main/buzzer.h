@@ -10,10 +10,13 @@
 class Buzzer {
 private:
     byte buzzerPin = 0;
+    bool is_muted = true;
 public:
     Buzzer();
 
     void init(byte _buzzerPin);
+
+    void mute(bool _is_mute);
 
     void welcome_sound() const;
 

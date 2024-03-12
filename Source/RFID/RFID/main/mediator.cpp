@@ -18,6 +18,7 @@ Mediator::Mediator() {
     isTaskExecutable = false;
     isTaskCompleted = true;
 
+    taskResults.isMuted = true;
     taskResults.currentFeature = NO_FEATURE;
     taskResults.currentTask = NO_TASK;
     taskArgs.task = IDLE;
@@ -36,10 +37,11 @@ void Mediator::init_services() {
         display.init(PORTRAIT);
     }
     // Set buzzer pin
-    //peripherals.set_digital_output(buzzerPinDefinition);
+    peripherals.set_digital_output(buzzerPinDefinition);
     // Play welcome sound using buzzer
-    //buzzer.init(buzzerPinDefinition);
-    //buzzer.welcome_sound();
+    buzzer.init(buzzerPinDefinition);
+    buzzer.mute(true);
+    buzzer.welcome_sound();
     display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         gunButtonPinDefinition, rightDownNavButtonPinDefinition);

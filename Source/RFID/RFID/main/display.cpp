@@ -744,60 +744,86 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case SETTING: {
-            tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.setTextColor(0x12AC);
-            tft.drawString("SETTINGS", 120, 46);
+            if ((_taskResults.currentScreenItemIndex == 3) || (_taskResults.currentScreenItemIndex == 5)) {
+                Serial.println(F("This is the first time SETTING feature is rendered"));
 
-            // Put Wi-Fi setting banner
-            iconWidth = 300;
-            iconHeight = 66;
-            put_icon(10, 81, menu_icon_names[47]);
+                tft.setFreeFont(&FreeSansBold9pt7b);
+                tft.setTextColor(0x12AC);
+                tft.drawString("SETTINGS", 120, 46);
 
-            // Put sound setting banner
-            iconWidth = 300;
-            iconHeight = 66;
-            put_icon(10, 157, menu_icon_names[48]);
+                // Put Wi-Fi setting banner
+                iconWidth = 300;
+                iconHeight = 66;
+                put_icon(10, 81, menu_icon_names[47]);
 
-            // Put currently saved and used Wi-Fi name
-            tft.setTextColor(TFT_BLACK);
-            tft.drawString("ERP 2020", 78, 105);
+                // Put sound setting banner
+                iconWidth = 300;
+                iconHeight = 66;
+                put_icon(10, 157, menu_icon_names[48]);
 
-            // Update accordingly screen item
-            screen_item_position _item_position = {10, 81, iconWidth, iconHeight};
-            update_screen_item(0, _item_position);
+                // Put currently saved and used Wi-Fi name
+                tft.setTextColor(TFT_BLACK);
+                tft.drawString("ERP 2020", 78, 105);
 
-            _item_position = {10, 157, iconWidth, iconHeight};
-            update_screen_item(1, _item_position);
+                // Update accordingly screen item
+                screen_item_position _item_position = {10, 81, iconWidth, iconHeight};
+                update_screen_item(0, _item_position);
 
-            screen_selector_border_color = backgroundColor;
-            screen_item_count = 2;
-            // Start to set screen selector to the first one item
-            update_screen_selector(0);
+                _item_position = {10, 157, iconWidth, iconHeight};
+                update_screen_item(1, _item_position);
 
-            reset_display_setting();
-            // Start to set screen selector to the first one item
-            update_screen_selector(0);
-            current_feature_item_type = MENU_ICON;
-            // Reset current screen features
-            memset(current_screen_features, NO_FEATURE, 10);
-            current_screen_features[0] = SETTING_WIFI;
-            current_screen_features[1] = SETTING;
+                screen_selector_border_color = backgroundColor;
+                screen_item_count = 2;
+                // Start to set screen selector to the first one item
+                update_screen_selector(0);
+
+                reset_display_setting();
+                // Start to set screen selector to the first one item
+                update_screen_selector(0);
+                current_feature_item_type = MENU_ICON;
+                // Reset current screen features
+                memset(current_screen_features, NO_FEATURE, 10);
+                current_screen_features[0] = SETTING_WIFI;
+                current_screen_features[1] = SETTING;
+            } else {
+                switch (_taskResults.currentScreenItemIndex) {
+                    case 1: {
+                        Serial.println(F("Start mute/unmute sound"));
+
+                        if (_taskResults.isMuted) {
+                            _taskResults.isMuted = false;
+                            put_icon(273, 10, menu_icon_names[51]);
+                        } else if (!_taskResults.isMuted) {
+                            _taskResults.isMuted = true;
+                            put_icon(273, 10, menu_icon_names[52]);
+                        }
+
+                        break;
+                    }
+                }
+            }
             break;
         }
         case SETTING_WIFI: {
-            tft.setFreeFont(&FreeSansBold9pt7b);
-            tft.setTextColor(0x12AC);
-            tft.drawString("CHANGE WIFI CONNECTION", 30, 46);
+            if (is_background_task_completed) {
+                // Back to SETTING with new set Wi-Fi
+                
+            } else {
+                tft.setFreeFont(&FreeSansBold9pt7b);
+                tft.setTextColor(0x12AC);
+                tft.drawString("CHANGE WIFI CONNECTION", 30, 46);
 
-            // Put Wi-Fi setting guide banner
-            iconWidth = 300;
-            iconHeight = 287;
-            put_icon(10, 81, menu_icon_names[49]);
+                // Put Wi-Fi setting guide banner
+                iconWidth = 300;
+                iconHeight = 287;
+                put_icon(10, 81, menu_icon_names[49]);
 
-            reset_display_setting();
-            current_feature_item_type = NONE_ITEM_TYPE;
-            // Reset current screen features
-            memset(current_screen_features, NO_FEATURE, 10);
+                reset_display_setting();
+                current_feature_item_type = NONE_ITEM_TYPE;
+                // Reset current screen features
+                memset(current_screen_features, NO_FEATURE, 10);
+            }
+
             break;
         }
         default:

@@ -72,6 +72,7 @@ typedef struct {
 // Struct for storing task results and state
 typedef struct {
     bool isFsLoaded;
+    bool isMuted;
     operating_mode_t savedOperatingModeInFs;
     operating_mode_t currentOperatingMode;
     feature_t currentFeature;

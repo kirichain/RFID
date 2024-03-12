@@ -66,6 +66,7 @@
 #include "icons/wifi_setting_guide_banner.h"
 #include "icons/back_home_button.h"
 #include "icons/sound.h"
+#include "icons/muted_sound.h"
 
 extern TFT_eSPI tft;
 
@@ -172,7 +173,8 @@ public:
             "sound_setting_banner_icon",
             "wifi_setting_guide_banner_icon",
             "back_home_button_icon",
-            "sound_icon"
+            "sound_icon",
+            "muted_sound_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -228,7 +230,8 @@ public:
             {"sound_setting_banner_icon",             sound_setting_banner_icon},
             {"wifi_setting_guide_banner_icon",        wifi_setting_guide_banner_icon},
             {"back_home_button_icon",                 back_home_button_icon},
-            {"sound_icon",                            sound_icon}
+            {"sound_icon",                            sound_icon},
+            {"muted_sound_icon",                      muted_sound_icon}
     };
 
     Display();
