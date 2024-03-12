@@ -35,8 +35,6 @@ public:
     retrieve_corresponding_feature(feature_t &previousFeature, feature_t &currentFeature, feature_t &argsFeature,
                                    byte &screenItemIndex, feature_t (&screenFeatures)[10], button_type_t &button_type,
                                    feature_t (&navigation_history)[10], byte &navigation_history_size);
-
-    void reset_button_state();
 };
 
 #endif //RFID_PERIPHERALS_H

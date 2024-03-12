@@ -458,7 +458,6 @@ void Mediator::execute_task(task_t task) {
                 isTaskCompleted = true;
                 // Stop the RFID module
                 rfid.stop_scanning();
-                peripherals.reset_button_state();
                 return;
             }
             // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
@@ -549,6 +548,7 @@ void Mediator::execute_task(task_t task) {
                     }
                     break;
                 case BACK_CANCEL:
+                    Serial.println(F("Back"));
                     // If we are in home, no back anymore
                     if (taskResults.currentFeature != HOME_HANDHELD_2) {
                         Peripherals::retrieve_corresponding_feature(taskArgs.previousFeature,
@@ -580,7 +580,6 @@ void Mediator::execute_task(task_t task) {
             taskArgs.feature = taskResults.currentFeature;
             break;
         case SET_CURRENT_FEATURE:
-            Serial.println(F("Execute task SET_CURRENT_FEATURE"));
             if (taskArgs.feature != taskResults.currentFeature) {
                 taskArgs.previousFeature = taskResults.currentFeature;
                 taskResults.currentFeature = taskArgs.feature;

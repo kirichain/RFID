@@ -8,7 +8,7 @@ volatile bool Peripherals::isMenuSelectButtonReleased = false;
 Peripherals::Peripherals() {
     lastLeftUpNavButtonState = 0;
     lastBackCancelNavButtonState = 0;
-    lastMenuSelectNavButtonState = 1;
+    lastMenuSelectNavButtonState = 0;
     lastRightDownNavButtonState = 0;
 
     leftUpNavButtonPin = 0;
@@ -30,6 +30,14 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
 
     Serial.println("Initialized navigation buttons");
+    Serial.print(F("Button pin: "));
+    Serial.println(leftUpNavButtonPin);
+    Serial.print(F("Button pin: "));
+    Serial.println(backCancelNavButtonPin);
+    Serial.print(F("Button pin: "));
+    Serial.println(menuSelectNavButtonPin);
+    Serial.print(F("Button pin: "));
+    Serial.println(rightDownNavButtonPin);
 }
 
 button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
@@ -173,8 +181,4 @@ void Peripherals::retrieve_corresponding_feature(feature_t &previousFeature, fea
             break;
     }
 
-}
-
-void Peripherals::reset_button_state() {
-    //lastMenuSelectNavButtonState = 0;
 }
