@@ -567,10 +567,11 @@ void Mediator::execute_task(task_t task) {
                     } else {
                         clear_navigation_history();
                     }
-                case NOT_PRESSED:
+                case NOT_PRESSED: {
                     isTaskExecutable = false;
                     isTaskCompleted = true;
                     break;
+                }
             }
             break;
         }

@@ -5,14 +5,10 @@
 
 volatile bool Peripherals::isMenuSelectButtonReleased = false;
 
-void IRAM_ATTR select_button_on_released_isr() {
-    Peripherals::isMenuSelectButtonReleased = true;
-}
-
 Peripherals::Peripherals() {
     lastLeftUpNavButtonState = 0;
     lastBackCancelNavButtonState = 0;
-    lastMenuSelectNavButtonState = 0;
+    lastMenuSelectNavButtonState = 1;
     lastRightDownNavButtonState = 0;
 
     leftUpNavButtonPin = 0;
@@ -33,7 +29,6 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
 
-    //attachInterrupt(digitalPinToInterrupt(menuSelectNavButtonPin), select_button_on_released_isr, RISING);
     Serial.println("Initialized navigation buttons");
 }
 
@@ -67,7 +62,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     // Check if back cancel navigation button is pressed
     if (currentBackCancelNavButtonState != lastBackCancelNavButtonState) {
         if (currentBackCancelNavButtonState == LOW) {
-            Serial.println(F("Back Cancel Navigation Button Has Been Pressed"));
+            Serial.println(F("Back Cancel Navigation Button Pressed"));
 
             button_type = BACK_CANCEL;
         }
@@ -79,12 +74,11 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     if (currentMenuSelectNavButtonState != lastMenuSelectNavButtonState) {
         if (currentMenuSelectNavButtonState == LOW) {
             Serial.println(F("Menu Select Navigation Button Has Been Pressed"));
-
+            Peripherals::isMenuSelectButtonReleased = false;
             button_type = SELECT;
-        }
-        else {
+        } else {
             Serial.println(F("Menu Select Navigation Button Has Been Released"));
-
+            Peripherals::isMenuSelectButtonReleased = true;
             button_type = NOT_PRESSED;
         }
         lastMenuSelectNavButtonState = currentMenuSelectNavButtonState;
@@ -92,6 +86,8 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
     } else {
         // Button is being pressed, return state SELECT
         if (currentMenuSelectNavButtonState == LOW) {
+            Peripherals::isMenuSelectButtonReleased = false;
+
             button_type = SELECT;
         }
         delay(50); // Delay for debouncing
@@ -180,5 +176,5 @@ void Peripherals::retrieve_corresponding_feature(feature_t &previousFeature, fea
 }
 
 void Peripherals::reset_button_state() {
-    lastMenuSelectNavButtonState = 0;
+    //lastMenuSelectNavButtonState = 0;
 }
