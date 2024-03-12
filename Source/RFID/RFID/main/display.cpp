@@ -66,10 +66,8 @@ void Display::draw_layout(feature_layout_t _feature_layout) const {
             tft.drawString("Server not connected", 58, 10);
             tft.pushImage(294, 10, 16, 16, wifi_connection_failed_icon);
 
-            // Draw date and time aligned to the top-right of the header
-            tft.setTextDatum(TR_DATUM); // Align to the top-right
-            //tft.drawString(dateTime, SCREEN_WIDTH - 5, 10);
-
+            // Sound indicator icon
+            tft.pushImage(273, 10, 16, 16, sound_icon);
             break;
         }
         case LANDSCAPE:
@@ -132,8 +130,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
 
         // Clear screen items and reset screen selector
-        clear_screen_selector();
+        clear_screen_selector(_taskResults);
         clear_screen_items();
+
+
     }
 
     switch (_feature) {
@@ -301,25 +301,35 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 _item_position = {166, 425, 144, 45};
                 update_screen_item(screen_item_index, _item_position);
                 ++screen_item_index;
+
+                // Put Setting button on the header bar------------------------------------
+                iconWidth = 16;
+                iconHeight = 16;
+                put_icon(252, 10, menu_icon_names[0]);
+                // Update accordingly screen item
+                _item_position = {252, 10, 16, 16};
+                update_screen_item(screen_item_index, _item_position);
+                ++screen_item_index;
             } else {
                 Serial.println("MES Package or MES Package Group is not selected");
                 // Put the Register button on the bottom left------------------------------------
                 put_icon(10, 425, menu_icon_names[38]);
                 // Put Scan button------------------------------------
                 put_icon(166, 425, menu_icon_names[39]);
-            }
 
-            // Put Setting button on the bottom right------------------------------------
-//            iconWidth = 290;
-//            iconHeight = 40;
-//            put_icon(15, 425, menu_icon_names[28]);
-//            // Update accordingly screen item
-//            _item_position = {15, 425, 290, 40};
-//            update_screen_item(screen_item_index, _item_position);
-//            ++screen_item_index;
+                // Put Setting button on the header bar------------------------------------
+                iconWidth = 16;
+                iconHeight = 16;
+                put_icon(252, 10, menu_icon_names[0]);
+                // Update accordingly screen item
+                _item_position = {252, 10, 16, 16};
+                update_screen_item(screen_item_index, _item_position);
+                ++screen_item_index;
+            }
 
             screen_selector_border_color = backgroundColor;
             screen_item_count = screen_item_index;
+            is_viewport_cleared = true;
             reset_display_setting();
             // Start to set screen selector to the first one item
             update_screen_selector(0);
@@ -329,9 +339,12 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             current_screen_features[0] = QR_CODE_SCANNING;
             current_screen_features[1] = QR_CODE_SCANNING;
             current_screen_features[2] = QR_CODE_SCANNING;
+            current_screen_features[3] = SETTING;
+
             if ((_taskResults.selected_mes_package != "") or (_taskResults.selected_mes_package_group != "")) {
                 current_screen_features[3] = RFID_REGISTER_TAG;
                 current_screen_features[4] = RFID_SCAN_DETAILS_REVIEW;
+                current_screen_features[5] = SETTING;
             }
             break;
         }
@@ -434,25 +447,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case RFID_SCAN_RESULT: {
             // Check if the background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
-                // Update the "Submitted/target" field with the latest count
-                String submittedTargetStr =
-                        String(_taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
-                        String(_taskResults.registered_rfid_tags_from_server_count);
-                tft.fillRect(223, 251, 60, 50, 0x1b2e); // Clear the previous area
-                tft.setTextColor(0xe751); // Color for the count
-                tft.setFreeFont(&FreeSansBold9pt7b);
-                tft.drawString(submittedTargetStr, 223, 267);
-
-                // Update the "Quantity" field with the latest count
-                String quantityStr = String(_taskResults.current_scanned_rfid_tag_count);
-                tft.fillRect(223, 343, 60, 48, 0xdf7e);
-                tft.setFreeFont(&FreeSansBold12pt7b);
-                tft.setTextColor(0x1b2e);
-                tft.drawString(quantityStr, 223, 357);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
-                // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+                update_rfid_match_check_scan_result(_taskResults);
             } else {
                 // Check if this is the first time this feature is rendered
                 if (_taskResults.currentFeature == RFID_SCAN_DETAILS_REVIEW) {
@@ -601,17 +596,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case RFID_REGISTER_TAG: {
             // Check if the background task is completed, if yes, start rendering, else, set background tasks and return
             if (is_background_task_completed) {
-                // Just display the recently scanned result and increase total scans
-                tft.setFreeFont(&FreeSansBold12pt7b);
-                tft.setTextColor(0x350F);
-                // Clear the area where the "0/200" is displayed
-                tft.fillRect(235, 361, 70, 50, TFT_WHITE);
-                // Draw the new string with the updated count
-                tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
-                // Start to set screen selector to the first one item
-                clear_screen_selector();
-                update_screen_selector(0);
-                // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+                update_rfid_registration_scan_result(_taskResults);
             } else {
                 // Check if this is the first time this feature is rendered
                 if (_taskResults.currentScreenItemIndex == 3) {
@@ -758,6 +743,63 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
             break;
         }
+        case SETTING: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(0x12AC);
+            tft.drawString("SETTINGS", 120, 46);
+
+            // Put Wi-Fi setting banner
+            iconWidth = 300;
+            iconHeight = 66;
+            put_icon(10, 81, menu_icon_names[47]);
+
+            // Put sound setting banner
+            iconWidth = 300;
+            iconHeight = 66;
+            put_icon(10, 157, menu_icon_names[48]);
+
+            // Put currently saved and used Wi-Fi name
+            tft.setTextColor(TFT_BLACK);
+            tft.drawString("ERP 2020", 78, 105);
+
+            // Update accordingly screen item
+            screen_item_position _item_position = {10, 81, iconWidth, iconHeight};
+            update_screen_item(0, _item_position);
+
+            _item_position = {10, 157, iconWidth, iconHeight};
+            update_screen_item(1, _item_position);
+
+            screen_selector_border_color = backgroundColor;
+            screen_item_count = 2;
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+
+            reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = SETTING_WIFI;
+            current_screen_features[1] = SETTING;
+            break;
+        }
+        case SETTING_WIFI: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(0x12AC);
+            tft.drawString("CHANGE WIFI CONNECTION", 30, 46);
+
+            // Put Wi-Fi setting guide banner
+            iconWidth = 300;
+            iconHeight = 287;
+            put_icon(10, 81, menu_icon_names[49]);
+
+            reset_display_setting();
+            current_feature_item_type = NONE_ITEM_TYPE;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            break;
+        }
         default:
             // Code to handle unknown feature
             break;
@@ -839,14 +881,9 @@ void Display::update_screen_selector(byte _screen_item_index) {
                  current_screen_selector.current_position.h + (2 * border_thickness), border_color);
 }
 
-void Display::clear_screen_selector() const {
-    //static uint16_t border_color = backgroundColor;
+void Display::clear_screen_selector(task_results &_taskResults) {
     // Define border thickness
     byte border_thickness = 2; // Adjust the thickness of your border here
-
-    // Define the color for clearing the border if it changes
-    //if (_border_color != border_color) border_color = _border_color;
-
     // Clear old screen selector border by drawing over it with the background color
     // Clear top border
     tft.fillRect(current_screen_selector.current_position.x - border_thickness,
@@ -868,6 +905,8 @@ void Display::clear_screen_selector() const {
                  current_screen_selector.current_position.y - border_thickness,
                  border_thickness,
                  current_screen_selector.current_position.h + (2 * border_thickness), screen_selector_border_color);
+
+    screen_selector_border_color = backgroundColor;
 }
 
 void Display::set_screen_selector_border_color(feature_t _next_feature) {
@@ -883,6 +922,42 @@ void Display::set_screen_selector_border_color(feature_t _next_feature) {
             screen_selector_border_color = backgroundColor;
             break;
     }
+}
+
+void Display::update_rfid_registration_scan_result(task_results &_taskResults) {
+    // Just display the recently scanned result and increase total scans
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.setTextColor(0x350F);
+    // Clear the area where the "0/200" is displayed
+    tft.fillRect(235, 361, 70, 50, TFT_WHITE);
+    // Draw the new string with the updated count
+    tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 245, 375);
+    // Start to set screen selector to the first one item
+    clear_screen_selector(_taskResults);
+    update_screen_selector(0);
+    // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
+}
+
+void Display::update_rfid_match_check_scan_result(task_results &_taskResults) {
+    // Update the "Submitted/target" field with the latest count
+    String submittedTargetStr =
+            String(_taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
+            String(_taskResults.registered_rfid_tags_from_server_count);
+    tft.fillRect(223, 251, 60, 50, 0x1b2e); // Clear the previous area
+    tft.setTextColor(0xe751); // Color for the count
+    tft.setFreeFont(&FreeSansBold9pt7b);
+    tft.drawString(submittedTargetStr, 223, 267);
+
+    // Update the "Quantity" field with the latest count
+    String quantityStr = String(_taskResults.current_scanned_rfid_tag_count);
+    tft.fillRect(223, 343, 60, 48, 0xdf7e);
+    tft.setFreeFont(&FreeSansBold12pt7b);
+    tft.setTextColor(0x1b2e);
+    tft.drawString(quantityStr, 223, 357);
+    // Start to set screen selector to the first one item
+    clear_screen_selector(_taskResults);
+    update_screen_selector(0);
+    // Do nothing, lets user choose to Submit scan results to server or Clear and scan again
 }
 
 void GIFDraw(GIFDRAW *pDraw) {

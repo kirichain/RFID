@@ -17,10 +17,10 @@ MQTT mqtt;
 Mediator::Mediator() {
     isTaskExecutable = false;
     isTaskCompleted = true;
-    isTaskQueueEmpty = true;
 
     taskResults.currentFeature = NO_FEATURE;
     taskResults.currentTask = NO_TASK;
+    taskArgs.task = IDLE;
     taskResults.currentScreenItemIndex = 0;
     taskResults.featureNavigationHistory[++taskResults.featureNavigationHistorySize] = HOME_HANDHELD_2;
 
@@ -36,25 +36,29 @@ void Mediator::init_services() {
         display.init(PORTRAIT);
     }
     // Set buzzer pin
-    peripherals.set_digital_output(buzzerPinDefinition);
+    //peripherals.set_digital_output(buzzerPinDefinition);
     // Play welcome sound using buzzer
-    buzzer.init(buzzerPinDefinition);
-    buzzer.welcome_sound();
+    //buzzer.init(buzzerPinDefinition);
+    //buzzer.welcome_sound();
     display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
                                         gunButtonPinDefinition, rightDownNavButtonPinDefinition);
     // Check RFID module
     rfid.init(rfid_rx_pin, rfid_tx_pin);
+    // Stop RFID module if it still is scanning
+    rfid.stop_scanning();
     // Get mac address
     wifi.get_mac_addr();
     taskResults.mac_address = wifi.mac_address;
 }
 
 void Mediator::execute_task(task_t task) {
-    isTaskExecutable = true;
-    isTaskQueueEmpty = false;
+//    isTaskExecutable = false;
+//    isTaskCompleted = true;
+//    isTaskQueueEmpty = false;
     switch (task) {
         case IDLE:
+            Serial.println(F("Idling"));
             //Do nothing in idle mode until nav button is pressed
             //isTaskCompleted = true;
             break;
@@ -65,7 +69,7 @@ void Mediator::execute_task(task_t task) {
             break;
         case BLINK_SCREEN:
             Serial.println(F("Execute task BLINK_SCREEN"));
-            display.blink_screen(isTaskCompleted);
+            //display.blink_screen(isTaskCompleted);
             break;
         case READ_SERIAL_COMMUNICATION_MESSAGE:
             //Serial.println(F("Execute task READ_COMMUNICATION_MESSAGE"));
@@ -320,8 +324,8 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_3, sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, default_wifi_password_3, sizeof(taskArgs.wifi_sta_password));
+            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
+            strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
             strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
@@ -441,13 +445,23 @@ void Mediator::execute_task(task_t task) {
             break;
         case INIT_NAVIGATION_BUTTON:
             Serial.println(F("Execute task INIT_NAVIGATION_BUTTON"));
-            peripherals.init_navigation_buttons(menuSelectNavButtonPinDefinition,
-                                                leftUpNavButtonPinDefinition,
+            peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition,
+                                                backCancelNavButtonPinDefinition,
                                                 gunButtonPinDefinition,
-                                                backCancelNavButtonPinDefinition);
+                                                rightDownNavButtonPinDefinition);
             break;
         case READ_NAVIGATION_BUTTON: {
             // Serial.println(F("Execute task READ_NAVIGATION_BUTTON"));
+            if (Peripherals::isMenuSelectButtonReleased) {
+                Peripherals::isMenuSelectButtonReleased = false;
+                if (!isTaskCompleted) {
+                    isTaskExecutable = false;
+                    isTaskCompleted = true;
+                    // Stop the RFID module if it is still working
+                    rfid.stop_scanning();
+                }
+                return;
+            }
             // Get navigation direction
             // To store current screen item index with LIST_ITEM type
             byte previous_screen_item_index = taskResults.currentScreenItemIndex;
@@ -459,12 +473,25 @@ void Mediator::execute_task(task_t task) {
             switch (is_nav_button_pressed) {
                 case LEFT_UP:
                     // We just traverse through screen items for both cases
-                    display.clear_screen_selector();
+                    if (taskResults.currentFeature == HOME_HANDHELD_2) {
+                        if (taskResults.currentScreenItemIndex == 4) {
+                            display.screen_selector_border_color = 0x3b2d;
+                        }
+                        if (taskResults.currentScreenItemIndex == 2) {
+                            if (taskResults.screenItemCount == 4) {
+                                display.screen_selector_border_color = 0x3b2d;
+                            }
+                        }
+                    }
+                    display.clear_screen_selector(taskResults);
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
                     break;
                 case RIGHT_DOWN:
                     // We just traverse through screen items for both cases
-                    display.clear_screen_selector();
+                    if (taskResults.currentFeature == HOME_HANDHELD_2 && taskResults.currentScreenItemIndex == 0) {
+                        display.screen_selector_border_color = 0x3b2d;
+                    }
+                    display.clear_screen_selector(taskResults);
                     display.update_screen_selector(taskResults.currentScreenItemIndex);
                     break;
                 case SELECT:
@@ -486,6 +513,9 @@ void Mediator::execute_task(task_t task) {
 
                             // Set screen selector border color accordingly to the next feature
                             display.set_screen_selector_border_color(taskArgs.feature);
+
+                            // Clear setting icon if not in homepage
+                            if (taskArgs.feature != HOME_HANDHELD_2) tft.fillRect(252, 10, 18, 18, display.headerColor);
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -553,6 +583,11 @@ void Mediator::execute_task(task_t task) {
                     } else {
                         clear_navigation_history();
                     }
+                case NOT_PRESSED: {
+                    isTaskExecutable = false;
+                    isTaskCompleted = true;
+                    break;
+                }
             }
             break;
         }
@@ -561,7 +596,6 @@ void Mediator::execute_task(task_t task) {
             taskArgs.feature = taskResults.currentFeature;
             break;
         case SET_CURRENT_FEATURE:
-            Serial.println(F("Execute task SET_CURRENT_FEATURE"));
             if (taskArgs.feature != taskResults.currentFeature) {
                 taskArgs.previousFeature = taskResults.currentFeature;
                 taskResults.currentFeature = taskArgs.feature;
@@ -599,51 +633,67 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task SYNC_DATA_TO_DEVICE"));
             break;
         case READ_RFID_TAG:
-            //Serial.println(F("Execute task READ_RFID_TAG"));
-            rfid.set_scanning_mode(SINGLE_SCAN);
-            // Reset scan result count if we are in RFID_REGISTER_TAG or RFID_SCAN_RESULT the first time
-            if (taskResults.is_the_first_scan) {
-                rfid.scanned_tag_count = 0;
-                taskResults.is_the_first_scan = false;
-            }
-            //rfid.set_scanning_mode(MULTI_SCAN);
-            rfid.scan_rfid_tag();
-            if (taskResults.currentFeature == RFID_REGISTER_TAG) {
-                if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
-                    taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                    buzzer.successful_sound();
-                } else {
-                    //buzzer.failure_sound();
-                }
-            } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
-                // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
-                // Default false
-                bool check = false;
+            Serial.println(F("Execute task READ_RFID_TAG"));
+            // Fresh task running
+            if (!isTaskExecutable && isTaskCompleted && !Peripherals::isMenuSelectButtonReleased) {
+                Serial.println(F("Fresh task READ_RFID_TAG running"));
+                isTaskExecutable = true;
+                isTaskCompleted = false;
+                // Keep this task run continuously
+                taskArgs.task = READ_RFID_TAG;
+                set_current_task();
 
-                for (int i = 0; i < 200; ++i) {
-                    for (int j = 0; j < 200; ++j) {
-                        if (is_epc_matched(rfid.scan_results[i].epc,
-                                           taskResults.registered_rfid_tags_from_server[j].epc) and
-                            (rfid.scan_results[i].epc != "") and
-                            (taskResults.registered_rfid_tags_from_server[j].epc != "") and
-                            (!rfid.scan_results[i].is_matched_check)) {
-                            rfid.scan_results[i].is_matched_check = true;
-                            Serial.print(F("RFID tag is registered before: "));
-                            Serial.println(rfid.scan_results[i].epc);
-                            check = true;
-                            ++taskResults.current_matched_mes_scanned_rfid_tag_count;
-                            buzzer.successful_sound();
-                            break;
+                if (taskResults.is_the_first_scan) {
+                    rfid.scanned_tag_count = 0;
+                    taskResults.is_the_first_scan = false;
+                }
+                //rfid.set_scanning_mode(SINGLE_SCAN);
+                rfid.set_scanning_mode(MULTI_SCAN);
+                rfid.scan_rfid_tag();
+            } else if (isTaskExecutable && !isTaskCompleted) {
+                // Serial.println(F("Scanning"));
+                // We re scanning, read scan result
+                rfid.read_multi_scan_response(Peripherals::isMenuSelectButtonReleased);
+                // We re scanning, update the counted tags
+                if (taskResults.currentFeature == RFID_REGISTER_TAG) {
+                    if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
+                        taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+                        //buzzer.successful_sound();
+                        display.update_rfid_registration_scan_result(taskResults);
+                    } else {
+                        //buzzer.failure_sound();
+                    }
+                } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
+                    // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
+                    // Default false
+                    bool check = false;
+
+                    for (int i = 0; i < 200; ++i) {
+                        for (int j = 0; j < 200; ++j) {
+                            if (is_epc_matched(rfid.scan_results[i].epc,
+                                               taskResults.registered_rfid_tags_from_server[j].epc) and
+                                (rfid.scan_results[i].epc != "") and
+                                (taskResults.registered_rfid_tags_from_server[j].epc != "") and
+                                (!rfid.scan_results[i].is_matched_check)) {
+                                rfid.scan_results[i].is_matched_check = true;
+                                Serial.print(F("RFID tag is registered before: "));
+                                Serial.println(rfid.scan_results[i].epc);
+                                check = true;
+                                ++taskResults.current_matched_mes_scanned_rfid_tag_count;
+                                buzzer.successful_sound();
+                                break;
+                            }
                         }
                     }
-                }
-                // Totally scanned to be displayed
-                if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
-                    taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                }
-                // If matched, sound
-                if (!check) {
-                    buzzer.failure_sound();
+                    // Totally scanned to be displayed
+                    if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
+                        taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
+                        display.update_rfid_match_check_scan_result(taskResults);
+                    }
+                    // If not matched, sound
+                    if (!check) {
+                        buzzer.failure_sound();
+                    }
                 }
             }
             break;
@@ -707,6 +757,7 @@ void Mediator::execute_task(task_t task) {
                 rfid.scan_results[i].epc = "";
                 rfid.scan_results[i].is_matched_check = false;
             }
+            delay(500);
             break;
         }
         case INSERT_DATA_ROW:

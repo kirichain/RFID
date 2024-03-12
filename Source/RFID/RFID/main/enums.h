@@ -124,7 +124,8 @@ enum task_t {
 enum feature_item_type_t {
     MENU_ICON,
     LIST_ITEM,
-    TASK_ITEM
+    TASK_ITEM,
+    NONE_ITEM_TYPE
 };
 
 enum feature_render_type_t {

@@ -11,235 +11,269 @@ Rfid::Rfid() {
 void Rfid::init(byte rx_pin, byte tx_pin) {
     Serial2.begin(115200, SERIAL_8N1, rx_pin, tx_pin);
     Serial.println(F("RFID module initiated"));
-    set_tx_power(2600);
     get_hardware_version();
+    set_tx_power(2600);
 //    get_software_version();
 }
 
-String Rfid::hex2str(uint8_t num) {
-    if (num > 0xf) {
-        return String(num, HEX);
-    } else {
-        return ("0" + String(num, HEX));
+void Rfid::clean_buffer() {
+    // Clean buffer
+    for (int i = 0; i < 256; i++) {
+        buffer[i] = 0;
     }
 }
 
-String Rfid::byte_array_to_hex_string(const uint8_t *byte_array, size_t array_length) {
-    String hex_string = "";
-    for (size_t i = 0; i < array_length; ++i) {
-        if (byte_array[i] < 0x10) {
-            hex_string += "0"; // Add a leading zero for values less than 0x10
-        }
-        hex_string += String(byte_array[i], HEX);
-    }
-    hex_string.toUpperCase(); // Convert the string to uppercase
-    return hex_string;
-}
+void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) {
+    clean_buffer();
 
-// This method is specifically used for POLLING_MULTI, for other commands, use read_response
-String Rfid::read_response_async() {
-    String response = "";
-    bool startDetected = false;
-    unsigned long lastReadTime = millis();
-    const unsigned long timeout = 1000; // Set a timeout period
-    const String noTagResponse = "BB01FF000115167E"; // "No tags found" message without spaces
-    int noTagCount = 0; // Counter for "no tags found" messages
+    int buffer_index = 0;
 
-    while (true) {
+    bool is_tag_not_found = false;
+    bool timeout_occurred = false;
+
+    unsigned long start_time = millis();
+    const unsigned long timeout = 500;
+    const uint16_t NOTICE_FRAME_LENGTH = 24; // Expected notice frame length
+    uint8_t prevScannedTagCount = scanned_tag_count;
+
+    // Read data from RFID module when this method is called
+    while (millis() - start_time < timeout && !_isMenuSelectButtonReleased &&
+           (scanned_tag_count == prevScannedTagCount)) {
         if (Serial2.available()) {
             byte readByte = Serial2.read();
-            lastReadTime = millis(); // Update the last read time
+            //Serial.print(readByte, HEX);
+            buffer[buffer_index] = readByte;
+            ++buffer_index;
 
-            if (readByte == 0xBB) { // Check if the start byte is detected
-                startDetected = true;
-                response = "BB"; // Start building the response string
-            } else if (startDetected) {
-                char hexBuffer[3]; // 2 characters for the byte and 1 for the null terminator
-                sprintf(hexBuffer, "%02X", readByte);
-                response += hexBuffer;
-
-                if (readByte == 0x7E) { // Check if the end byte is detected
-                    if (response.equalsIgnoreCase(noTagResponse)) {
-                        noTagCount++; // Increment "no tags found" counter
-                        Serial.print("No tags found. Count: ");
-                        Serial.println(noTagCount);
-
-                        if (noTagCount >= 5) {
-                            Serial.println("No tag threshold exceeded. Stopping scan.");
-                            //Serial.println(F("Stop scanning multi RFID tags"));
-                            //send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-                            break; // Exit the loop after 10 "no tags found" messages
-                        }
-                    } else {
-                        noTagCount = 0; // Reset the counter if a tag is found
-                        // If the response type is EPC_READING, process the EPC
-                        if (is_valid_epc_response(response)) {
-                            Serial.println("Valid EPC response. Start appending");
-                            // Parse the EPC from the response
-                            Serial.println("Raw response: " + response);
-                            String epc = response.substring(16, 40);
-
-                            // Check for duplicatesW
-                            if (!is_duplicate_scan(epc)) {
-                                // If not a duplicate, add to scan_results and increment scanned_tag_count
-                                scan_results[scanned_tag_count].epc = epc;
-                                scanned_tag_count++;
-
-                                // Optionally print the new EPC
-                                Serial.print(F("New EPC scanned: "));
-                                Serial.println(epc);
-                            } else {
-                                Serial.print(F("Duplicate EPC: "));
-                                Serial.println(epc);
-                            }
-                        } else {
-                            Serial.println("Invalid EPC response or no tag read.");
-                        }
+            // Check if the end byte is detected
+            if (readByte == 0x7e) {
+                //Serial.println();
+                //Serial.println(buffer_index);
+                // Check if we have a valid notice frame, 0xbb 02 22...........0x7e
+                if (buffer[0] == 0xbb && buffer[1] == 0x02 && buffer[2] == 0x22 &&
+                    buffer_index == NOTICE_FRAME_LENGTH) {
+                    // We have a valid notice frame with the expected length, print its EPC
+//                    print_raw_read(buffer, buffer_index);
+//                    print_epc(buffer, buffer_index);
+                    store_epc(buffer, buffer_index);
+                    // Reset buffer index for the next reading
+                    buffer_index = 0;
+                }
+                    // Check if we have a valid response frame, 0xbb 01 FF...........0x7e
+                else if (buffer[0] == 0xbb && buffer[1] == 0x01 && buffer[2] == 0xFF && buffer_index >= 5) {
+                    // Check if response is tag not found (error code 0x15)
+                    if (buffer[5] == 0x15) {
+                        is_tag_not_found = true;
+                        break;
                     }
-                    startDetected = false; // Reset the start detected flag for the next tag or message
-                    response = ""; // Clear the response for the next message
                 }
             }
-        } else if (millis() - lastReadTime > timeout && !startDetected) {
-            // If no more data is received for the duration of the timeout, break the loop
-            Serial.println("Timeout: No more tags detected.");
-            break;
+
+            // Check if the buffer is full
+            if (buffer_index >= sizeof(buffer)) {
+                Serial.println("Buffer overflow");
+                // Reset buffer index to prevent further reading
+                buffer_index = 0;
+            }
         }
-        delay(10); // Small delay to prevent reading too fast
     }
 
-    Serial.print(F("Last response before stopping: "));
-    // Returns the last response, or an empty string if no tags found
-    return response;
+    // Check if the scanned tag count has changed
+    if (scanned_tag_count != prevScannedTagCount) {
+        return;
+    }
+
+    // Check if timeout occurred
+    if (millis() - start_time >= timeout) {
+        timeout_occurred = true;
+    }
+
+    // Print message if no tag is found and timeout didn't occur
+    if (is_tag_not_found && !timeout_occurred) {
+        Serial.println("No tag found");
+    }
 }
 
-String Rfid::read_response(bool wait_for_success_confirmation, uint8_t *success_confirmation, size_t confirmation_size,
-                           unsigned long timeout, rfid_response_type_t response_type) {
-    String success_confirmation_string = "";
-    if (wait_for_success_confirmation) {
-        success_confirmation_string = byte_array_to_hex_string(success_confirmation, confirmation_size);
-//        Serial.print(F("Success confirmation string: "));
-//        Serial.println(success_confirmation_string);
+void Rfid::read_single_scan_response() {
+    clean_buffer();
+
+    int buffer_index = 0;
+
+    bool is_tag_not_found = false;
+    bool timeout_occurred = false;
+
+    unsigned long start_time = millis();
+    const unsigned long timeout = 500;
+
+    const uint16_t NOTICE_FRAME_LENGTH = 24; // Expected notice frame length
+
+    // Read data from RFID module when this method is called
+    while (millis() - start_time < timeout) {
+        if (Serial2.available()) {
+            byte readByte = Serial2.read();
+            //Serial.print(readByte, HEX);
+            buffer[buffer_index] = readByte;
+            ++buffer_index;
+
+            // Check if the end byte is detected
+            if (readByte == 0x7e) {
+                //Serial.println();
+                //Serial.println(buffer_index);
+                // Check if we have a valid notice frame, 0xbb 02 22...........0x7e
+                if (buffer[0] == 0xbb && buffer[1] == 0x02 && buffer[2] == 0x22 &&
+                    buffer_index == NOTICE_FRAME_LENGTH) {
+                    // We have a valid notice frame with the expected length, print its EPC
+//                    print_raw_read(buffer, buffer_index);
+//                    print_epc(buffer, buffer_index);
+                    store_epc(buffer, buffer_index);
+                    // Reset buffer index for the next reading
+                    buffer_index = 0;
+                }
+                    // Check if we have a valid response frame, 0xbb 01 FF...........0x7e
+                else if (buffer[0] == 0xbb && buffer[1] == 0x01 && buffer[2] == 0xFF && buffer_index >= 5) {
+                    // Check if response is tag not found (error code 0x15)
+                    if (buffer[5] == 0x15) {
+                        is_tag_not_found = true;
+                        break;
+                    }
+                }
+            }
+
+            // Check if the buffer is full
+            if (buffer_index >= sizeof(buffer)) {
+                Serial.println("Buffer overflow");
+                // Reset buffer index to prevent further reading
+                buffer_index = 0;
+            }
+        }
     }
-    String response = "";
-    bool startDetected = false;
-    unsigned long lastReadTime = 0;
-    //const unsigned long timeout = 1000; // Set a timeout period
+
+    // Check if timeout occurred
+    if (millis() - start_time >= timeout) {
+        timeout_occurred = true;
+    }
+
+    // Print message if no tag is found and timeout didn't occur
+    if (is_tag_not_found && !timeout_occurred) {
+        Serial.println("No tag found");
+    }
+}
+
+void Rfid::print_raw_read(const uint8_t *_buffer, uint8_t buffer_size) {
+    Serial.print("Raw Read: ");
+    for (uint8_t i = 0; i < buffer_size; ++i) {
+        if (_buffer[i] < 0x10) {
+            Serial.print("0");
+        }
+        Serial.print(_buffer[i], HEX);
+    }
+    Serial.println();
+}
+
+void Rfid::print_epc(const uint8_t *buffer, uint8_t buffer_size) {
+    const uint8_t EPC_START_INDEX = 8; // Starting index of EPC in the buffer
+    const uint8_t EPC_LENGTH = 12; // Expected EPC length
+
+    // Check if the buffer size is sufficient
+    if (buffer_size >= EPC_START_INDEX + EPC_LENGTH) {
+        Serial.print("EPC: ");
+        for (uint8_t i = 0; i < EPC_LENGTH; ++i) {
+            if (buffer[EPC_START_INDEX + i] < 0x10) {
+                Serial.print("0");
+            }
+            Serial.print(buffer[EPC_START_INDEX + i], HEX);
+        }
+        Serial.println();
+    } else {
+        Serial.println("Invalid EPC data");
+    }
+}
+
+void Rfid::store_epc(const uint8_t *_buffer, uint8_t buffer_size) {
+    const uint8_t EPC_START_INDEX = 8; // Starting index of EPC in the buffer
+    const uint8_t EPC_LENGTH = 12; // Expected EPC length
+
+    // Check if the buffer size is sufficient
+    if (buffer_size >= EPC_START_INDEX + EPC_LENGTH && scanned_tag_count < 200) {
+        String epc = "";
+        // Convert the EPC bytes to a string
+        for (uint8_t i = 0; i < EPC_LENGTH; i++) {
+            char hex[3];
+            sprintf(hex, "%02X", _buffer[EPC_START_INDEX + i]);
+            epc += hex;
+        }
+
+        if (!is_duplicate_scan(epc)) {
+//            Serial.print(F("New added EPC: "));
+//            Serial.println(epc);
+            // Clear the existing EPC string
+            scan_results[scanned_tag_count].epc = epc;
+            scan_results[scanned_tag_count].is_matched_check = false;
+            // Increment the scanned tag count
+            ++scanned_tag_count;
+        }
+    }
+}
+
+bool Rfid::read_response(unsigned long timeout) {
+    unsigned long start_time = millis();
+
+    uint8_t buffer_index = 0;
+
+    clean_buffer();
 
     // Read the response until no more data is received for the duration of the timeout
-    while (true) {
+    while (Serial2.available() || (millis() - start_time < timeout)) {
         if (Serial2.available()) {
             byte readByte = Serial2.read();
-            lastReadTime = millis(); // Update the last read time
-
-            if (readByte == 0xBB) { // Check if the start byte is detected
-                startDetected = true;
-                response = "";
-                response += "BB"; // Include the start byte in the response
-            } else if (startDetected) {
-                char hexBuffer[4];
-                sprintf(hexBuffer, "%02X", readByte);
-                response += hexBuffer;
-
-                if (readByte == 0x7E) { // Check if the end byte is detected
-                    if (wait_for_success_confirmation) {
-                        if (response.equalsIgnoreCase(success_confirmation_string)) {
-                            Serial.print(F("Got success confirmation string: "));
-                            Serial.println(success_confirmation_string);
-                            break; // Exit the loop if success confirmation string found
-                        }
-                    }
-
-                    // If the response type is EPC_READING, process the EPC
-                    if (response_type == EPC_READING) {
-                        if (is_valid_epc_response(response)) {
-                            //Serial.println("Valid EPC response. Start appending if not duplicated");
-                            // Parse the EPC from the response
-                            //Serial.println("Raw response: " + response);
-                            String epc = response.substring(16, 40);
-
-                            // Check for duplicates
-                            if (!is_duplicate_scan(epc)) {
-                                // If not a duplicate, add to scan_results and increment scanned_tag_count
-                                scan_results[scanned_tag_count].epc = epc;
-                                scanned_tag_count++;
-
-                                // Optionally print the new EPC
-                                //Serial.print(F("New scanned EPC: "));
-                                //Serial.println(epc);
-                            } else {
-                                //Serial.print(F("Duplicated EPC: "));
-                                //Serial.println(epc);
-                            }
-                        } else {
-                            //Serial.println("Invalid EPC response or no tag read.");
-                        }
-                        // Stop the task so user will need keep pressing button for continuous scanning
-                        //break;
-                    } else {
-                        //Serial.println(response);
-                    }
-                    // Comment these below if we use break above
-                    startDetected = false;
-                    response = "";
-                }
+            buffer[buffer_index] = readByte;
+            ++buffer_index;
+            // Check if the end byte is detected
+            if (readByte == 0x7e) {
+                break;
             }
-        } else if (millis() - lastReadTime > timeout && !startDetected) {
-            // If no more data is received for the duration of the timeout, break the loop
-            break;
         }
-        //delay(10); // Small delay to prevent reading too fast
     }
-    //Serial.print(F("Last response from RFID module: "));
-    return response; // Return the last response, if needed
+
+    if (buffer[0] == 0xbb && buffer[buffer_index - 1] == 0x7e) {
+        return true;
+    } else {
+        return false;
+    }
 }
 
-/*! @brief Send command.*/
 void Rfid::send_command(uint8_t *data, size_t size) {
     Serial.println(F("Sending command"));
     Serial2.write(data, size);
     //Serial2.flush(); // Wait for the data to be completely sent
 }
 
-/*! @brief Get hardware version information.*/
-String Rfid::get_hardware_version() {
-    Serial.println(F("Getting RFID hardware version"));
-    Serial.println(F("Hardware version: "));
+void Rfid::get_hardware_version() {
+    Serial.println(F("Getting RFID hardware version: "));
     send_command((uint8_t *) HARDWARE_VERSION_CMD, sizeof(HARDWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8, 3000, NORMAL_READING));
-    return "";
+    if (read_response(3000)) {
+        String info;
+        for (uint8_t i = 0; i < 50; i++) {
+            info += (char) buffer[6 + i];
+            if (buffer[8 + i] == 0x7e) {
+                break;
+            }
+        }
+        Serial.println(info);
+    } else {
+        Serial1.println(F("Error in getting hardware version"));
+    }
 }
 
-/*! @brief Get software version information.*/
-String Rfid::get_software_version() {
+void Rfid::get_software_version() {
     Serial.println(F("Getting RFID software version"));
     send_command((uint8_t *) SOFTWARE_VERSION_CMD, sizeof(SOFTWARE_VERSION_CMD));
-    Serial.println(read_response(false, nullptr, 8, 3000, NORMAL_READING));
-    return "";
-}
-
-/*! @brief Save the card information.*/
-void Rfid::print_rfid_tag_info() {
-    String rssi = hex2str(buffer[5]);
-    String pc = hex2str(buffer[6]) + hex2str(buffer[7]);
-    String epc = "";
-
-    for (uint8_t i = 8; i < 20; i++) {
-        epc += hex2str(buffer[i]);
-    }
-
-    Serial.println("pc: " + pc);
-    Serial.println("rssi: " + rssi);
-    Serial.println("epc: " + epc);
-    for (uint8_t i = 0; i < 24; i++) {
-        Serial.print(hex2str(buffer[i]));
-    }
-    Serial.println(" ");
+    read_response(3000);
 }
 
 void Rfid::polling_once() {
     send_command((uint8_t *) POLLING_ONCE_CMD, sizeof(POLLING_ONCE_CMD));
-    read_response(false, nullptr, 8, 1, EPC_READING);
+    read_single_scan_response();
     //Serial.println(read_response(false, nullptr, 8, 20, EPC_READING));
 }
 
@@ -247,27 +281,27 @@ void Rfid::polling_multi() {
 //    send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD),
 //                 true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI);
     send_command((uint8_t *) POLLING_MULTIPLE_CMD, sizeof(POLLING_MULTIPLE_CMD));
-    Serial.println(read_response_async());
+    //read_multi_scan_response();
 }
 
 void Rfid::scan_rfid_tag() {
     switch (scanning_mode) {
         case SINGLE_SCAN:
-            //Serial.println(F("Start scanning RFID tags once"));
+            Serial.println(F("Start scanning RFID tags once"));
             polling_once();
-            //Serial.print(F("Total scanned RFID tags currently: "));
-            //Serial.println(scanned_tag_count);
+            Serial.print(F("Total scanned RFID tags currently: "));
+            Serial.println(scanned_tag_count);
             stop_scanning();
             //for (int i = 0; i < 200; ++i) {
-                //Serial.print(scan_results[i].epc);
-                //Serial.print(", ");
+            //Serial.print(scan_results[i].epc);
+            //Serial.print(", ");
             //}
             //Serial.println();
             break;
         case MULTI_SCAN:
             Serial.println(F("Start scanning multi RFID tags"));
             polling_multi();
-            stop_scanning();
+            //stop_scanning();
             break;
     }
 }
@@ -279,60 +313,37 @@ void Rfid::set_scanning_mode(rfid_scanning_mode_t _scanning_mode) {
 void Rfid::set_tx_power(uint16_t db) {
     Serial.println(F("Start setting tx power"));
     send_command((uint8_t *) SET_TX_POWER, sizeof(SET_TX_POWER));
-    Serial.print(F("Set TX power received: "));
-    Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_SET_TX_POWER, 8, 3000, NORMAL_READING));
+    if (read_response(500)) {
+        Serial.println(F("Set TX power successfully"));
+    } else {
+        Serial.println(F("Set TX power failed"));
+    }
+//    Serial.println(F("Start setting high sensitivity"));
+//    send_command((uint8_t *) SET_HIGH_SENSITIVITY, sizeof(SET_HIGH_SENSITIVITY));
+//    if (read_response(500)) {
+//        Serial.println(F("Set high sensitivity successfully"));
+//    } else {
+//        Serial.println(F("Set high sensitivity failed"));
+//    }
 }
 
 bool Rfid::is_duplicate_scan(const String &epc) {
     for (int i = 0; i < scanned_tag_count; ++i) {
-        if (scan_results[i].epc.equalsIgnoreCase(epc)) {
+        if (epc.equalsIgnoreCase(scan_results[i].epc)) {
             return true;
         }
     }
     return false;
 }
 
-// Method to validate the EPC response
-bool Rfid::is_valid_epc_response(const String &response) {
-    // Convert the response to uppercase for case-insensitive comparison
-    String upperResponse = response;
-    upperResponse.toUpperCase();
-
-    // Define the expected start and end markers of the EPC response
-    const String expectedStart = "BB0222";
-    const String expectedLength = "0011"; // Indicating 17 bytes follow
-    const String expectedEnd = "7E";
-
-    // Check if the response starts with the expected start sequence
-    if (!upperResponse.startsWith(expectedStart)) {
-        return false;
-    }
-
-    // Check if the response ends with the expected end sequence
-    if (!upperResponse.endsWith(expectedEnd)) {
-        return false;
-    }
-
-    // Check if the length field in the response matches the expected length
-//    int lengthIndex = expectedStart.length(); // The length field starts right after the expectedStart
-//    String lengthField = upperResponse.substring(lengthIndex, lengthIndex + 4);
-//    if (lengthField != expectedLength) {
-//        return false;
-//    }
-
-    // Calculate the expected response length: start (6) + length (4) + data (36) + end (2)
-    int expectedResponseLength = 48;
-    if (upperResponse.length() != expectedResponseLength) {
-        return false;
-    }
-
-    // If all checks pass, return true
-    return true;
-}
-
 void Rfid::stop_scanning() {
-    //Serial.println(F("Stop scanning multi RFID tags"));
+    Serial.println(F("Stop scanning multi RFID tags"));
     send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
-    read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING);
+    if (read_response(5000)) {
+        Serial.println(F("Stopped scanning multi RFID tags"));
+    } else {
+        Serial.println(F("Failed to stop scanning multi RFID tags"));
+    }
     //Serial.println(read_response(true, (uint8_t *) SUCCESSFULLY_STOP_POLLING_MULTI, 8, 3000, NORMAL_READING));
 }
+
