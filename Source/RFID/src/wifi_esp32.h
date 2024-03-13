@@ -43,13 +43,11 @@ public:
 
     void terminate_sta_mode();
 
-    int scan_wifi_networks();
-
     String get_mac_addr();
 
     void wait_for_new_wifi_setting();
 
-    void handleSetWiFiConnection(AsyncWebServerRequest *request);
+    void handle_setting_new_wifi_connection(AsyncWebServerRequest *request);
 };
 
 #endif //RFID_WIFI_H

@@ -356,14 +356,6 @@ void Mediator::execute_task(task_t task) {
             Serial.println(F("Execute task TERMINATE_STA_WIFI"));
             wifi.terminate_sta_mode();
             break;
-        case SCAN_WIFI_NETWORKS:
-            Serial.println(F("Execute task SCAN_WIFI_NETWORKS"));
-            wifi.scan_wifi_networks();
-            taskResults.wifi_networks_count = wifi.wifi_networks_count;
-            for (byte i = 0; i < 10; ++i) {
-                taskResults.wifi_networks[i] = wifi.wifi_networks[i];
-            }
-            break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
             taskResults.currentOperatingMode = operation.get_operating_mode();
