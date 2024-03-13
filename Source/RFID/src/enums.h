@@ -117,6 +117,7 @@ enum task_t {
     START_CONVEYOR,
     STOP_CONVEYOR,
     SUBMIT_CHOSEN_ITEM,
+    TOGGLE_SOUND,
     NO_TASK,
     NUM_TASKS
 };

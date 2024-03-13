@@ -4,6 +4,8 @@
 
 #include "wifi_esp32.h"
 
+AsyncWebServer async_server(80);
+
 Wifi::Wifi() {
     currentApWifiSSID = nullptr;
     currentApWifiPassword = nullptr;
@@ -11,11 +13,17 @@ Wifi::Wifi() {
     currentStaWifiPassword = nullptr;
 }
 
-bool Wifi::init_ap_mode() const {
+void Wifi::init_ap_mode() {
     // Code to initialize the device in AP mode
     WiFi.mode(WIFI_AP);
-    WiFi.softAP(currentApWifiSSID, currentApWifiPassword);
-    return WiFi.softAPIP() != INADDR_NONE;
+    if (WiFi.softAP(currentApWifiSSID, currentApWifiPassword)) {
+        Serial.println(F("Init AP Wi-Fi successfully"));
+        Serial.print(F("Wi-Fi AP IP is: "));
+        Serial.println(WiFi.softAPIP());
+        wait_for_new_wifi_setting();
+    } else {
+        Serial.println(F("Init AP Wi-Fi failed"));
+    }
 }
 
 bool Wifi::init_sta_mode() const {
@@ -56,23 +64,6 @@ bool Wifi::init_sta_mode() const {
     return true;
 }
 
-bool Wifi::init_mdns() {
-    // Code to initialize mDNS service
-    // if (MDNS.begin("esp8266")) {
-    //     Serial.println("MDNS responder started");
-    //     return true;
-    // }
-    // return false;
-    return true; // Placeholder return value
-}
-
-void Wifi::init_web_page() {
-    // Code to initialize web server or web page
-    // You may need to start a web server and define route handlers
-    // webServer.on("/", HTTP_GET, [this]() { handleRoot(); });
-    // webServer.begin();
-}
-
 void Wifi::set_ap_wifi_credential(char *ssid, char *password) {
     currentApWifiSSID = ssid;
     currentApWifiPassword = password;
@@ -92,17 +83,14 @@ void Wifi::set_sta_wifi_credential(char *ssid, char *password, char *hostname) {
 
 void Wifi::terminate_ap_mode() {
     // Code to terminate AP mode
+    Serial.println(F("Terminate AP Wi-Fi"));
     WiFi.softAPdisconnect(true);
 }
 
 void Wifi::terminate_sta_mode() {
     // Code to terminate STA mode
     WiFi.disconnect(true);
-}
-
-void Wifi::terminate_web_page() {
-    // Code to terminate the web server or web page
-    // webServer.stop();
+    is_sta_mode_enabled = false;
 }
 
 int Wifi::scan_wifi_networks() {
@@ -115,7 +103,8 @@ int Wifi::scan_wifi_networks() {
     Serial.println("Scan Wi-Fi networks done");
     if (wifi_networks_count == 0) {
         Serial.println("No Wi-Fi networks found");
-    } if (wifi_networks_count == WIFI_SCAN_FAILED) {
+    }
+    if (wifi_networks_count == WIFI_SCAN_FAILED) {
         Serial.println("Wi-Fi scan failed");
         // Handle the scan failure (e.g., by returning an error code)
         return -1;
@@ -194,4 +183,53 @@ String Wifi::get_mac_addr() {
     Serial.println(WiFi.macAddress());
     mac_address = WiFi.macAddress();
     return WiFi.macAddress();
+}
+
+void notFound(AsyncWebServerRequest *request) {
+    request->send(404, "text/plain", "Not found");
+}
+
+void Wifi::handleSetWiFiConnection(AsyncWebServerRequest *request) {
+    if (request->hasParam("ssid") && request->hasParam("password")) {
+        is_sta_wifi_reconnected = true;
+        is_sta_mode_enabled = true;
+
+        String ssid = request->getParam("ssid")->value();
+        String password = request->getParam("password")->value();
+
+        // Copy the credentials into the class member variables
+        ssid.toCharArray(ssidArray, sizeof(ssidArray));
+        password.toCharArray(passwordArray, sizeof(passwordArray));
+
+        // Call the function to set the STA Wi-Fi credentials
+        set_sta_wifi_credential(ssidArray, passwordArray, currentHostname);
+
+        // Terminate AP mode and clean up to save resources
+        terminate_ap_mode();
+        async_server.end();
+
+//        // Initialize STA mode with the new credentials
+//        if (init_sta_mode()) {
+//            request->send(200, "text/plain", "STA mode initialized with SSID = " + ssid + " & Password = " + password);
+//
+//        } else {
+//            request->send(500, "text/plain", "Failed to initialize STA mode");
+//        }
+    } else {
+        // In case the SSID or Password was not provided
+        request->send(400, "text/plain", "SSID and Password parameters are required");
+    }
+}
+
+void Wifi::wait_for_new_wifi_setting() {
+    async_server.onNotFound(notFound);
+
+    // Send a GET request to <IP>/?ssid=<ssid>&password=<password>
+    // http://192.168.4.1/set-wifi-connection?ssid=ERPLTD&password=erp@@2020
+    // http://192.168.4.1/set-wifi-connection?ssid=kiri&password=101conchodom
+    async_server.on("/set-wifi-connection", HTTP_GET, [this](AsyncWebServerRequest *request) {
+        handleSetWiFiConnection(request);
+    });
+
+    async_server.begin();
 }

@@ -8,8 +8,12 @@
 #include "Arduino.h"
 #include <Wifi.h>
 #include "structs.h."
+#include <ESPAsyncWebServer.h>
 
 class Wifi {
+private:
+    char ssidArray[32];
+    char passwordArray[64];
 public:
     char *currentApWifiSSID;
     char *currentApWifiPassword;
@@ -22,15 +26,14 @@ public:
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
 
+    bool is_sta_mode_enabled = true;
+    bool is_sta_wifi_reconnected = false;
+
     Wifi();
 
-    bool init_ap_mode() const;
+    void init_ap_mode();
 
     bool init_sta_mode() const;
-
-    bool init_mdns();
-
-    void init_web_page();
 
     void set_ap_wifi_credential(char *ssid, char *password);
 
@@ -38,13 +41,15 @@ public:
 
     static void terminate_ap_mode();
 
-    static void terminate_sta_mode();
+    void terminate_sta_mode();
 
     int scan_wifi_networks();
 
-    void terminate_web_page();
-
     String get_mac_addr();
+
+    void wait_for_new_wifi_setting();
+
+    void handleSetWiFiConnection(AsyncWebServerRequest *request);
 };
 
 #endif //RFID_WIFI_H
