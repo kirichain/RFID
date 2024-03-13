@@ -30,17 +30,17 @@ Mediator::Mediator() {
 }
 
 void Mediator::init_services() {
-    // Render layout based on operating mode
-    if (taskArgs.feature == HOME_TERMINAL) {
-        display.init(LANDSCAPE);
-    } else {
-        display.init(PORTRAIT);
-    }
     // Set buzzer pin
     peripherals.set_digital_output(buzzerPinDefinition);
-    // Play welcome sound using buzzer
     buzzer.init(buzzerPinDefinition);
-    buzzer.mute(true);
+    buzzer.mute(taskResults.isMuted);
+    // Render layout based on operating mode
+    if (taskArgs.feature == HOME_TERMINAL) {
+        display.init(LANDSCAPE, taskResults);
+    } else {
+        display.init(PORTRAIT, taskResults);
+    }
+    // Play welcome sound using buzzer
     buzzer.welcome_sound();
     display.render_feature(LOADING, taskResults);
     peripherals.init_navigation_buttons(leftUpNavButtonPinDefinition, backCancelNavButtonPinDefinition,
@@ -55,9 +55,6 @@ void Mediator::init_services() {
 }
 
 void Mediator::execute_task(task_t task) {
-//    isTaskExecutable = false;
-//    isTaskCompleted = true;
-//    isTaskQueueEmpty = false;
     switch (task) {
         case IDLE:
             Serial.println(F("Idling"));
@@ -313,28 +310,32 @@ void Mediator::execute_task(task_t task) {
         }
         case INIT_AP_WIFI:
             Serial.println(F("Execute task INIT_AP_WIFI"));
+
             strncpy(taskArgs.wifi_ap_ssid, "RFID-001", sizeof(taskArgs.wifi_ap_ssid));
-            strncpy(taskArgs.wifi_ap_password, "rfid001x", sizeof(taskArgs.wifi_ap_password));
+            //strncpy(taskArgs.wifi_ap_password, "rfid001x", sizeof(taskArgs.wifi_ap_password));
             // Ensure null-termination if the string length equals the buffer size
             taskArgs.wifi_ap_ssid[sizeof(taskArgs.wifi_ap_ssid) - 1] = '\0';
             taskArgs.wifi_ap_password[sizeof(taskArgs.wifi_ap_password) - 1] = '\0';
             wifi.set_ap_wifi_credential(taskArgs.wifi_ap_ssid, taskArgs.wifi_ap_password);
             // Start to connect to Wi-Fi as AP credential
-            if (wifi.init_ap_mode()) {
-                Serial.println(F("Init ap wifi successfully"));
-            }
+            wifi.init_ap_mode();
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-            strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
-            strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
-            strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
-            // Ensure null-termination if the string length equals the buffer size
-            taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
-            taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
-            taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
-            wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password, taskArgs.wifi_hostname);
-            // Start to connect to Wi-Fi as STA credential
+
+            if (wifi.is_default_sta_wifi_credential_used) {
+                strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
+                strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
+                strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
+                // Ensure null-termination if the string length equals the buffer size
+                taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
+                taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
+                taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
+                wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
+                                             taskArgs.wifi_hostname);
+            }
+
+            // Start to connect to Wi-Fi as set STA credential
             if (wifi.init_sta_mode()) {
                 Serial.println(F("Init sta wifi successfully"));
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
@@ -355,14 +356,6 @@ void Mediator::execute_task(task_t task) {
         case TERMINATE_STA_WIFI:
             Serial.println(F("Execute task TERMINATE_STA_WIFI"));
             wifi.terminate_sta_mode();
-            break;
-        case SCAN_WIFI_NETWORKS:
-            Serial.println(F("Execute task SCAN_WIFI_NETWORKS"));
-            wifi.scan_wifi_networks();
-            taskResults.wifi_networks_count = wifi.wifi_networks_count;
-            for (byte i = 0; i < 10; ++i) {
-                taskResults.wifi_networks[i] = wifi.wifi_networks[i];
-            }
             break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
@@ -410,7 +403,6 @@ void Mediator::execute_task(task_t task) {
                     taskResults.currentFeature = NO_FEATURE;
                     taskArgs.feature = HOME_HANDHELD_2;
                     execute_task(RENDER_FEATURE);
-                    //break;
                 } else {
                     // Update screen item index for screen selector
                     taskResults.currentScreenItemIndex = 0;
@@ -462,7 +454,7 @@ void Mediator::execute_task(task_t task) {
                     // Stop the RFID module if it is still working
                     rfid.stop_scanning();
                 }
-                return;
+                break;
             }
             // Get navigation direction
             // To store current screen item index with LIST_ITEM type
@@ -517,7 +509,9 @@ void Mediator::execute_task(task_t task) {
                             display.set_screen_selector_border_color(taskArgs.feature);
 
                             // Clear setting icon if not in homepage
-                            if (taskArgs.feature != HOME_HANDHELD_2) tft.fillRect(252, 10, 18, 18, display.headerColor);
+                            if (taskArgs.feature != HOME_HANDHELD_2) {
+                                tft.fillRect(252, 10, 16, 16, display.headerColor);
+                            }
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -559,6 +553,7 @@ void Mediator::execute_task(task_t task) {
                             //peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
                         case TASK_ITEM:
+                            Serial.println("Task item");
                             // We just execute the task which is associated with the clicked item.
                             // Render to next feature will be done in the task
                             //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
@@ -579,7 +574,8 @@ void Mediator::execute_task(task_t task) {
                         // Set screen selector border color accordingly to the next feature
                         display.set_screen_selector_border_color(taskArgs.feature);
                         if ((taskResults.currentFeature == RFID_SCAN_RESULT) or
-                            (taskResults.currentFeature == RFID_REGISTER_TAG)) {
+                            (taskResults.currentFeature == RFID_REGISTER_TAG) or
+                            (taskResults.currentFeature == SETTING)) {
                             display.is_viewport_cleared = true;
                         }
                     } else {
@@ -794,6 +790,15 @@ void Mediator::execute_task(task_t task) {
             break;
         case SUBMIT_CHOSEN_ITEM:
             Serial.println(F("Execute task SUBMIT_CHOSEN_ITEM"));
+            break;
+        case TOGGLE_SOUND:
+            Serial.println(F("Execute task TOGGLE_SOUND"));
+            if (taskResults.isMuted) {
+                taskResults.isMuted = false;
+            } else {
+                taskResults.isMuted = true;
+            }
+            buzzer.mute(taskResults.isMuted);
             break;
     }
 }

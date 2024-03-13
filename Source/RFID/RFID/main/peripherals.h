@@ -11,9 +11,10 @@
 class Peripherals {
 private:
     byte leftUpNavButtonPin, backCancelNavButtonPin, menuSelectNavButtonPin, rightDownNavButtonPin;
-    byte lastMenuSelectNavButtonState, lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
+    byte lastLeftUpNavButtonState, lastRightDownNavButtonState, lastBackCancelNavButtonState;
 public:
     static volatile bool isMenuSelectButtonReleased;
+    static volatile byte lastMenuSelectNavButtonState;
 
     Peripherals();
 

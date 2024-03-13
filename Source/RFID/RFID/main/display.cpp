@@ -21,7 +21,7 @@ Display::Display() {
 
 }
 
-void Display::init(feature_layout_t _feature_layout) {
+void Display::init(feature_layout_t _feature_layout, task_results &_taskResults) {
     // Initialize display
     feature_layout = _feature_layout;
     tft.init();
@@ -40,11 +40,11 @@ void Display::init(feature_layout_t _feature_layout) {
         SCREEN_HEIGHT = 320;
     }
     tft.fillScreen(backgroundColor);
-    draw_layout(feature_layout);
+    draw_layout(feature_layout, _taskResults);
     gif.begin(BIG_ENDIAN_PIXELS);
 }
 
-void Display::draw_layout(feature_layout_t _feature_layout) const {
+void Display::draw_layout(feature_layout_t _feature_layout, task_results &_taskResults) {
     // Clear the screen before drawing the layout
     tft.fillScreen(backgroundColor);
 
@@ -66,34 +66,16 @@ void Display::draw_layout(feature_layout_t _feature_layout) const {
             tft.drawString("Server not connected", 58, 10);
             tft.pushImage(294, 10, 16, 16, wifi_connection_failed_icon);
 
-            // Sound indicator icon
-            tft.pushImage(273, 10, 16, 16, sound_icon);
+            // Draw sound icon
+            iconWidth = 16;
+            iconHeight = 16;
+            if (_taskResults.isMuted) {
+                put_icon(273, 10, menu_icon_names[52]);
+            } else {
+                put_icon(273, 10, menu_icon_names[51]);
+            }
             break;
         }
-        case LANDSCAPE:
-            // Draw header at the top
-            tft.fillRect(0, 0, SCREEN_HEIGHT, HEADER_HEIGHT, headerColor);
-
-            // Set text color for the header
-            tft.setTextColor(TFT_WHITE, headerColor);
-
-            // Draw Wi-Fi status at the top-left
-            tft.drawString(wifiStatus, 5, 5);
-
-            // Draw login status directly below Wi-Fi status
-            tft.drawString(loginStatus, 5, 20);
-
-            // Draw date and time at the top-right
-//            dateTimeWidthLandscape = get_string_width(dateTime);
-//            tft.drawString(dateTime, SCREEN_HEIGHT - dateTimeWidthLandscape - 5, 5);
-//
-//            // Draw server status directly below date and time
-//            serverStatusWidthLandscape = get_string_width(serverStatus);
-//            tft.drawString(serverStatus, SCREEN_HEIGHT - serverStatusWidthLandscape - 5, 20);
-
-            // Draw viewport below the header
-            tft.drawRect(0, HEADER_HEIGHT, SCREEN_HEIGHT, SCREEN_WIDTH - HEADER_HEIGHT, headerColor);
-            break;
     }
 }
 
@@ -129,11 +111,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         Serial.println("Viewport is cleared now");
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
 
+        // Clear setting icon selector
+        if ((_taskResults.currentFeature == HOME_HANDHELD_2) &&
+            ((_taskResults.currentScreenItemIndex == 3) || (_taskResults.currentScreenItemIndex == 5))) {
+            screen_selector_border_color = headerColor;
+        }
         // Clear screen items and reset screen selector
         clear_screen_selector(_taskResults);
         clear_screen_items();
-
-
     }
 
     switch (_feature) {
@@ -594,7 +579,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case RFID_REGISTER_TAG: {
-            // Check if the background task is completed, if yes, start rendering, else, set background tasks and return
+            // Check if the background task is completed, if yes, start rendering
             if (is_background_task_completed) {
                 update_rfid_registration_scan_result(_taskResults);
             } else {
@@ -700,7 +685,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     // Start to set screen selector to the first one item
                     update_screen_selector(0);
 
-                    //current_feature_item_type = MENU_ICON;
                     // Reset current screen tasks
                     memset(current_screen_tasks, NO_TASK, 10);
                     current_screen_tasks[0] = READ_RFID_TAG;
@@ -744,61 +728,94 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case SETTING: {
-            if ((_taskResults.currentScreenItemIndex == 3) || (_taskResults.currentScreenItemIndex == 5)) {
-                Serial.println(F("This is the first time SETTING feature is rendered"));
+            // Check if the background task is completed, if yes, start rendering
+            if (is_background_task_completed) {
+                // Task setting new Wi-Fi has been completed
+                if (_taskResults.currentScreenItemIndex == 0) {
+                    // Update new set Wi-Fi name
+                    Serial.println(F("Update new set Wi-Fi"));
+                    tft.fillRect(78, 95, 200, 40, 0xDF7E);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.setTextColor(TFT_BLACK);
+                    tft.drawString("New Wi-Fi", 78, 105);
+                }
+                // Task mute/unmute sound has been completed
+                if (_taskResults.currentScreenItemIndex == 1) {
+                    // Draw sound icon
+                    iconWidth = 16;
+                    iconHeight = 16;
+                    if (_taskResults.isMuted) {
+                        put_icon(273, 10, menu_icon_names[52]);
+                    } else {
+                        put_icon(273, 10, menu_icon_names[51]);
+                    }
+                    delay(1000);
+                }
 
-                tft.setFreeFont(&FreeSansBold9pt7b);
-                tft.setTextColor(0x12AC);
-                tft.drawString("SETTINGS", 120, 46);
-
-                // Put Wi-Fi setting banner
-                iconWidth = 300;
-                iconHeight = 66;
-                put_icon(10, 81, menu_icon_names[47]);
-
-                // Put sound setting banner
-                iconWidth = 300;
-                iconHeight = 66;
-                put_icon(10, 157, menu_icon_names[48]);
-
-                // Put currently saved and used Wi-Fi name
-                tft.setTextColor(TFT_BLACK);
-                tft.drawString("ERP 2020", 78, 105);
-
-                // Update accordingly screen item
-                screen_item_position _item_position = {10, 81, iconWidth, iconHeight};
-                update_screen_item(0, _item_position);
-
-                _item_position = {10, 157, iconWidth, iconHeight};
-                update_screen_item(1, _item_position);
-
-                screen_selector_border_color = backgroundColor;
-                screen_item_count = 2;
-                // Start to set screen selector to the first one item
+                clear_screen_selector(_taskResults);
                 update_screen_selector(0);
-
-                reset_display_setting();
-                // Start to set screen selector to the first one item
-                update_screen_selector(0);
-                current_feature_item_type = MENU_ICON;
-                // Reset current screen features
-                memset(current_screen_features, NO_FEATURE, 10);
-                current_screen_features[0] = SETTING_WIFI;
-                current_screen_features[1] = SETTING;
             } else {
-                switch (_taskResults.currentScreenItemIndex) {
-                    case 1: {
-                        Serial.println(F("Start mute/unmute sound"));
+                if ((_taskResults.currentScreenItemIndex == 3) || (_taskResults.currentScreenItemIndex == 5)) {
+                    Serial.println(F("This is the first time SETTING feature is rendered"));
 
-                        if (_taskResults.isMuted) {
-                            _taskResults.isMuted = false;
-                            put_icon(273, 10, menu_icon_names[51]);
-                        } else if (!_taskResults.isMuted) {
-                            _taskResults.isMuted = true;
-                            put_icon(273, 10, menu_icon_names[52]);
-                        }
+                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.setTextColor(0x12AC);
+                    tft.drawString("SETTINGS", 120, 46);
 
-                        break;
+                    // Put Wi-Fi setting banner
+                    iconWidth = 300;
+                    iconHeight = 66;
+                    put_icon(10, 81, menu_icon_names[47]);
+
+                    // Put sound setting banner
+                    iconWidth = 300;
+                    iconHeight = 66;
+                    put_icon(10, 157, menu_icon_names[48]);
+
+                    // Put currently saved and used Wi-Fi name
+                    tft.setTextColor(TFT_BLACK);
+                    tft.drawString("ERP 2020", 78, 105);
+
+                    // Update accordingly screen item
+                    screen_item_position _item_position = {10, 81, iconWidth, iconHeight};
+                    update_screen_item(0, _item_position);
+
+                    _item_position = {10, 157, iconWidth, iconHeight};
+                    update_screen_item(1, _item_position);
+
+                    screen_selector_border_color = backgroundColor;
+                    screen_item_count = 2;
+                    // Start to set screen selector to the first one item
+                    update_screen_selector(0);
+
+                    // Reset current screen tasks
+                    memset(current_screen_tasks, NO_TASK, 10);
+                    current_screen_tasks[0] = TERMINATE_STA_WIFI;
+                    current_screen_tasks[1] = TOGGLE_SOUND;
+                    current_feature_item_type = TASK_ITEM;
+                    // Reset current screen features
+                    memset(current_screen_features, NO_FEATURE, 10);
+                    // Reset display settings
+                    reset_display_setting();
+                    is_viewport_cleared = false;
+                } else {
+                    is_background_task_required = true;
+                    // Reset current screen background tasks
+                    for (byte i = 0; i < 10; ++i) {
+                        current_screen_background_tasks[i] = NO_TASK;
+                    }
+                    switch (_taskResults.currentScreenItemIndex) {
+                        case 0:
+                            // Start AP WiFi
+                            Serial.println(F("Start background setting new WiFi task"));
+                            current_screen_background_tasks[0] = TERMINATE_STA_WIFI;
+                            current_screen_background_tasks[1] = INIT_AP_WIFI;
+                            break;
+                        case 1:
+                            // Start resetting the scanned rfid tag count task
+                            Serial.println(F("Start background toggle sound task"));
+                            current_screen_background_tasks[0] = TOGGLE_SOUND;
+                            break;
                     }
                 }
             }
@@ -807,7 +824,9 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
         case SETTING_WIFI: {
             if (is_background_task_completed) {
                 // Back to SETTING with new set Wi-Fi
-                
+                // To avoid failing to undefined behaviour
+                _taskResults.currentScreenItemIndex = 3;
+                render_feature(SETTING, _taskResults);
             } else {
                 tft.setFreeFont(&FreeSansBold9pt7b);
                 tft.setTextColor(0x12AC);
@@ -822,6 +841,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 current_feature_item_type = NONE_ITEM_TYPE;
                 // Reset current screen features
                 memset(current_screen_features, NO_FEATURE, 10);
+
+                is_background_task_required = true;
+                // Reset current screen background tasks
+                for (byte i = 0; i < 10; ++i) {
+                    current_screen_background_tasks[i] = NO_TASK;
+                }
+                current_screen_background_tasks[0] = TERMINATE_STA_WIFI;
+                current_screen_background_tasks[1] = INIT_AP_WIFI;
             }
 
             break;

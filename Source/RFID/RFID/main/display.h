@@ -236,9 +236,9 @@ public:
 
     Display();
 
-    void init(feature_layout_t _feature_layout);
+    void init(feature_layout_t _feature_layout, task_results &_taskResults);
 
-    void draw_layout(feature_layout_t _feature_layout) const;
+    void draw_layout(feature_layout_t _feature_layout, task_results &_taskResults);
 
     const menu_icon *get_icon_by_name(const char *icon_name);
 

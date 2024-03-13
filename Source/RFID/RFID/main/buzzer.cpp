@@ -5,24 +5,32 @@
 #include "buzzer.h"
 
 Buzzer::Buzzer() {
-    Serial.println(F("Buzzer initiated"));
 }
 
 void Buzzer::init(byte _buzzerPin) {
     buzzerPin = _buzzerPin;
+    digitalWrite(buzzerPin, HIGH);
+    Serial.println(F("Buzzer pin initiated"));
 }
 
 void Buzzer::mute(bool _is_mute) {
     is_muted = _is_mute;
-};
+    if (is_muted)
+        Serial.println(F("Muted sound"));
+    else {
+        Serial.println(F("Un muted sound"));
+        welcome_sound();
+    }
+}
+
 void Buzzer::welcome_sound() const {
     if (!is_muted) {
-//        Serial.println(F("Start playing welcome sound"));
+        Serial.println(F("Start playing welcome sound"));
         tone(buzzerPin, 880);  // Play A5 note (880 Hz), a high "beep"
         delay(100);            // Duration 100 ms
         noTone(buzzerPin);     // Stop the tone
         digitalWrite(buzzerPin, HIGH);
-//        Serial.println(F("Stop playing welcome sound"));
+        Serial.println(F("Stop playing welcome sound"));
     }
 }
 
