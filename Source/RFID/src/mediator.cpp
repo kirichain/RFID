@@ -303,7 +303,7 @@ void Mediator::execute_task(task_t task) {
                 // Try to reconnect
                 if (current_millis - last_reconnect_millis >= reconnect_interval) {
                     last_reconnect_millis = current_millis;
-                    if (wifi.is_sta_mode_enabled) wifi.init_sta_mode();
+                    wifi.init_sta_mode();
                 }
             }
             break;
@@ -323,7 +323,7 @@ void Mediator::execute_task(task_t task) {
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
 
-            if (!wifi.is_sta_wifi_reconnected) {
+            if (wifi.is_default_sta_wifi_credential_used) {
                 strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
                 strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
                 strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
@@ -331,7 +331,8 @@ void Mediator::execute_task(task_t task) {
                 taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
                 taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
                 taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
-                wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password, taskArgs.wifi_hostname);
+                wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
+                                             taskArgs.wifi_hostname);
             }
 
             // Start to connect to Wi-Fi as set STA credential

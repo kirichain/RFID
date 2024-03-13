@@ -108,6 +108,7 @@ void Wifi::handle_setting_new_wifi_connection(AsyncWebServerRequest *request) {
     if (request->hasParam("ssid") && request->hasParam("password")) {
         is_sta_wifi_reconnected = true;
         is_sta_mode_enabled = true;
+        is_default_sta_wifi_credential_used = false;
 
         String ssid = request->getParam("ssid")->value();
         String password = request->getParam("password")->value();
