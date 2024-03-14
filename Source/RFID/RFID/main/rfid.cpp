@@ -141,9 +141,9 @@ void Rfid::read_single_scan_response() {
 
             // Check if the buffer is full
             if (buffer_index >= sizeof(buffer)) {
-                Serial.println("Buffer overflow");
-                // Reset buffer index to prevent further reading
                 buffer_index = 0;
+//                Serial.println("Buffer overflow");
+                // Reset buffer index to prevent further reading
             }
         }
     }
@@ -155,7 +155,7 @@ void Rfid::read_single_scan_response() {
 
     // Print message if no tag is found and timeout didn't occur
     if (is_tag_not_found && !timeout_occurred) {
-        Serial.println("No tag found");
+//        Serial.println("No tag found");
     }
 }
 

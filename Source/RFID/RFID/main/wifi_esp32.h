@@ -9,6 +9,7 @@
 #include <Wifi.h>
 #include "structs.h."
 #include <ESPAsyncWebServer.h>
+#include "SPIFFS.h"
 
 class Wifi {
 private:
@@ -27,7 +28,6 @@ public:
     wifi_network_info wifi_networks[10];
 
     bool is_sta_mode_enabled = true;
-    bool is_sta_wifi_reconnected = false;
     bool is_default_sta_wifi_credential_used = true;
 
     Wifi();

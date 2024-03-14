@@ -34,7 +34,7 @@ void Peripherals::init_navigation_buttons(byte _leftUpNavButtonPin, byte _backCa
     pinMode(menuSelectNavButtonPin, INPUT_PULLUP);
     pinMode(rightDownNavButtonPin, INPUT_PULLUP);
 
-    attachInterrupt(digitalPinToInterrupt(menuSelectNavButtonPin), is_select_button_released_isr, RISING);
+//    attachInterrupt(digitalPinToInterrupt(menuSelectNavButtonPin), is_select_button_released_isr, RISING);
 }
 
 button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex, byte &screenItemCount,
@@ -61,7 +61,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = LEFT_UP;
         }
         lastLeftUpNavButtonState = currentLeftUpNavButtonState;
-        delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if back cancel navigation button is pressed
@@ -72,7 +72,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
             button_type = BACK_CANCEL;
         }
         lastBackCancelNavButtonState = currentBackCancelNavButtonState;
-        delay(50); // Delay for debouncing
+        delay(20); // Delay for debouncing
     }
 
     // Check if the menu select navigation button is pressed
@@ -95,7 +95,7 @@ button_type_t Peripherals::read_navigation_buttons(byte &currentScreenItemIndex,
 
             button_type = SELECT;
         }
-//        delay(10); // Delay for debouncing
+        delay(5); // Delay for debouncing
     }
 
     // Check if right down navigation button is pressed

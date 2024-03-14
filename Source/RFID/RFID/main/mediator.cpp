@@ -4,11 +4,9 @@
 
 #include "mediator.h"
 
-Ws2812b ws2812b;
 Wifi wifi;
 Request request;
 Display display;
-Operation operation;
 Peripherals peripherals;
 Buzzer buzzer;
 Rfid rfid;
@@ -303,7 +301,7 @@ void Mediator::execute_task(task_t task) {
                 // Try to reconnect
                 if (current_millis - last_reconnect_millis >= reconnect_interval) {
                     last_reconnect_millis = current_millis;
-                    wifi.init_sta_mode();
+                    if (wifi.is_sta_mode_enabled) wifi.init_sta_mode();
                 }
             }
             break;
@@ -359,11 +357,11 @@ void Mediator::execute_task(task_t task) {
             break;
         case GET_OPERATING_MODE:
             Serial.println(F("Execute task GET_OPERATING_MODE"));
-            taskResults.currentOperatingMode = operation.get_operating_mode();
+//            taskResults.currentOperatingMode = operation.get_operating_mode();
             break;
         case SET_OPERATING_MODE:
             Serial.println(F("Execute task SET_OPERATING_MODE"));
-            operation.set_operation_mode(taskArgs.operatingMode);
+//            operation.set_operation_mode(taskArgs.operatingMode);
             taskResults.currentOperatingMode = taskArgs.operatingMode;
             break;
         case RENDER_FEATURE:

@@ -11,13 +11,11 @@
 #include "config.h"
 #include "display.h"
 #include "mqtt.h"
-#include "operation.h"
 #include "peripherals.h"
 #include "request.h"
 #include "rfid.h"
 #include "sensor.h"
 #include "wifi_esp32.h"
-#include "ws2812b.h"
 
 class Mediator {
 private:

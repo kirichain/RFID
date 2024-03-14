@@ -270,6 +270,11 @@ void Mediator::execute_task(task_t task) {
 
                 // Because we have had a reconnection, we need re-subscribe to MQTT broker
                 if (is_reconnected) {
+                    // Terminate previous AP mode
+                    if ((wifi.is_ap_mode_enabled) && (wifi.is_sta_mode_enabled)) {
+                        Serial.println(F("Got sta wifi again. Stop AP"));
+                        wifi.terminate_ap_mode();
+                    }
                     is_reconnected = false;
                     if (taskArgs.mes_api_host != "") {
                         mqtt.is_broker_connected = false;
@@ -301,7 +306,7 @@ void Mediator::execute_task(task_t task) {
                 // Try to reconnect
                 if (current_millis - last_reconnect_millis >= reconnect_interval) {
                     last_reconnect_millis = current_millis;
-                    wifi.init_sta_mode();
+                    if (wifi.is_sta_mode_enabled) wifi.init_sta_mode();
                 }
             }
             break;
