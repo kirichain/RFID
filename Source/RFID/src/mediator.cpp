@@ -263,60 +263,61 @@ void Mediator::execute_task(task_t task) {
             static bool is_reconnected = false;
 
             //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
-            if (WiFi.status() == WL_CONNECTED) {
-                //Serial.println(F("WiFi now"));
-                // Wi-Fi is connected
-                //Serial.println(F("Wi-Fi is connected"));
-                display.iconWidth = 16;
-                display.iconHeight = 16;
-                display.put_icon(294, 10, display.menu_icon_names[23]);
+            if (!wifi.is_ap_mode_enabled) {
+                if (WiFi.status() == WL_CONNECTED) {
+                    //Serial.println(F("WiFi now"));
+                    // Wi-Fi is connected
+                    //Serial.println(F("Wi-Fi is connected"));
+                    display.iconWidth = 16;
+                    display.iconHeight = 16;
+                    display.put_icon(294, 10, display.menu_icon_names[23]);
 
-                // Because we have had a reconnection, we need re-subscribe to MQTT broker
-//                if (is_reconnected) {
-//                    Serial.println(F("Reset now because Wi-Fi is available again"));
+                    // Because we have had a reconnection, we need re-subscribe to MQTT broker
+                    if (is_reconnected) {
+                        Serial.println(F("Reset now because Wi-Fi is available again"));
 //                    // Terminate previous AP mode
 //                    if (wifi.is_ap_mode_enabled) {
 //                        wifi.terminate_ap_mode();
 //                    }
-//                    Serial.println(F("Re connect MQTT"));
-//                    is_reconnected = false;
-//                    if (taskArgs.mes_api_host != "") {
-//                        Serial.println(F("1"));
+                        Serial.println(F("Re connect MQTT"));
+                        is_reconnected = false;
+                        if (taskArgs.mes_api_host != "") {
+                            Serial.println(F("1"));
 //                        execute_task(CONNECT_MQTT_BROKER);
 //                        execute_task(SUBSCRIBE_MQTT_TOPIC);
 //                        buzzer.successful_sound();
-//                    } else {
+                        } else {
 //                        execute_task(INIT_STA_WIFI);
-//                    }
-//                }
-            } else if (!wifi.is_ap_mode_enabled) {
-                if (!is_reconnected) {
-                    Serial.println(F("Will reconnect MQTT when sta mode is done again"));
-                    buzzer.failure_sound();
-                    is_reconnected = true;
-                }
+                        }
+                    }
+                } else {
+                    if (!is_reconnected) {
+                        Serial.println(F("Will reconnect MQTT when sta mode is done again"));
+                        buzzer.failure_sound();
+                        is_reconnected = true;
+                    }
 
-                Serial.println(F("Wi-Fi is not connected"));
-                display.iconWidth = 16;
-                display.iconHeight = 16;
-                // Blink the icon
-                unsigned long current_millis = millis();
-                if (current_millis - last_millis >= blink_interval) {
-                    last_millis = current_millis;
-                    display.put_icon(294, 10, display.menu_icon_names[24]);
-                }
-                if (current_millis - last_millis >= blink_interval / 2) {
-                    display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
-                }
-                // Try to reconnect
-                if (current_millis - last_reconnect_millis >= reconnect_interval) {
-                    last_reconnect_millis = current_millis;
-                    if (wifi.is_sta_mode_enabled) {
-                        Serial.println(F("Try to init sta mode now"));
-                        //wifi.init_sta_mode();
+                    Serial.println(F("Wi-Fi is not connected"));
+                    display.iconWidth = 16;
+                    display.iconHeight = 16;
+                    // Blink the icon
+                    unsigned long current_millis = millis();
+                    if (current_millis - last_millis >= blink_interval) {
+                        last_millis = current_millis;
+                        display.put_icon(294, 10, display.menu_icon_names[24]);
+                    }
+                    if (current_millis - last_millis >= blink_interval / 2) {
+                        display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
+                    }
+                    // Try to reconnect
+                    if (current_millis - last_reconnect_millis >= reconnect_interval) {
+                        last_reconnect_millis = current_millis;
+                        if (wifi.is_sta_mode_enabled) {
+                            Serial.println(F("Try to init sta mode now"));
+                            wifi.init_sta_mode();
+                        }
                     }
                 }
-
             }
             break;
         }

@@ -41,12 +41,9 @@ bool Wifi::init_sta_mode() {
     const unsigned long timeout = 10000; // 10 seconds timeout
 
     // Keep checking the status until we're connected or until the timeout
-    while (WiFi.status() != WL_CONNECTED) {
-        if (millis() - startTime >= timeout) {
-            Serial.println("[WiFi] Failed to connect within the timeout period.");
-            return false;
-        }
-        delay(500);
+    while (millis() - startTime < timeout) {
+        // Feed the watchdog timer to prevent reset
+        esp_task_wdt_reset();
         // You can handle different cases here if you want to provide detailed feedback
         if (WiFi.status() == WL_NO_SSID_AVAIL) {
             Serial.println("[WiFi] SSID not found");
@@ -60,6 +57,10 @@ bool Wifi::init_sta_mode() {
         }
     }
 
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[WiFi] Failed to connect within the timeout period.");
+        return false;
+    }
     // If we get here, we are connected
 //    is_sta_mode_enabled = true;
 
@@ -147,11 +148,10 @@ void Wifi::handle_setting_new_wifi_connection(AsyncWebServerRequest *request) {
             bool check = init_sta_mode();
             // Initialize STA mode with the new credentials
             if (check) {
-
                 Serial.println(F("Done"));
-
                 request->send(200, "text/plain",
                               "STA mode initialized with SSID = " + ssid + " & Password = " + password);
+                //is_ap_mode_enabled = false;
 //                WiFi.mode(WIFI_STA);
 //                async_server.end();
             } else {
