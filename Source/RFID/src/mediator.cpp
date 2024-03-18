@@ -50,6 +50,8 @@ void Mediator::init_services() {
     // Get mac address
     wifi.get_mac_addr();
     taskResults.mac_address = wifi.mac_address;
+    // Check SPIFFS
+    wifi.init_spiffs();
 }
 
 void Mediator::execute_task(task_t task) {
@@ -262,6 +264,7 @@ void Mediator::execute_task(task_t task) {
 
             //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
             if (WiFi.status() == WL_CONNECTED) {
+                //Serial.println(F("WiFi now"));
                 // Wi-Fi is connected
                 //Serial.println(F("Wi-Fi is connected"));
                 display.iconWidth = 16;
@@ -269,28 +272,31 @@ void Mediator::execute_task(task_t task) {
                 display.put_icon(294, 10, display.menu_icon_names[23]);
 
                 // Because we have had a reconnection, we need re-subscribe to MQTT broker
-                if (is_reconnected) {
-                    // Terminate previous AP mode
-                    if ((wifi.is_ap_mode_enabled) && (wifi.is_sta_mode_enabled)) {
-                        Serial.println(F("Got sta wifi again. Stop AP"));
-                        wifi.terminate_ap_mode();
-                    }
-                    is_reconnected = false;
-                    if (taskArgs.mes_api_host != "") {
-                        mqtt.is_broker_connected = false;
-                        execute_task(CONNECT_MQTT_BROKER);
-                        execute_task(SUBSCRIBE_MQTT_TOPIC);
-                        buzzer.successful_sound();
-                    } else {
-                        execute_task(INIT_STA_WIFI);
-                    }
-                }
-            } else {
+//                if (is_reconnected) {
+//                    Serial.println(F("Reset now because Wi-Fi is available again"));
+//                    // Terminate previous AP mode
+//                    if (wifi.is_ap_mode_enabled) {
+//                        wifi.terminate_ap_mode();
+//                    }
+//                    Serial.println(F("Re connect MQTT"));
+//                    is_reconnected = false;
+//                    if (taskArgs.mes_api_host != "") {
+//                        Serial.println(F("1"));
+//                        execute_task(CONNECT_MQTT_BROKER);
+//                        execute_task(SUBSCRIBE_MQTT_TOPIC);
+//                        buzzer.successful_sound();
+//                    } else {
+//                        execute_task(INIT_STA_WIFI);
+//                    }
+//                }
+            } else if (!wifi.is_ap_mode_enabled) {
                 if (!is_reconnected) {
+                    Serial.println(F("Will reconnect MQTT when sta mode is done again"));
                     buzzer.failure_sound();
                     is_reconnected = true;
                 }
-                //Serial.println(F("Wi-Fi is not connected"));
+
+                Serial.println(F("Wi-Fi is not connected"));
                 display.iconWidth = 16;
                 display.iconHeight = 16;
                 // Blink the icon
@@ -302,16 +308,25 @@ void Mediator::execute_task(task_t task) {
                 if (current_millis - last_millis >= blink_interval / 2) {
                     display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
                 }
-
                 // Try to reconnect
                 if (current_millis - last_reconnect_millis >= reconnect_interval) {
                     last_reconnect_millis = current_millis;
-                    if (wifi.is_sta_mode_enabled) wifi.init_sta_mode();
+                    if (wifi.is_sta_mode_enabled) {
+                        Serial.println(F("Try to init sta mode now"));
+                        //wifi.init_sta_mode();
+                    }
                 }
+
             }
             break;
         }
         case INIT_AP_WIFI:
+            // If the calling feature is SETTING, render SETTING_WIFI feature and init AP WI-Fi
+            if (taskResults.currentFeature == SETTING) {
+                taskArgs.feature = SETTING_WIFI;
+                execute_task(RENDER_FEATURE);
+            }
+
             Serial.println(F("Execute task INIT_AP_WIFI"));
 
             strncpy(taskArgs.wifi_ap_ssid, "RFID-001", sizeof(taskArgs.wifi_ap_ssid));
@@ -320,13 +335,17 @@ void Mediator::execute_task(task_t task) {
             taskArgs.wifi_ap_ssid[sizeof(taskArgs.wifi_ap_ssid) - 1] = '\0';
             taskArgs.wifi_ap_password[sizeof(taskArgs.wifi_ap_password) - 1] = '\0';
             wifi.set_ap_wifi_credential(taskArgs.wifi_ap_ssid, taskArgs.wifi_ap_password);
+            // Turn off MQTT broker reconnecting and current connection
+            MQTT::is_reconnecting_enabled = false;
+            mqtt.disconnect();
             // Start to connect to Wi-Fi as AP credential
-            wifi.init_ap_mode();
+            wifi.init_ap_sta_mode();
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
 
             if (wifi.is_default_sta_wifi_credential_used) {
+                Serial.println(F("Default STA Wi-Fi credential is used"));
                 strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
                 strncpy(taskArgs.wifi_sta_password, default_wifi_password_1, sizeof(taskArgs.wifi_sta_password));
                 strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));

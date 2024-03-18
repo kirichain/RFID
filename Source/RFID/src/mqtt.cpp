@@ -7,25 +7,26 @@
 AsyncMqttClient mqttClient;
 
 MQTT *MQTT::instance = nullptr;
+bool MQTT::is_reconnecting_enabled = true;
 
 MQTT::MQTT() {
     instance = this;
 
     is_broker_connected = false;
     is_mes_package_selected = false;
-
     expected_event = NONE;
+
     Serial.println(F("MQTT instance initiated"));
 }
 
 void MQTT::onMqttDisconnect(AsyncMqttClientDisconnectReason reason) {
     if (reason == AsyncMqttClientDisconnectReason::TCP_DISCONNECTED) {
         Serial.println("MQTT disconnected due to TCP disconnection");
-//        mqttClient.disconnect(true);
-//        return;
     }
-    Serial.println(F("Disconnected from MQTT. Try reconnecting"));
-    mqttClient.connect();
+    if (MQTT::is_reconnecting_enabled) {
+        Serial.println(F("Disconnected from MQTT. Try reconnecting"));
+        mqttClient.connect();
+    }
 }
 
 void MQTT::onMqttConnectStatic(bool sessionPresent) {
@@ -132,7 +133,8 @@ bool MQTT::publish_message(char *topicName) {
     return true;
 }
 
-void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len, size_t index,
+void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMessageProperties properties, size_t len,
+                                   size_t index,
                                    size_t total) {
     String raw_last_payload = String(payload);
     for (int i = 0; i < raw_last_payload.length(); i++) {
@@ -201,7 +203,7 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
     }
 }
 
-void MQTT::wait_for_mqtt_event(mqtt_event_t _event){
+void MQTT::wait_for_mqtt_event(mqtt_event_t _event) {
     expected_event = _event;
 //    switch (_event) {
 //        case MES_PACKAGE_SELECTED:
@@ -223,7 +225,7 @@ void MQTT::wait_for_mqtt_event(mqtt_event_t _event){
 //    }
 }
 
-String MQTT::extract_value_from_json_string(const String& data, const String& key) {
+String MQTT::extract_value_from_json_string(const String &data, const String &key) {
     int start = data.indexOf(key);
     if (start != -1) {
         start += key.length() + 2;  // Move past the key and the two quote characters and colon
@@ -253,4 +255,13 @@ void MQTT::reset_saved_data() {
     buyer_po = "";
     module_name = "";
     mes_target = 0;
+}
+
+void MQTT::disconnect() {
+    if (mqttClient.connected()) {
+        Serial.println(F("Disconnect MQTT now"));
+        is_broker_connected = false;
+        reset_saved_data();
+        mqttClient.disconnect(true);
+    }
 }

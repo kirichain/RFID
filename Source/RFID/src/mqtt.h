@@ -15,8 +15,6 @@ extern AsyncMqttClient mqttClient;
 class MQTT {
     static MQTT *instance;
 private:
-    const char *device_name;
-
     String mac_address;
     String lwt_topic;
     String lwt_payload;
@@ -42,6 +40,7 @@ public:
 
     bool is_broker_connected;
     bool is_mes_package_selected;
+    static bool is_reconnecting_enabled;
     bool is_mes_package_group_selected;
 
     mqtt_event_t expected_event;
@@ -80,6 +79,8 @@ public:
     static String extract_value_from_json_string(const String &data, const String &key);
 
     void reset_saved_data();
+
+    void disconnect();
 };
 
 #endif //RFID_MQTT_H

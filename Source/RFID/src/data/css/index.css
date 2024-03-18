@@ -1,5 +1,13 @@
-.custom-padding {
-    padding: 86px 67px;
+@media screen and (max-width: 992px) {
+    .custom-padding {
+        padding: 86px 36px !important;
+    }
+}
+
+@media screen and (min-width: 1280px) {
+    .custom-padding {
+        padding: 86px 67px !important;
+    }
 }
 
 .logo-container {
@@ -10,6 +18,10 @@
     margin-bottom: 15px;
     font-size: 18pt !important;
     font-family: 'Poppins', sans-serif;
+}
+
+.card {
+    height: 100% !important;
 }
 
 .connect-button-caption {
@@ -26,6 +38,8 @@
 .btn-custom {
     background-color: #196774;
     color: #fff;
+    padding-bottom: 12px;
+    padding-top: 12px;
 }
 
 .btn-custom:hover {
@@ -49,6 +63,11 @@
     height: 577px;
 }
 
+.row-custom {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+}
+
 .row {
     height: 100%;
 }
@@ -59,13 +78,12 @@
 
 .card {
     height: 100%;
-    width: 455px;
+    /*width: 455px;*/
 }
 
 .form-control-custom {
     height: 48px;
     font-size: 14px;
-    padding-top: 1.625rem;
     padding-bottom: 0.625rem;
 }
 

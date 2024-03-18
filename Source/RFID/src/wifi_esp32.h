@@ -28,8 +28,8 @@ public:
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
 
-    bool is_sta_mode_enabled = true;
-    bool is_ap_mode_enabled = false;
+    volatile bool is_sta_mode_enabled = true;
+    volatile bool is_ap_mode_enabled = false;
     bool is_default_sta_wifi_credential_used = true;
 
     Wifi();
@@ -37,6 +37,8 @@ public:
     void init_ap_mode();
 
     bool init_sta_mode();
+
+    void init_ap_sta_mode();
 
     void set_ap_wifi_credential(char *ssid, char *password);
 
@@ -51,6 +53,8 @@ public:
     void wait_for_new_wifi_setting();
 
     void handle_setting_new_wifi_connection(AsyncWebServerRequest *request);
+
+    static void init_spiffs();
 };
 
 #endif //RFID_WIFI_H

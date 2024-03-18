@@ -14,28 +14,27 @@ Wifi::Wifi() {
 }
 
 void Wifi::init_ap_mode() {
-    if (!SPIFFS.begin()) {
-        Serial.println("An Error has occurred while mounting SPIFFS-------------------------------");
-    }
-    // Code to initialize the device in AP mode
-    WiFi.mode(WIFI_AP);
-    if (WiFi.softAP(currentApWifiSSID, currentApWifiPassword)) {
-        Serial.println(F("Init AP Wi-Fi successfully"));
-        Serial.print(F("Wi-Fi AP IP is: "));
-        Serial.println(WiFi.softAPIP());
-        is_sta_mode_enabled = false;
-        is_ap_mode_enabled = true;
-        wait_for_new_wifi_setting();
-    } else {
-        Serial.println(F("Init AP Wi-Fi failed"));
+    if (WiFi.getMode() != WIFI_AP) {
+        WiFi.mode(WIFI_AP);
+        if (WiFi.softAP(currentApWifiSSID, currentApWifiPassword)) {
+            Serial.println(F("Init AP Wi-Fi successfully"));
+            Serial.print(F("Wi-Fi AP IP is: "));
+            Serial.println(WiFi.softAPIP());
+            is_sta_mode_enabled = false;
+            is_ap_mode_enabled = true;
+            wait_for_new_wifi_setting();
+        } else {
+            Serial.println(F("Init AP Wi-Fi failed"));
+        }
     }
 }
 
 bool Wifi::init_sta_mode() {
-    // Code to initialize the device in STA (client) mode
-    WiFi.setHostname(currentHostname);
-    // Set the Wi-Fi mode based on the AP mode flag
-    WiFi.mode(WIFI_STA);
+    if (is_default_sta_wifi_credential_used) {
+        WiFi.setHostname(currentHostname);
+        WiFi.mode(WIFI_STA);
+    }
+
     WiFi.begin(currentStaWifiSSID, currentStaWifiPassword);
     // We'll wait up to 10 seconds for a connection
     unsigned long startTime = millis();
@@ -47,9 +46,7 @@ bool Wifi::init_sta_mode() {
             Serial.println("[WiFi] Failed to connect within the timeout period.");
             return false;
         }
-
-        delay(500); // Wait half a second before checking again
-
+        delay(500);
         // You can handle different cases here if you want to provide detailed feedback
         if (WiFi.status() == WL_NO_SSID_AVAIL) {
             Serial.println("[WiFi] SSID not found");
@@ -63,12 +60,30 @@ bool Wifi::init_sta_mode() {
         }
     }
 
-    is_sta_mode_enabled = true;
     // If we get here, we are connected
+//    is_sta_mode_enabled = true;
+
     Serial.println("[WiFi] WiFi is connected!");
     Serial.print("[WiFi] IP address: ");
     Serial.println(WiFi.localIP());
     return true;
+}
+
+void Wifi::init_ap_sta_mode() {
+    if (WiFi.getMode() != WIFI_AP_STA) {
+        WiFi.mode(WIFI_AP_STA);
+
+        if (WiFi.softAP(currentApWifiSSID, currentApWifiPassword)) {
+            Serial.println(F("Init AP Wi-Fi successfully"));
+            Serial.print(F("Wi-Fi AP IP is: "));
+            Serial.println(WiFi.softAPIP());
+//            is_sta_mode_enabled = false;
+            is_ap_mode_enabled = true;
+            wait_for_new_wifi_setting();
+        } else {
+            Serial.println(F("Init AP Wi-Fi failed"));
+        }
+    }
 }
 
 void Wifi::set_ap_wifi_credential(char *ssid, char *password) {
@@ -119,22 +134,31 @@ void Wifi::handle_setting_new_wifi_connection(AsyncWebServerRequest *request) {
         String ssid = request->getParam("ssid")->value();
         String password = request->getParam("password")->value();
 
-        // Copy the credentials into the class member variables
-        ssid.toCharArray(ssidArray, sizeof(ssidArray));
-        password.toCharArray(passwordArray, sizeof(passwordArray));
+        if ((ssid != "") && (password != "")) {
+            Serial.println(F("Valid new SSID and Password. Try to connect now"));
 
-        // Call the function to set the STA Wi-Fi credentials
-        set_sta_wifi_credential(ssidArray, passwordArray, currentHostname);
+            // Copy the credentials into the class member variables
+            ssid.toCharArray(ssidArray, sizeof(ssidArray));
+            password.toCharArray(passwordArray, sizeof(passwordArray));
 
-        bool check = init_sta_mode();
-        // Initialize STA mode with the new credentials
-        if (check) {
-            Serial.println(F("Done"));
-            request->send(200, "text/plain", "STA mode initialized with SSID = " + ssid + " & Password = " + password);
-            async_server.end();
-        } else {
-            Serial.println(F("Failed"));
-            request->send(500, "text/plain", "Failed to initialize STA mode");
+            // Call the function to set the STA Wi-Fi credentials
+            set_sta_wifi_credential(ssidArray, passwordArray, currentHostname);
+
+            bool check = init_sta_mode();
+            // Initialize STA mode with the new credentials
+            if (check) {
+
+                Serial.println(F("Done"));
+
+                request->send(200, "text/plain",
+                              "STA mode initialized with SSID = " + ssid + " & Password = " + password);
+//                WiFi.mode(WIFI_STA);
+//                async_server.end();
+            } else {
+//            WiFi.mode(WIFI_AP);
+                Serial.println(F("Failed"));
+                request->send(500, "text/plain", "Failed to initialize STA mode");
+            }
         }
     } else {
         // In case the SSID or Password was not provided
@@ -158,4 +182,10 @@ void Wifi::wait_for_new_wifi_setting() {
     });
 
     async_server.begin();
+}
+
+void Wifi::init_spiffs() {
+    if (!SPIFFS.begin()) {
+        Serial.println("An Error has occurred while mounting SPIFFS-------------------------------");
+    }
 }
