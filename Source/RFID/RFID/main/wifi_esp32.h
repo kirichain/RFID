@@ -10,6 +10,7 @@
 #include "structs.h."
 #include <ESPAsyncWebServer.h>
 #include "SPIFFS.h"
+#include <esp_task_wdt.h>
 
 class Wifi {
 private:
@@ -27,20 +28,23 @@ public:
     int wifi_networks_count;
     wifi_network_info wifi_networks[10];
 
-    bool is_sta_mode_enabled = true;
+    volatile bool is_sta_mode_enabled = true;
+    volatile bool is_ap_mode_enabled = false;
     bool is_default_sta_wifi_credential_used = true;
 
     Wifi();
 
     void init_ap_mode();
 
-    bool init_sta_mode() const;
+    bool init_sta_mode();
+
+    void init_ap_sta_mode();
 
     void set_ap_wifi_credential(char *ssid, char *password);
 
     void set_sta_wifi_credential(char *ssid, char *password, char *hostname);
 
-    static void terminate_ap_mode();
+    void terminate_ap_mode();
 
     void terminate_sta_mode();
 

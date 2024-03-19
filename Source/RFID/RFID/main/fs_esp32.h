@@ -17,7 +17,7 @@ public:
 
     FS32();
 
-    static bool save_settings(const String& ssid, const String& password, const String& mes_package, const String& mes_package_group);
+    static bool save_settings(String ssid, String password, String mes_package, String mes_package_group);
 
     bool read_saved_settings();
 

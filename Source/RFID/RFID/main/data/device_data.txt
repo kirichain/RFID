@@ -1,0 +1,6 @@
+{
+	"ssid":"SFS OFFICE",
+	"password":"sfs#office!@",
+	"mes_package":"",
+	"mes_package_group":""
+}

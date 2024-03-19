@@ -808,12 +808,13 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                         case 0:
                             // Start AP WiFi
                             Serial.println(F("Start background setting new WiFi task"));
-                            current_screen_background_tasks[0] = TERMINATE_STA_WIFI;
-                            current_screen_background_tasks[1] = INIT_AP_WIFI;
+                            is_viewport_cleared = true;
+                            current_screen_background_tasks[0] = INIT_AP_WIFI;
                             break;
                         case 1:
                             // Start resetting the scanned rfid tag count task
                             Serial.println(F("Start background toggle sound task"));
+                            is_viewport_cleared = false;
                             current_screen_background_tasks[0] = TOGGLE_SOUND;
                             break;
                     }
@@ -822,35 +823,25 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case SETTING_WIFI: {
-            if (is_background_task_completed) {
-                // Back to SETTING with new set Wi-Fi
-                // To avoid failing to undefined behaviour
-                _taskResults.currentScreenItemIndex = 3;
-                render_feature(SETTING, _taskResults);
-            } else {
-                tft.setFreeFont(&FreeSansBold9pt7b);
-                tft.setTextColor(0x12AC);
-                tft.drawString("CHANGE WIFI CONNECTION", 30, 46);
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(0x12AC);
+            tft.drawString("CHANGE WIFI CONNECTION", 30, 46);
 
-                // Put Wi-Fi setting guide banner
-                iconWidth = 300;
-                iconHeight = 287;
-                put_icon(10, 81, menu_icon_names[49]);
+            // Put Wi-Fi setting guide banner
+            iconWidth = 300;
+            iconHeight = 287;
+            put_icon(10, 81, menu_icon_names[49]);
 
-                reset_display_setting();
-                current_feature_item_type = NONE_ITEM_TYPE;
-                // Reset current screen features
-                memset(current_screen_features, NO_FEATURE, 10);
+            reset_display_setting();
+            current_feature_item_type = NONE_ITEM_TYPE;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
 
-                is_background_task_required = true;
-                // Reset current screen background tasks
-                for (byte i = 0; i < 10; ++i) {
-                    current_screen_background_tasks[i] = NO_TASK;
-                }
-                current_screen_background_tasks[0] = TERMINATE_STA_WIFI;
-                current_screen_background_tasks[1] = INIT_AP_WIFI;
+            is_background_task_required = true;
+            // Reset current screen background tasks
+            for (byte i = 0; i < 10; ++i) {
+                current_screen_background_tasks[i] = NO_TASK;
             }
-
             break;
         }
         default:

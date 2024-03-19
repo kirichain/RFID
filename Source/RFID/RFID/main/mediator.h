@@ -16,6 +16,7 @@
 #include "rfid.h"
 #include "sensor.h"
 #include "wifi_esp32.h"
+#include "fs_esp32.h"
 
 class Mediator {
 private:

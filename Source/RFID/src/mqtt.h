@@ -10,8 +10,6 @@
 #include "structs.h"
 #include "AsyncMqttClient.h"
 
-extern AsyncMqttClient mqttClient;
-
 class MQTT {
     static MQTT *instance;
 private:

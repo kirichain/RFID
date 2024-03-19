@@ -49,7 +49,10 @@ void Mediator::init_services() {
     // Stop RFID module if it still is scanning
     rfid.stop_scanning();
     // Get saved Wi-Fi setting from SPIFFS and the last MES Package
-    fs32.init_spiffs();
+    if (fs32.init_spiffs()) {
+        if (fs32.read_saved_settings())
+            wifi.is_default_sta_wifi_credential_used = false;
+    }
     // Get mac address
     wifi.get_mac_addr();
     taskResults.mac_address = wifi.mac_address;
@@ -259,7 +262,7 @@ void Mediator::execute_task(task_t task) {
         case CHECK_WIFI_CONNECTION: {
             static unsigned long last_millis = millis();
             static unsigned long last_reconnect_millis = millis();
-            const unsigned long blink_interval = 500;
+            const unsigned long blink_interval = 300;
             const unsigned long reconnect_interval = 5000;
             static bool is_reconnected = false;
 
@@ -273,6 +276,20 @@ void Mediator::execute_task(task_t task) {
 
                     // Because we have had a reconnection, we need re-subscribe to MQTT broker
                     if ((is_reconnected) || (!MQTT::is_reconnecting_enabled)) {
+                        // Save new Wi-Fi setting
+                        if (!MQTT::is_reconnecting_enabled) {
+                            // Convert the char arrays to String for saving, if required by the save_settings method
+                            String ssid = String(wifi.currentStaWifiSSID);
+                            String password = String(wifi.currentStaWifiPassword);
+
+                            // Call save_settings with the current SSID and password
+                            // Assuming fs32.save_settings takes String arguments for ssid and password
+                            if (!fs32.save_settings(ssid, password, "", "")) {
+                                Serial.println(F("Failed to save Wi-Fi settings"));
+                            } else {
+                                Serial.println(F("Wi-Fi settings saved successfully"));
+                            }
+                        }
                         Serial.println(F("Reset connection now because Wi-Fi is available again"));
                         is_reconnected = false;
                         if (taskArgs.mes_api_host != "") {
@@ -282,6 +299,13 @@ void Mediator::execute_task(task_t task) {
                             buzzer.successful_sound();
                         } else {
                             execute_task(INIT_STA_WIFI);
+                        }
+
+                        // Back to SETTING if we are in SETTING_WIFI
+                        if (taskResults.currentFeature == SETTING_WIFI) {
+                            Serial.println(F("Back to SETTING feature now"));
+                            taskArgs.feature = SETTING;
+                            taskResults.currentFeature = HOME_HANDHELD_2;
                         }
                     }
                 } else {
@@ -352,9 +376,24 @@ void Mediator::execute_task(task_t task) {
                 taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
                 taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
                 taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
-                wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
-                                             taskArgs.wifi_hostname);
+
+            } else {
+                Serial.println(F("Saved Wi-Fi credential is used"));
+                // Call read_saved_settings method to get saved credentials
+                // If reading the settings was successful, use them to set up the Wi-Fi connection
+                strncpy(taskArgs.wifi_sta_ssid, fs32.ssid.c_str(), sizeof(taskArgs.wifi_sta_ssid));
+                strncpy(taskArgs.wifi_sta_password, fs32.password.c_str(), sizeof(taskArgs.wifi_sta_password));
+                // Assuming device_hostname is a variable holding the hostname
+                strncpy(taskArgs.wifi_hostname, device_hostname, sizeof(taskArgs.wifi_hostname));
+                // Ensure null-termination if the string length equals the buffer size
+                taskArgs.wifi_sta_ssid[sizeof(taskArgs.wifi_sta_ssid) - 1] = '\0';
+                taskArgs.wifi_sta_password[sizeof(taskArgs.wifi_sta_password) - 1] = '\0';
+                taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
             }
+
+            // Set Wi-Fi credential accordingly
+            wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
+                                         taskArgs.wifi_hostname);
 
             // Start to connect to Wi-Fi as set STA credential
             if (wifi.init_sta_mode()) {
