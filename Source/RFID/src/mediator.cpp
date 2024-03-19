@@ -265,29 +265,22 @@ void Mediator::execute_task(task_t task) {
             //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
             if (!wifi.is_ap_mode_enabled) {
                 if (WiFi.status() == WL_CONNECTED) {
-                    //Serial.println(F("WiFi now"));
                     // Wi-Fi is connected
-                    //Serial.println(F("Wi-Fi is connected"));
                     display.iconWidth = 16;
                     display.iconHeight = 16;
                     display.put_icon(294, 10, display.menu_icon_names[23]);
 
                     // Because we have had a reconnection, we need re-subscribe to MQTT broker
-                    if (is_reconnected) {
+                    if ((is_reconnected) || (!MQTT::is_reconnecting_enabled)) {
                         Serial.println(F("Reset now because Wi-Fi is available again"));
-//                    // Terminate previous AP mode
-//                    if (wifi.is_ap_mode_enabled) {
-//                        wifi.terminate_ap_mode();
-//                    }
-                        Serial.println(F("Re connect MQTT"));
                         is_reconnected = false;
                         if (taskArgs.mes_api_host != "") {
-                            Serial.println(F("1"));
-//                        execute_task(CONNECT_MQTT_BROKER);
-//                        execute_task(SUBSCRIBE_MQTT_TOPIC);
-//                        buzzer.successful_sound();
+                            Serial.println(F("Reconnect MQTT"));
+                            execute_task(CONNECT_MQTT_BROKER);
+                            execute_task(SUBSCRIBE_MQTT_TOPIC);
+                            buzzer.successful_sound();
                         } else {
-//                        execute_task(INIT_STA_WIFI);
+                            execute_task(INIT_STA_WIFI);
                         }
                     }
                 } else {
@@ -319,6 +312,7 @@ void Mediator::execute_task(task_t task) {
                     }
                 }
             }
+            yield();
             break;
         }
         case INIT_AP_WIFI:
@@ -339,6 +333,10 @@ void Mediator::execute_task(task_t task) {
             // Turn off MQTT broker reconnecting and current connection
             MQTT::is_reconnecting_enabled = false;
             mqtt.disconnect();
+            // Display disconnected wifi icon
+            display.iconWidth = 16;
+            display.iconHeight = 16;
+            display.put_icon(294, 10, display.menu_icon_names[24]);
             // Start to connect to Wi-Fi as AP credential
             wifi.init_ap_sta_mode();
             break;
@@ -535,6 +533,7 @@ void Mediator::execute_task(task_t task) {
                             if (taskArgs.feature != HOME_HANDHELD_2) {
                                 tft.fillRect(252, 10, 16, 16, display.headerColor);
                             }
+
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -600,6 +599,14 @@ void Mediator::execute_task(task_t task) {
                             (taskResults.currentFeature == RFID_REGISTER_TAG) or
                             (taskResults.currentFeature == SETTING)) {
                             display.is_viewport_cleared = true;
+                        }
+
+                        // Turn off AP Wi-Fi if we are in SETTING_WIFI feature
+                        if (taskArgs.feature != SETTING_WIFI) {
+                            if (wifi.is_ap_mode_enabled) {
+                                wifi.terminate_ap_mode();
+                                wifi.init_sta_mode();
+                            }
                         }
                     } else {
                         clear_navigation_history();

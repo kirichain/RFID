@@ -36,9 +36,9 @@ bool Wifi::init_sta_mode() {
     }
 
     WiFi.begin(currentStaWifiSSID, currentStaWifiPassword);
-    // We'll wait up to 10 seconds for a connection
+    // We'll wait up to 7 seconds for a connection
     unsigned long startTime = millis();
-    const unsigned long timeout = 10000; // 10 seconds timeout
+    const unsigned long timeout = 7000; // 7 seconds timeout
 
     // Keep checking the status until we're connected or until the timeout
     while (millis() - startTime < timeout) {
@@ -62,7 +62,7 @@ bool Wifi::init_sta_mode() {
         return false;
     }
     // If we get here, we are connected
-//    is_sta_mode_enabled = true;
+    is_sta_mode_enabled = true;
 
     Serial.println("[WiFi] WiFi is connected!");
     Serial.print("[WiFi] IP address: ");
@@ -148,15 +148,15 @@ void Wifi::handle_setting_new_wifi_connection(AsyncWebServerRequest *request) {
             bool check = init_sta_mode();
             // Initialize STA mode with the new credentials
             if (check) {
-                Serial.println(F("Done"));
+                // Feed the watchdog timer to prevent reset
+                esp_task_wdt_reset();
                 request->send(200, "text/plain",
                               "STA mode initialized with SSID = " + ssid + " & Password = " + password);
-                //is_ap_mode_enabled = false;
-//                WiFi.mode(WIFI_STA);
-//                async_server.end();
+                yield();
+                terminate_ap_mode();
+                yield();
+                async_server.end();
             } else {
-//            WiFi.mode(WIFI_AP);
-                Serial.println(F("Failed"));
                 request->send(500, "text/plain", "Failed to initialize STA mode");
             }
         }

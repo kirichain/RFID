@@ -45,6 +45,8 @@ void MQTT::onMqttConnect(bool sessionPresent) {
 
     mqttClient.publish(lwt_topic.c_str(), 0, false,
                        (String(R"({"mac": ")") + String(mac_address) + String(R"(", "status": "ON"})")).c_str());
+
+    if (!MQTT::is_reconnecting_enabled) MQTT::is_reconnecting_enabled = true;
 }
 
 void MQTT::onMqttSubscribeStatic(uint16_t packetId, uint8_t qos) {
