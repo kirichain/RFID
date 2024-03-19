@@ -183,9 +183,3 @@ void Wifi::wait_for_new_wifi_setting() {
 
     async_server.begin();
 }
-
-void Wifi::init_spiffs() {
-    if (!SPIFFS.begin()) {
-        Serial.println("An Error has occurred while mounting SPIFFS-------------------------------");
-    }
-}

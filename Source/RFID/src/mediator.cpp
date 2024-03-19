@@ -11,6 +11,7 @@ Peripherals peripherals;
 Buzzer buzzer;
 Rfid rfid;
 MQTT mqtt;
+FS32 fs32;
 
 Mediator::Mediator() {
     isTaskExecutable = false;
@@ -47,11 +48,11 @@ void Mediator::init_services() {
     rfid.init(rfid_rx_pin, rfid_tx_pin);
     // Stop RFID module if it still is scanning
     rfid.stop_scanning();
+    // Get saved Wi-Fi setting from SPIFFS and the last MES Package
+    fs32.init_spiffs();
     // Get mac address
     wifi.get_mac_addr();
     taskResults.mac_address = wifi.mac_address;
-    // Check SPIFFS
-    wifi.init_spiffs();
 }
 
 void Mediator::execute_task(task_t task) {
@@ -272,7 +273,7 @@ void Mediator::execute_task(task_t task) {
 
                     // Because we have had a reconnection, we need re-subscribe to MQTT broker
                     if ((is_reconnected) || (!MQTT::is_reconnecting_enabled)) {
-                        Serial.println(F("Reset now because Wi-Fi is available again"));
+                        Serial.println(F("Reset connection now because Wi-Fi is available again"));
                         is_reconnected = false;
                         if (taskArgs.mes_api_host != "") {
                             Serial.println(F("Reconnect MQTT"));
@@ -285,12 +286,11 @@ void Mediator::execute_task(task_t task) {
                     }
                 } else {
                     if (!is_reconnected) {
-                        Serial.println(F("Will reconnect MQTT when sta mode is done again"));
+                        Serial.println(F("Will reconnect MQTT when sta mode is available again"));
                         buzzer.failure_sound();
                         is_reconnected = true;
                     }
 
-                    Serial.println(F("Wi-Fi is not connected"));
                     display.iconWidth = 16;
                     display.iconHeight = 16;
                     // Blink the icon

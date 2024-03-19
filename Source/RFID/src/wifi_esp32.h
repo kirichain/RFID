@@ -53,8 +53,6 @@ public:
     void wait_for_new_wifi_setting();
 
     void handle_setting_new_wifi_connection(AsyncWebServerRequest *request);
-
-    static void init_spiffs();
 };
 
 #endif //RFID_WIFI_H
