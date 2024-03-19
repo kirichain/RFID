@@ -108,7 +108,7 @@ void Display::put_icon(int x, int y, const char *icon_name) {
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
     if (is_viewport_cleared) {
-        Serial.println("Viewport is cleared now");
+        Serial.println(F("Viewport is cleared now"));
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
 
         // Clear setting icon selector
@@ -727,17 +727,20 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
             break;
         }
+        case RFID_REGISTER_TAG_OK: {
+            
+            break;
+        }
+        case RFID_REGISTER_TAG_FAILED: {
+
+            break;
+        }
         case SETTING: {
             // Check if the background task is completed, if yes, start rendering
             if (is_background_task_completed) {
                 // Task setting new Wi-Fi has been completed
                 if (_taskResults.currentScreenItemIndex == 0) {
-                    // Update new set Wi-Fi name
-                    Serial.println(F("Update new set Wi-Fi"));
-                    tft.fillRect(78, 95, 200, 40, 0xDF7E);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.setTextColor(TFT_BLACK);
-                    tft.drawString("New Wi-Fi", 78, 105);
+                    // Do nothing
                 }
                 // Task mute/unmute sound has been completed
                 if (_taskResults.currentScreenItemIndex == 1) {
@@ -774,7 +777,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Put currently saved and used Wi-Fi name
                     tft.setTextColor(TFT_BLACK);
-                    tft.drawString("ERP 2020", 78, 105);
+                    tft.drawString(String(_taskResults.current_wifi_sta_ssid), 78, 105);
 
                     // Update accordingly screen item
                     screen_item_position _item_position = {10, 81, iconWidth, iconHeight};

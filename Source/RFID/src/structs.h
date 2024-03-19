@@ -15,14 +15,6 @@ typedef struct {
 } menu_icon;
 
 typedef struct {
-    char ssid[16];
-    int rssi;
-    char password[32];
-    char hostname[32];
-    char ip[32];
-} wifi_network_info;
-
-typedef struct {
     String epc = "";
     bool is_matched_check = false;
 } rfid_tag;
@@ -85,8 +77,8 @@ typedef struct {
     task_t screenBackgroundTasks[10];
     feature_t featureNavigationHistory[10] = {NO_FEATURE};
     byte featureNavigationHistorySize = 0;
+    char current_wifi_sta_ssid[32];
     int wifi_networks_count;
-    wifi_network_info wifi_networks[10];
     String mac_address;
     // For scanning options
     String selected_list_items[10] = {""};

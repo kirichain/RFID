@@ -304,8 +304,8 @@ void Mediator::execute_task(task_t task) {
                         // Back to SETTING if we are in SETTING_WIFI
                         if (taskResults.currentFeature == SETTING_WIFI) {
                             Serial.println(F("Back to SETTING feature now"));
-                            taskArgs.feature = SETTING;
-                            taskResults.currentFeature = HOME_HANDHELD_2;
+                            taskArgs.feature = HOME_HANDHELD_2;
+                            execute_task(RENDER_FEATURE);
                         }
                     }
                 } else {
@@ -400,6 +400,9 @@ void Mediator::execute_task(task_t task) {
                 Serial.println(F("Init sta wifi successfully"));
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
                 buzzer.successful_sound();
+                strncpy(taskResults.current_wifi_sta_ssid, taskArgs.wifi_sta_ssid,
+                        sizeof(taskResults.current_wifi_sta_ssid));
+                taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
             } else {
                 buzzer.failure_sound();
 //                Serial.println(F("Init sta Wi-Fi failed. Reset in 3s"));
