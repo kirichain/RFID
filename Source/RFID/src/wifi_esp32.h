@@ -26,7 +26,6 @@ public:
     String mac_address;
 
     int wifi_networks_count;
-    wifi_network_info wifi_networks[10];
 
     volatile bool is_sta_mode_enabled = true;
     volatile bool is_ap_mode_enabled = false;

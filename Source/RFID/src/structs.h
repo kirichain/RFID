@@ -101,7 +101,8 @@ typedef struct {
     int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
     // For RFID
-    bool is_the_first_scan = false;
+    bool is_rfid_registration_submit_successful = false;
+    bool is_the_first_time_rfid_scan = false;
     int current_scanned_rfid_tag_count = 0;
     int current_matched_mes_scanned_rfid_tag_count = 0;
     int registered_rfid_tags_from_server_count = 0;

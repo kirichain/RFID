@@ -67,6 +67,12 @@
 #include "icons/back_home_button.h"
 #include "icons/sound.h"
 #include "icons/muted_sound.h"
+#include "icons/blurred_back_button.h"
+#include "icons/blurred_done_button.h"
+#include "icons/back_button.h"
+#include "icons/done_button.h"
+#include "icons/failure_registration_banner.h"
+#include "icons/succcess_registration_banner.h"
 
 extern TFT_eSPI tft;
 
@@ -118,7 +124,7 @@ public:
     // Constants for the grid layout
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 53; //  Number of icons
+    static const byte numIcons = 60; //  Number of icons
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[numIcons] = {
@@ -174,7 +180,13 @@ public:
             "wifi_setting_guide_banner_icon",
             "back_home_button_icon",
             "sound_icon",
-            "muted_sound_icon"
+            "muted_sound_icon",
+            "done_button_icon",
+            "back_button_icon",
+            "blurred_done_button_icon",
+            "blurred_back_button_icon",
+            "failure_registration_banner_icon",
+            "success_registration_banner_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -231,7 +243,13 @@ public:
             {"wifi_setting_guide_banner_icon",        wifi_setting_guide_banner_icon},
             {"back_home_button_icon",                 back_home_button_icon},
             {"sound_icon",                            sound_icon},
-            {"muted_sound_icon",                      muted_sound_icon}
+            {"muted_sound_icon",                      muted_sound_icon},
+            {"done_button_icon",                      done_button_icon},
+            {"back_button_icon",                      back_button_icon},
+            {"blurred_done_button_icon",              blurred_done_button_icon},
+            {"blurred_back_button_icon",              blurred_back_button_icon},
+            {"failure_registration_banner_icon",      failure_registration_banner_icon},
+            {"success_registration_banner_icon",      succcess_registration_banner_icon}
     };
 
     Display();
