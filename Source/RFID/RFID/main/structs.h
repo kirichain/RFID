@@ -15,14 +15,6 @@ typedef struct {
 } menu_icon;
 
 typedef struct {
-    char ssid[16];
-    int rssi;
-    char password[32];
-    char hostname[32];
-    char ip[32];
-} wifi_network_info;
-
-typedef struct {
     String epc = "";
     bool is_matched_check = false;
 } rfid_tag;
@@ -85,8 +77,8 @@ typedef struct {
     task_t screenBackgroundTasks[10];
     feature_t featureNavigationHistory[10] = {NO_FEATURE};
     byte featureNavigationHistorySize = 0;
+    char current_wifi_sta_ssid[32];
     int wifi_networks_count;
-    wifi_network_info wifi_networks[10];
     String mac_address;
     // For scanning options
     String selected_list_items[10] = {""};
@@ -109,7 +101,8 @@ typedef struct {
     int mes_img_buffer_size = sizeof(mes_img_buffer) / sizeof(mes_img_buffer[0]);
     int mes_target = 0;
     // For RFID
-    bool is_the_first_scan = false;
+    bool is_rfid_registration_submit_successful = false;
+    bool is_the_first_time_rfid_scan = false;
     int current_scanned_rfid_tag_count = 0;
     int current_matched_mes_scanned_rfid_tag_count = 0;
     int registered_rfid_tags_from_server_count = 0;

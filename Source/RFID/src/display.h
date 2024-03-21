@@ -115,12 +115,6 @@ public:
     uint32_t backgroundColor = 0x84B2;
     uint16_t screen_selector_border_color = backgroundColor;
 
-    // Placeholder text for various status indicators
-    const char *wifiStatus = "WiFi: Connected";
-    const char *dateTime = "2023-12-20 14:30";
-    const char *serverStatus = "Server: Connected";
-    const char *loginStatus = "User: Logged In";
-
     // Constants for the grid layout
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon

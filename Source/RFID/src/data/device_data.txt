@@ -2,5 +2,6 @@
 	"ssid":"SFS OFFICE",
 	"password":"sfs#office!@",
 	"mes_package":"",
-	"mes_package_group":""
+	"mes_package_group":"",
+	"is_muted":"yes"
 }

@@ -108,7 +108,7 @@ void Display::put_icon(int x, int y, const char *icon_name) {
 void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     // Clear the viewport
     if (is_viewport_cleared) {
-        Serial.println("Viewport is cleared now");
+        Serial.println(F("Viewport is cleared now"));
         tft.fillRect(0, NAV_BAR_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT - HEADER_HEIGHT, backgroundColor);
 
         // Clear setting icon selector
@@ -440,7 +440,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Reset RFID scan results
                     _taskResults.current_scanned_rfid_tag_count = 0;
-                    _taskResults.is_the_first_scan = true;
+                    _taskResults.is_the_first_time_rfid_scan = true;
 
                     // Check provided arguments which are selected items from previous lists
                     Serial.println(F("Selected items from previous lists: "));
@@ -579,9 +579,23 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             break;
         }
         case RFID_REGISTER_TAG: {
+            Serial.println(F("~~~~~~~~~~~~~~~~"));
             // Check if the background task is completed, if yes, start rendering
             if (is_background_task_completed) {
-                update_rfid_registration_scan_result(_taskResults);
+                if (_taskResults.currentScreenItemIndex != 2) {
+                    update_rfid_registration_scan_result(_taskResults);
+                } else {
+                    Serial.println(F("Switch to confirmation screen now"));
+                    // Switch to successful or unsuccessful submit screen
+                    // Render screen accordingly
+                    if (_taskResults.is_rfid_registration_submit_successful) {
+                        Serial.println(F("Switch to success screen"));
+                        render_feature(RFID_REGISTER_TAG_SUCCESS, _taskResults);
+                    } else {
+                        Serial.println(F("Switch to failure screen"));
+                        render_feature(RFID_REGISTER_TAG_FAILURE, _taskResults);
+                    }
+                }
             } else {
                 // Check if this is the first time this feature is rendered
                 if (_taskResults.currentScreenItemIndex == 3) {
@@ -589,7 +603,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Reset RFID scan results
                     _taskResults.current_scanned_rfid_tag_count = 0;
-                    _taskResults.is_the_first_scan = true;
+                    _taskResults.is_the_first_time_rfid_scan = true;
 
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.setTextColor(0x12AC);
@@ -714,17 +728,91 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             current_screen_background_tasks[0] = RESET_SCANNED_RFID_TAG_COUNT;
                             break;
                         case 2:
-                            // Start submitting task
                             Serial.println(F("Start background submitting task"));
-                            // Clear scan result task
                             current_screen_background_tasks[0] = REGISTER_RFID_TAG;
-                            current_screen_background_tasks[1] = RESET_SCANNED_RFID_TAG_COUNT;
+//                            current_screen_background_tasks[1] = RESET_SCANNED_RFID_TAG_COUNT;
                             is_viewport_cleared = true;
-                            is_back_to_home = true;
+//                            is_back_to_home = true;
                             break;
                     }
                 }
             }
+            break;
+        }
+        case RFID_REGISTER_TAG_SUCCESS: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(0x12AC);
+            tft.drawString("REGISTRATION CONFIRMATION", 15, 46);
+
+            iconWidth = 300;
+            iconHeight = 258;
+            put_icon(10, 81, menu_icon_names[58]);
+
+            // Put registered tags count
+            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 139, 218);
+
+            // Put done button
+            iconWidth = 140;
+            iconHeight = 45;
+            put_icon(10, 425, menu_icon_names[53]);
+
+            // Put blurred back button
+            put_icon(170, 425, menu_icon_names[56]);
+
+            // Update accordingly screen item
+            screen_item_position _item_position = {10, 425, iconWidth, iconHeight};
+            update_screen_item(0, _item_position);
+
+            screen_selector_border_color = backgroundColor;
+            screen_item_count = 1;
+            is_viewport_cleared = true;
+            reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = HOME_HANDHELD_2;
+            break;
+        }
+        case RFID_REGISTER_TAG_FAILURE: {
+            tft.setFreeFont(&FreeSansBold9pt7b);
+            tft.setTextColor(0x12AC);
+            tft.drawString("REGISTRATION CONFIRMATION", 15, 46);
+
+            iconWidth = 300;
+            iconHeight = 258;
+            put_icon(10, 81, menu_icon_names[57]);
+
+            // Put registered tags count
+            tft.setFreeFont(&FreeSansBold12pt7b);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString(String(_taskResults.current_scanned_rfid_tag_count), 139, 218);
+
+            // Put blurred done button
+            iconWidth = 140;
+            iconHeight = 45;
+            put_icon(10, 425, menu_icon_names[55]);
+
+            // Put back button
+            put_icon(170, 425, menu_icon_names[54]);
+
+            // Update accordingly screen item
+            screen_item_position _item_position = {170, 425, iconWidth, iconHeight};
+            update_screen_item(0, _item_position);
+
+            screen_selector_border_color = backgroundColor;
+            screen_item_count = 1;
+            is_viewport_cleared = true;
+            reset_display_setting();
+            // Start to set screen selector to the first one item
+            update_screen_selector(0);
+            current_feature_item_type = MENU_ICON;
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
+            current_screen_features[0] = RFID_REGISTER_TAG_FAILURE;
             break;
         }
         case SETTING: {
@@ -732,12 +820,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             if (is_background_task_completed) {
                 // Task setting new Wi-Fi has been completed
                 if (_taskResults.currentScreenItemIndex == 0) {
-                    // Update new set Wi-Fi name
-                    Serial.println(F("Update new set Wi-Fi"));
-                    tft.fillRect(78, 95, 200, 40, 0xDF7E);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
-                    tft.setTextColor(TFT_BLACK);
-                    tft.drawString("New Wi-Fi", 78, 105);
+                    // Do nothing
                 }
                 // Task mute/unmute sound has been completed
                 if (_taskResults.currentScreenItemIndex == 1) {
@@ -774,7 +857,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
 
                     // Put currently saved and used Wi-Fi name
                     tft.setTextColor(TFT_BLACK);
-                    tft.drawString("ERP 2020", 78, 105);
+                    tft.drawString(String(_taskResults.current_wifi_sta_ssid), 78, 105);
 
                     // Update accordingly screen item
                     screen_item_position _item_position = {10, 81, iconWidth, iconHeight};

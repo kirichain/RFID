@@ -8,7 +8,7 @@ FS32::FS32() {
 
 }
 
-bool FS32::save_settings(const String& ssid, const String& password, const String& mes_package, const String& mes_package_group) {
+bool FS32::save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group) {
     File file = SPIFFS.open("/device_data.txt", "w");
 
     if (!file) {
@@ -20,10 +20,16 @@ bool FS32::save_settings(const String& ssid, const String& password, const Strin
     JsonDocument doc;
 
     // Set the values in the document
-    doc["ssid"] = ssid;
-    doc["password"] = password;
-    doc["mes_package"] = mes_package;
-    doc["mes_package_group"] = mes_package_group;
+    doc["ssid"] = _ssid;
+    doc["password"] = _password;
+    doc["mes_package"] = _mes_package;
+    doc["mes_package_group"] = _mes_package_group;
+
+    // Update data
+    ssid = _ssid;
+    password = _password;
+    mes_package = _mes_package;
+    mes_package_group = _mes_package_group;
 
     Serial.println(F("JSON document created with the following settings:"));
     serializeJsonPretty(doc, Serial); // Print the JSON document in a pretty way to Serial for debugging

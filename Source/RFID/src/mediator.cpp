@@ -265,14 +265,14 @@ void Mediator::execute_task(task_t task) {
             const unsigned long blink_interval = 300;
             const unsigned long reconnect_interval = 5000;
             static bool is_reconnected = false;
+//            Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
 
-            //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
             if (!wifi.is_ap_mode_enabled) {
                 if (WiFi.status() == WL_CONNECTED) {
                     // Wi-Fi is connected
-                    display.iconWidth = 16;
-                    display.iconHeight = 16;
-                    display.put_icon(294, 10, display.menu_icon_names[23]);
+                    display.iconWidth = 22;
+                    display.iconHeight = 22;
+                    display.put_icon(294, 7, display.menu_icon_names[23]);
 
                     // Because we have had a reconnection, we need re-subscribe to MQTT broker
                     if ((is_reconnected) || (!MQTT::is_reconnecting_enabled)) {
@@ -297,6 +297,12 @@ void Mediator::execute_task(task_t task) {
                             execute_task(CONNECT_MQTT_BROKER);
                             execute_task(SUBSCRIBE_MQTT_TOPIC);
                             buzzer.successful_sound();
+                            // Assign new Wi-Fi ssid and password to taskResults vars
+                            // Copy the SSID from the Wi-Fi variable to the taskResults variable safely
+                            strncpy(taskResults.current_wifi_sta_ssid, wifi.currentStaWifiSSID,
+                                    sizeof(taskResults.current_wifi_sta_ssid) - 1);
+                            // Ensure null termination since strncpy does not guarantee it
+                            taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
                         } else {
                             execute_task(INIT_STA_WIFI);
                         }
@@ -315,16 +321,16 @@ void Mediator::execute_task(task_t task) {
                         is_reconnected = true;
                     }
 
-                    display.iconWidth = 16;
-                    display.iconHeight = 16;
+                    display.iconWidth = 22;
+                    display.iconHeight = 22;
                     // Blink the icon
                     unsigned long current_millis = millis();
                     if (current_millis - last_millis >= blink_interval) {
                         last_millis = current_millis;
-                        display.put_icon(294, 10, display.menu_icon_names[24]);
+                        display.put_icon(294, 7, display.menu_icon_names[24]);
                     }
                     if (current_millis - last_millis >= blink_interval / 2) {
-                        display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
+                        display.put_icon(294, 7, display.menu_icon_names[46]); // Clear the icon
                     }
                     // Try to reconnect
                     if (current_millis - last_reconnect_millis >= reconnect_interval) {
@@ -358,15 +364,14 @@ void Mediator::execute_task(task_t task) {
             MQTT::is_reconnecting_enabled = false;
             mqtt.disconnect();
             // Display disconnected wifi icon
-            display.iconWidth = 16;
-            display.iconHeight = 16;
-            display.put_icon(294, 10, display.menu_icon_names[24]);
+            display.iconWidth = 22;
+            display.iconHeight = 22;
+            display.put_icon(294, 7, display.menu_icon_names[24]);
             // Start to connect to Wi-Fi as AP credential
             wifi.init_ap_sta_mode();
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-
             if (wifi.is_default_sta_wifi_credential_used) {
                 Serial.println(F("Default STA Wi-Fi credential is used"));
                 strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
@@ -391,6 +396,10 @@ void Mediator::execute_task(task_t task) {
                 taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
             }
 
+            strncpy(taskResults.current_wifi_sta_ssid, taskArgs.wifi_sta_ssid,
+                    sizeof(taskResults.current_wifi_sta_ssid));
+            taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
+
             // Set Wi-Fi credential accordingly
             wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
                                          taskArgs.wifi_hostname);
@@ -400,9 +409,6 @@ void Mediator::execute_task(task_t task) {
                 Serial.println(F("Init sta wifi successfully"));
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
                 buzzer.successful_sound();
-                strncpy(taskResults.current_wifi_sta_ssid, taskArgs.wifi_sta_ssid,
-                        sizeof(taskResults.current_wifi_sta_ssid));
-                taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
             } else {
                 buzzer.failure_sound();
 //                Serial.println(F("Init sta Wi-Fi failed. Reset in 3s"));
@@ -411,6 +417,7 @@ void Mediator::execute_task(task_t task) {
 //                ESP.restart();
                 Serial.println(F("Init sta wifi failed"));
             }
+
             break;
         case TERMINATE_AP_WIFI:
             Serial.println(F("Execute task TERMINATE_AP_WIFI"));
@@ -573,9 +580,16 @@ void Mediator::execute_task(task_t task) {
 
                             // Clear setting icon if not in homepage
                             if (taskArgs.feature != HOME_HANDHELD_2) {
-                                tft.fillRect(252, 10, 16, 16, display.headerColor);
+                                tft.fillRect(252, 7, 22, 22, display.headerColor);
+                            } else {
+                                execute_task(RESET_SCANNED_RFID_TAG_COUNT);
                             }
 
+                            // To be sure that RFID TAG REGISTER FAILURE screen is rendered correctly
+                            if (taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) {
+                                Serial.println(F("Got it~~~~~~~~~~~~~~~"));
+                                taskResults.currentScreenItemIndex = 3;
+                            }
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -802,12 +816,13 @@ void Mediator::execute_task(task_t task) {
 
                     // Extract all registered tags into the storing list
                     extract_registered_rfid_tags(list_response.payload);
+
+//                    rfid.scanned_tag_count = 0;
+//                    taskResults.current_scanned_rfid_tag_count = 0;
                 } else {
                     buzzer.failure_sound();
                     taskResults.is_rfid_registration_submit_successful = false;
                 }
-//                rfid.scanned_tag_count = 0;
-//                taskResults.current_scanned_rfid_tag_count = 0;
             }
             break;
         }
@@ -824,6 +839,7 @@ void Mediator::execute_task(task_t task) {
             rfid.scanned_tag_count = 0;
             taskResults.current_scanned_rfid_tag_count = 0;
             taskResults.current_matched_mes_scanned_rfid_tag_count = 0;
+            taskResults.is_the_first_time_rfid_scan = true;
             for (int i = 0; i < 200; ++i) {
                 taskResults.scanned_rfid_tags[i].epc = "";
                 taskResults.scanned_rfid_tags[i].is_matched_check = false;
