@@ -26,6 +26,8 @@ public:
     post(const String &host_name, const String &path_name, const String &payload, const String &header,
          const String &header_value);
 
+    http_response put(const String &host_name, const String &path_name, const String &payload, const String &header,
+                      const String &header_value);
 };
 
 #endif //RFID_REQUEST_H
