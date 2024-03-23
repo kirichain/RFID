@@ -619,14 +619,8 @@ void Mediator::execute_task(task_t task) {
                                 taskResults.featureNavigationHistory[2] = RFID_REGISTER_TAG;
                                 taskArgs.previousFeature = HOME_HANDHELD_2;
                             }
-
-//                            Serial.println(F("^^^^^^^^^^^^^^^^Current feature and target feature: "));
-//                            Serial.println(feature_as_string(taskResults.currentFeature));
-//                            Serial.println(feature_as_string(taskArgs.feature));
                             break;
                         case LIST_ITEM:
-                            // When item is selected, start to switch to next screen and execute background task
-                            //taskArgs.feature = taskResults.screenFeatures[0];
                             // Append selected item in the list of this screen into the selected list items array
                             if (taskResults.selected_list_items[0] == "") {
                                 taskResults.selected_list_items[0]
@@ -661,17 +655,9 @@ void Mediator::execute_task(task_t task) {
                                 if (taskResults.selected_list_items[i] != "")
                                     Serial.println(taskResults.selected_list_items[i]);
                             }
-                            //peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
                         case TASK_ITEM:
-                            Serial.println("Task item");
-
-                            // We just execute the task which is associated with the clicked item.
-                            // Render to next feature will be done in the task
-                            //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
-//                            Serial.println(F("++++++++Current feature and target feature: "));
-//                            Serial.println(feature_as_string(taskResults.currentFeature));
-//                            Serial.println(feature_as_string(taskArgs.feature));
+//                            Serial.println("Task item");
                             is_render_forced = true;
                             break;
                     }
@@ -784,10 +770,10 @@ void Mediator::execute_task(task_t task) {
                 if (taskResults.currentFeature == RFID_REGISTER_TAG) {
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                        //buzzer.successful_sound();
+                        buzzer.successful_sound();
                         display.update_rfid_registration_scan_result(taskResults);
                     } else {
-                        //buzzer.failure_sound();
+                        buzzer.failure_sound();
                     }
                 } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
                     // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
@@ -858,9 +844,6 @@ void Mediator::execute_task(task_t task) {
 
                     // Extract all registered tags into the storing list
                     extract_registered_rfid_tags(list_response.payload);
-
-//                    rfid.scanned_tag_count = 0;
-//                    taskResults.current_scanned_rfid_tag_count = 0;
                 } else {
                     buzzer.failure_sound();
                     taskResults.is_rfid_registration_submit_successful = false;

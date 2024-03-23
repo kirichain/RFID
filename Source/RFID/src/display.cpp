@@ -758,7 +758,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.drawString("Detected", 30, 379);
                     tft.setFreeFont(&FreeSansBold12pt7b);
                     tft.setTextColor(0x350F);
-                    //tft.drawString("", 218, 375);
+                    tft.drawString("0", 218, 375);
 
                     // Reset RFID scan results
                     if (_taskResults.current_scanned_rfid_tag_count != 0) {
@@ -803,7 +803,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     reset_display_setting();
                     is_viewport_cleared = false;
                 } else {
-                    Serial.println(F("****************"));
                     is_background_task_required = true;
                     // Reset current screen background tasks
                     for (byte i = 0; i < 10; ++i) {
@@ -824,10 +823,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             Serial.println(F("Start background submitting task"));
                             current_screen_background_tasks[0] = REGISTER_RFID_TAG;
                             is_viewport_cleared = true;
-                            break;
-                        default:
-                            Serial.println(F("Not matched any"));
-                            Serial.println(_taskResults.currentScreenItemIndex);
                             break;
                     }
                 }
