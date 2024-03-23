@@ -50,8 +50,23 @@ void Mediator::init_services() {
     rfid.stop_scanning();
     // Get saved Wi-Fi setting from SPIFFS and the last MES Package
     if (fs32.init_spiffs()) {
-        if (fs32.read_saved_settings())
+        if (fs32.read_saved_settings()) {
             wifi.is_default_sta_wifi_credential_used = false;
+            // Assign saved setting data
+            taskResults.selected_mes_package = fs32.mes_package;
+            taskResults.selected_mes_package_group = fs32.mes_package_group;
+            // Draw sound icon
+            display.iconWidth = 22;
+            display.iconHeight = 22;
+            if (fs32.is_muted == "yes") {
+                taskResults.isMuted = true;
+                display.put_icon(273, 7, display.menu_icon_names[52]);
+            } else {
+                taskResults.isMuted = false;
+                display.put_icon(273, 7, display.menu_icon_names[51]);
+            }
+            buzzer.mute(taskResults.isMuted);
+        }
     }
     // Get mac address
     wifi.get_mac_addr();
@@ -193,6 +208,12 @@ void Mediator::execute_task(task_t task) {
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
                             mqtt.reset_saved_data();
+                            // Save selected MES package to SPIFFS
+                            String is_muted = "";
+                            if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
+                            fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
+                                               taskResults.selected_mes_package,
+                                               taskResults.selected_mes_package_group, is_muted);
                         }
                     } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
                         // Don't reset selected MES package group before
@@ -243,6 +264,12 @@ void Mediator::execute_task(task_t task) {
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
                             mqtt.reset_saved_data();
+                            // Save selected MES package to SPIFFS
+                            String is_muted = "";
+                            if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
+                            fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
+                                               taskResults.selected_mes_package,
+                                               taskResults.selected_mes_package_group, is_muted);
                         }
                     }
                     break;
@@ -286,7 +313,10 @@ void Mediator::execute_task(task_t task) {
 
                             // Call save_settings with the current SSID and password
                             // Assuming fs32.save_settings takes String arguments for ssid and password
-                            if (!fs32.save_settings(ssid, password, "", "")) {
+                            String is_muted = "";
+                            if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
+                            if (!fs32.save_settings(ssid, password, taskResults.selected_mes_package,
+                                                    taskResults.selected_mes_package_group, is_muted)) {
                                 Serial.println(F("Failed to save Wi-Fi settings"));
                             } else {
                                 Serial.println(F("Wi-Fi settings saved successfully"));
@@ -442,11 +472,8 @@ void Mediator::execute_task(task_t task) {
             static bool is_render_forced = false;
 
             if ((taskArgs.feature != taskResults.currentFeature) or (is_render_forced)) {
-//                if (is_render_forced) Serial.println(F("Forced-----------------------"));
-//                if (!is_render_forced) Serial.println(F("@@@@@@"));
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
-                Serial.println(feature_as_string(taskResults.currentFeature));
                 display.render_feature(taskArgs.feature, taskResults);
                 // Check if this feature requires background tasks before rendering information, if yes, run tasks,
                 // then re-render
@@ -472,6 +499,16 @@ void Mediator::execute_task(task_t task) {
                     display.is_background_task_completed = false;
                     display.is_loading_animation_displayed = false;
                     is_render_forced = false;
+                }
+
+                // Save setting to SPIFFS
+                if (taskResults.currentFeature == SETTING) {
+                    // Save selected MES package to SPIFFS
+                    String is_muted = "";
+                    if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
+                    fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
+                                       taskResults.selected_mes_package,
+                                       taskResults.selected_mes_package_group, is_muted);
                 }
 
                 if (display.is_back_to_home) {

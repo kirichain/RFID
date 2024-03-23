@@ -145,3 +145,30 @@ Request::post(const String &host_name, const String &path_name, const String &pa
     http.end();
     return _response;
 }
+
+http_response
+Request::put(const String &host_name, const String &path_name, const String &payload, const String &header,
+             const String &header_value) {
+    http_response _response;
+    http.begin(host_name + path_name);
+    http.addHeader(header, header_value);
+    http.addHeader("Content-Type", "application/xml");
+    Serial.println(F("Sending payload: "));
+    Serial.println(payload);
+    _response.status_code = http.PUT(payload);
+
+    if (_response.status_code > 0) {
+        if (_response.status_code == HTTP_CODE_OK) {
+            _response.payload = http.getString();
+            Serial.print(F("PUT request is successful. Response: "));
+            Serial.println(_response.payload);
+        } else {
+            _response.payload = "failed";
+        }
+    } else {
+        _response.payload = "failed";
+    }
+
+    http.end();
+    return _response;
+}

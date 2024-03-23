@@ -145,7 +145,8 @@ void Mediator::execute_task(task_t task) {
             switch (taskArgs.feature) {
                 case QR_CODE_SCANNING: {
                     if (display.qr_code_type == "MES-PACKAGE") {
-                        taskResults.selected_mes_package = "";
+                        // Dont reset selected MES package before
+                        //taskResults.selected_mes_package = "";
 
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
@@ -194,7 +195,8 @@ void Mediator::execute_task(task_t task) {
                             mqtt.reset_saved_data();
                         }
                     } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
-                        taskResults.selected_mes_package_group = "";
+                        // Don't reset selected MES package group before
+                        //taskResults.selected_mes_package_group = "";
 
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
@@ -265,14 +267,14 @@ void Mediator::execute_task(task_t task) {
             const unsigned long blink_interval = 300;
             const unsigned long reconnect_interval = 5000;
             static bool is_reconnected = false;
+//            Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
 
-            //Serial.println(F("Execute task CHECK_WIFI_CONNECTION"));
             if (!wifi.is_ap_mode_enabled) {
                 if (WiFi.status() == WL_CONNECTED) {
                     // Wi-Fi is connected
-                    display.iconWidth = 16;
-                    display.iconHeight = 16;
-                    display.put_icon(294, 10, display.menu_icon_names[23]);
+                    display.iconWidth = 22;
+                    display.iconHeight = 22;
+                    display.put_icon(294, 7, display.menu_icon_names[23]);
 
                     // Because we have had a reconnection, we need re-subscribe to MQTT broker
                     if ((is_reconnected) || (!MQTT::is_reconnecting_enabled)) {
@@ -297,6 +299,12 @@ void Mediator::execute_task(task_t task) {
                             execute_task(CONNECT_MQTT_BROKER);
                             execute_task(SUBSCRIBE_MQTT_TOPIC);
                             buzzer.successful_sound();
+                            // Assign new Wi-Fi ssid and password to taskResults vars
+                            // Copy the SSID from the Wi-Fi variable to the taskResults variable safely
+                            strncpy(taskResults.current_wifi_sta_ssid, wifi.currentStaWifiSSID,
+                                    sizeof(taskResults.current_wifi_sta_ssid) - 1);
+                            // Ensure null termination since strncpy does not guarantee it
+                            taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
                         } else {
                             execute_task(INIT_STA_WIFI);
                         }
@@ -315,16 +323,16 @@ void Mediator::execute_task(task_t task) {
                         is_reconnected = true;
                     }
 
-                    display.iconWidth = 16;
-                    display.iconHeight = 16;
+                    display.iconWidth = 22;
+                    display.iconHeight = 22;
                     // Blink the icon
                     unsigned long current_millis = millis();
                     if (current_millis - last_millis >= blink_interval) {
                         last_millis = current_millis;
-                        display.put_icon(294, 10, display.menu_icon_names[24]);
+                        display.put_icon(294, 7, display.menu_icon_names[24]);
                     }
                     if (current_millis - last_millis >= blink_interval / 2) {
-                        display.put_icon(294, 10, display.menu_icon_names[46]); // Clear the icon
+                        display.put_icon(294, 7, display.menu_icon_names[46]); // Clear the icon
                     }
                     // Try to reconnect
                     if (current_millis - last_reconnect_millis >= reconnect_interval) {
@@ -358,15 +366,14 @@ void Mediator::execute_task(task_t task) {
             MQTT::is_reconnecting_enabled = false;
             mqtt.disconnect();
             // Display disconnected wifi icon
-            display.iconWidth = 16;
-            display.iconHeight = 16;
-            display.put_icon(294, 10, display.menu_icon_names[24]);
+            display.iconWidth = 22;
+            display.iconHeight = 22;
+            display.put_icon(294, 7, display.menu_icon_names[24]);
             // Start to connect to Wi-Fi as AP credential
             wifi.init_ap_sta_mode();
             break;
         case INIT_STA_WIFI:
             Serial.println(F("Execute task INIT_STA_WIFI"));
-
             if (wifi.is_default_sta_wifi_credential_used) {
                 Serial.println(F("Default STA Wi-Fi credential is used"));
                 strncpy(taskArgs.wifi_sta_ssid, default_wifi_ssid_1, sizeof(taskArgs.wifi_sta_ssid));
@@ -391,6 +398,10 @@ void Mediator::execute_task(task_t task) {
                 taskArgs.wifi_hostname[sizeof(taskArgs.wifi_hostname) - 1] = '\0';
             }
 
+            strncpy(taskResults.current_wifi_sta_ssid, taskArgs.wifi_sta_ssid,
+                    sizeof(taskResults.current_wifi_sta_ssid));
+            taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
+
             // Set Wi-Fi credential accordingly
             wifi.set_sta_wifi_credential(taskArgs.wifi_sta_ssid, taskArgs.wifi_sta_password,
                                          taskArgs.wifi_hostname);
@@ -400,9 +411,6 @@ void Mediator::execute_task(task_t task) {
                 Serial.println(F("Init sta wifi successfully"));
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
                 buzzer.successful_sound();
-                strncpy(taskResults.current_wifi_sta_ssid, taskArgs.wifi_sta_ssid,
-                        sizeof(taskResults.current_wifi_sta_ssid));
-                taskResults.current_wifi_sta_ssid[sizeof(taskResults.current_wifi_sta_ssid) - 1] = '\0';
             } else {
                 buzzer.failure_sound();
 //                Serial.println(F("Init sta Wi-Fi failed. Reset in 3s"));
@@ -411,6 +419,7 @@ void Mediator::execute_task(task_t task) {
 //                ESP.restart();
                 Serial.println(F("Init sta wifi failed"));
             }
+
             break;
         case TERMINATE_AP_WIFI:
             Serial.println(F("Execute task TERMINATE_AP_WIFI"));
@@ -433,12 +442,16 @@ void Mediator::execute_task(task_t task) {
             static bool is_render_forced = false;
 
             if ((taskArgs.feature != taskResults.currentFeature) or (is_render_forced)) {
+//                if (is_render_forced) Serial.println(F("Forced-----------------------"));
+//                if (!is_render_forced) Serial.println(F("@@@@@@"));
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
+                Serial.println(feature_as_string(taskResults.currentFeature));
                 display.render_feature(taskArgs.feature, taskResults);
                 // Check if this feature requires background tasks before rendering information, if yes, run tasks,
                 // then re-render
                 if (display.is_background_task_required) {
+                    Serial.println(F("Required"));
                     if (display.is_loading_animation_displayed)
                         display.render_feature(LOADING, taskResults);
                     byte feature_background_task_index = 0;
@@ -468,7 +481,20 @@ void Mediator::execute_task(task_t task) {
                     execute_task(RENDER_FEATURE);
                 } else {
                     // Update screen item index for screen selector
-                    taskResults.currentScreenItemIndex = 0;
+                    // To be sure that RFID TAG REGISTER FAILURE screen is rendered correctly
+                    if ((taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) &&
+                        (!taskResults.is_rfid_registration_submit_successful)) {
+//                        Serial.println(F("Set%%%%%%%"));
+                        taskResults.is_rfid_registration_submit_successful = true;
+                        taskArgs.feature = RFID_REGISTER_TAG_FAILURE;
+                        taskResults.currentScreenItemIndex = 3;
+                    } else if ((taskResults.currentFeature == RFID_SCAN_RESULT_SUBMIT_FAILURE) &&
+                               (!taskResults.is_rfid_scan_result_submit_successful)) {
+                        taskResults.is_rfid_scan_result_submit_successful = true;
+                        taskArgs.feature = RFID_SCAN_RESULT_SUBMIT_FAILURE;
+                        taskResults.currentScreenItemIndex = 0;
+                    } else
+                        taskResults.currentScreenItemIndex = 0;
                     // Update screen item count for screen selector
                     taskResults.screenItemCount = display.screen_item_count;
                     // Update the type of items on the screen
@@ -554,9 +580,6 @@ void Mediator::execute_task(task_t task) {
                 case SELECT:
                     switch (taskResults.feature_item_type) {
                         case MENU_ICON:
-                            // Reset navigation history if we render home
-                            if (taskResults.currentFeature == HOME_HANDHELD_2) clear_navigation_history();
-
                             Serial.println(F("Retrieving corresponding feature now"));
                             Serial.print(F("Current screen item index: "));
                             Serial.println(taskResults.currentScreenItemIndex);
@@ -573,19 +596,33 @@ void Mediator::execute_task(task_t task) {
 
                             // Clear setting icon if not in homepage
                             if (taskArgs.feature != HOME_HANDHELD_2) {
-                                tft.fillRect(252, 10, 16, 16, display.headerColor);
+                                tft.fillRect(252, 7, 22, 22, display.headerColor);
+                            } else {
+                                // Reset navigation history if we render home
+                                clear_navigation_history();
+                                execute_task(RESET_SCANNED_RFID_TAG_COUNT);
                             }
 
-                            // To be sure that RFID TAG REGISTER FAILURE screen is rendered correctly
-                            if (taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) {
-                                Serial.println(F("Got it~~~~~~~~~~~~~~~"));
-                                taskResults.currentScreenItemIndex = 3;
+                            // To be sure that RFID_SCAN_RESULT is rendered correctly
+                            if ((taskResults.currentFeature == RFID_SCAN_RESULT_SUBMIT_FAILURE) &&
+                                (taskArgs.feature == RFID_SCAN_RESULT)) {
+                                taskResults.currentFeature = RFID_SCAN_DETAILS_REVIEW;
+                                clear_navigation_history();
+                                taskResults.featureNavigationHistorySize = 2;
+                                taskResults.featureNavigationHistory[2] = RFID_SCAN_RESULT;
+                                taskArgs.previousFeature = HOME_HANDHELD_2;
                             }
 
+                            // To be sure that RFID_REGISTER_TAG is rendered correctly
+                            if ((taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) &&
+                                (taskArgs.feature == RFID_REGISTER_TAG)) {
+                                clear_navigation_history();
+                                taskResults.featureNavigationHistorySize = 2;
+                                taskResults.featureNavigationHistory[2] = RFID_REGISTER_TAG;
+                                taskArgs.previousFeature = HOME_HANDHELD_2;
+                            }
                             break;
                         case LIST_ITEM:
-                            // When item is selected, start to switch to next screen and execute background task
-                            //taskArgs.feature = taskResults.screenFeatures[0];
                             // Append selected item in the list of this screen into the selected list items array
                             if (taskResults.selected_list_items[0] == "") {
                                 taskResults.selected_list_items[0]
@@ -620,13 +657,9 @@ void Mediator::execute_task(task_t task) {
                                 if (taskResults.selected_list_items[i] != "")
                                     Serial.println(taskResults.selected_list_items[i]);
                             }
-                            //peripherals.retrieve_corresponding_task(taskArgs.previousTask, taskResults.currentTask);
                             break;
                         case TASK_ITEM:
-                            Serial.println("Task item");
-                            // We just execute the task which is associated with the clicked item.
-                            // Render to next feature will be done in the task
-                            //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
+//                            Serial.println("Task item");
                             is_render_forced = true;
                             break;
                     }
@@ -649,6 +682,11 @@ void Mediator::execute_task(task_t task) {
                             display.is_viewport_cleared = true;
                         }
 
+                        if (taskArgs.feature == HOME_HANDHELD_2) {
+                            clear_navigation_history();
+                            execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                            display.is_viewport_cleared = true;
+                        }
                         // Turn off AP Wi-Fi if we are in SETTING_WIFI feature
                         if (taskArgs.feature != SETTING_WIFI) {
                             if (wifi.is_ap_mode_enabled) {
@@ -734,10 +772,10 @@ void Mediator::execute_task(task_t task) {
                 if (taskResults.currentFeature == RFID_REGISTER_TAG) {
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
-                        //buzzer.successful_sound();
+                        buzzer.successful_sound();
                         display.update_rfid_registration_scan_result(taskResults);
                     } else {
-                        //buzzer.failure_sound();
+                        buzzer.failure_sound();
                     }
                 } else if (taskResults.currentFeature == RFID_SCAN_RESULT) {
                     // We first check if the latest scanned tag is in registered tags before (Check MES - matched) -
@@ -761,7 +799,7 @@ void Mediator::execute_task(task_t task) {
                             }
                         }
                     }
-                    // Totally scanned to be displayed
+                    // Total scanned tags to be displayed
                     if (taskResults.current_scanned_rfid_tag_count != rfid.scanned_tag_count) {
                         taskResults.current_scanned_rfid_tag_count = rfid.scanned_tag_count;
                         display.update_rfid_match_check_scan_result(taskResults);
@@ -812,8 +850,6 @@ void Mediator::execute_task(task_t task) {
                     buzzer.failure_sound();
                     taskResults.is_rfid_registration_submit_successful = false;
                 }
-//                rfid.scanned_tag_count = 0;
-//                taskResults.current_scanned_rfid_tag_count = 0;
             }
             break;
         }
@@ -830,6 +866,7 @@ void Mediator::execute_task(task_t task) {
             rfid.scanned_tag_count = 0;
             taskResults.current_scanned_rfid_tag_count = 0;
             taskResults.current_matched_mes_scanned_rfid_tag_count = 0;
+            taskResults.is_the_first_time_rfid_scan = true;
             for (int i = 0; i < 200; ++i) {
                 taskResults.scanned_rfid_tags[i].epc = "";
                 taskResults.scanned_rfid_tags[i].is_matched_check = false;
@@ -837,6 +874,40 @@ void Mediator::execute_task(task_t task) {
                 rfid.scan_results[i].is_matched_check = false;
             }
             delay(500);
+            break;
+        }
+        case SUBMIT_SCANNED_RFID_TAG: {
+            taskResults.is_rfid_scan_result_submit_successful = true;
+            Serial.println(F("Execute task SUBMIT_SCANNED_RFID_TAG"));
+            String scan_result_submit_payload =
+                    R"({"mesKey": ")" + taskResults.selected_mes_package + R"(","tagIds": [)";
+            if (rfid.scanned_tag_count == 0) {
+                Serial.println(F("No scanned RFID tag. Back to home now"));
+                taskResults.is_rfid_scan_result_submit_successful = false;
+            } else {
+                for (int i = 0; i < 199; ++i) {
+                    if ((rfid.scan_results[i].epc != "") && (rfid.scan_results[i].is_matched_check)) {
+                        if ((rfid.scan_results[i + 1].epc != "") and (i != 199)) {
+                            scan_result_submit_payload += "\"" + rfid.scan_results[i].epc + "\",";
+                        } else {
+                            scan_result_submit_payload += "\"" + rfid.scan_results[i].epc + "\"]}";
+                        }
+                    }
+                }
+                Serial.print(F("Total :"));
+                Serial.println(String(taskResults.current_matched_mes_scanned_rfid_tag_count) + " tags are submitted");
+                http_response scan_submit_response = request.put(taskArgs.mes_api_host, register_new_rfid_tag,
+                                                                 scan_result_submit_payload, "keyCode",
+                                                                 "PkerpVN2024*");
+                if (scan_submit_response.status_code == HTTP_CODE_OK) {
+                    buzzer.successful_sound();
+                    Serial.println(F("Scan result submit is successful"));
+                } else {
+                    Serial.println(F("Scan result submit is unsuccessful"));
+                    buzzer.failure_sound();
+                    taskResults.is_rfid_scan_result_submit_successful = false;
+                }
+            }
             break;
         }
         case INSERT_DATA_ROW:

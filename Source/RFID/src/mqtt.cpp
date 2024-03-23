@@ -207,24 +207,6 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
 
 void MQTT::wait_for_mqtt_event(mqtt_event_t _event) {
     expected_event = _event;
-//    switch (_event) {
-//        case MES_PACKAGE_SELECTED:
-//            while (!is_mes_package_selected) {
-//                // Wait for message arrives to topic rfid/mes/{mac_address}
-//                //Serial.println(F("Waiting for MES package selection"));
-//                yield();
-//            }
-//            Serial.println(F("MES_PACKAGE_SELECTED event has arrived"));
-//            break;
-//        case MES_PACKAGE_GROUP_SELECTED:
-//            while (!is_mes_package_group_selected) {
-//                // Wait for message arrives to topic rfid/mes/{mac_address}
-//                //Serial.println(F("Waiting for MES package group selection"));
-//                yield();
-//            }
-//            Serial.println(F("MES_PACKAGE_GROUP_SELECTED event has arrived"));
-//            break;
-//    }
 }
 
 String MQTT::extract_value_from_json_string(const String &data, const String &key) {

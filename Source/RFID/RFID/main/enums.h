@@ -31,6 +31,8 @@ enum feature_t {
     RFID_SCAN,
     RFID_SCAN_HISTORY,
     RFID_SCAN_RESULT,
+    RFID_SCAN_RESULT_SUBMIT_SUCCESS,
+    RFID_SCAN_RESULT_SUBMIT_FAILURE,
     RFID_MODIFY_TAG_DATA,
     RFID_REGISTER_TAG,
     RFID_REGISTER_TAG_SUCCESS,
@@ -108,6 +110,7 @@ enum task_t {
     SET_RFID_SCANNING_MODE,
     REGISTER_RFID_TAG,
     RESET_SCANNED_RFID_TAG_COUNT,
+    SUBMIT_SCANNED_RFID_TAG,
     INSERT_DATA_ROW,
     UPDATE_DATA_ROW,
     DELETE_DATA_ROW,
@@ -131,22 +134,12 @@ enum feature_item_type_t {
     NONE_ITEM_TYPE
 };
 
-enum feature_render_type_t {
-    GRID,
-    LIST
-};
-
 enum button_type_t {
     LEFT_UP,
     BACK_CANCEL,
     SELECT,
     RIGHT_DOWN,
     NOT_PRESSED
-};
-
-enum rfid_tag_status_t {
-    ASSOCIATED,
-    UNASSOCIATED
 };
 
 enum rfid_scanning_mode_t {
@@ -158,6 +151,7 @@ enum rfid_response_type_t {
     EPC_READING,
     NORMAL_READING
 };
+
 enum screen_selector_t {
     MENU_SELECTING,
     ITEM_LIST_SELECTING
