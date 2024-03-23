@@ -155,12 +155,12 @@ Request::put(const String &host_name, const String &path_name, const String &pay
     http.addHeader("Content-Type", "application/xml");
     Serial.println(F("Sending payload: "));
     Serial.println(payload);
-    _response.status_code = http.POST(payload);
+    _response.status_code = http.PUT(payload);
 
     if (_response.status_code > 0) {
         if (_response.status_code == HTTP_CODE_OK) {
             _response.payload = http.getString();
-            Serial.print(F("POST request is successful. Response: "));
+            Serial.print(F("PUT request is successful. Response: "));
             Serial.println(_response.payload);
         } else {
             _response.payload = "failed";

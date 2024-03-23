@@ -102,6 +102,7 @@ typedef struct {
     int mes_target = 0;
     // For RFID
     bool is_rfid_registration_submit_successful = false;
+    bool is_rfid_scan_result_submit_successful = false;
     bool is_the_first_time_rfid_scan = false;
     int current_scanned_rfid_tag_count = 0;
     int current_matched_mes_scanned_rfid_tag_count = 0;

@@ -73,6 +73,8 @@
 #include "icons/done_button.h"
 #include "icons/failure_registration_banner.h"
 #include "icons/succcess_registration_banner.h"
+#include "icons/success_submit_banner.h"
+#include "icons/failure_submit_banner.h"
 
 extern TFT_eSPI tft;
 
@@ -118,7 +120,7 @@ public:
     // Constants for the grid layout
     int iconWidth = 64; // Width of the icon
     int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 60; //  Number of icons
+    static const byte numIcons = 62; //  Number of icons
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[numIcons] = {
@@ -180,7 +182,9 @@ public:
             "blurred_done_button_icon",
             "blurred_back_button_icon",
             "failure_registration_banner_icon",
-            "success_registration_banner_icon"
+            "success_registration_banner_icon",
+            "success_submit_banner_icon",
+            "failure_submit_banner_icon"
     };
 
     // Map menu names to menu icon data arrays
@@ -243,7 +247,9 @@ public:
             {"blurred_done_button_icon",              blurred_done_button_icon},
             {"blurred_back_button_icon",              blurred_back_button_icon},
             {"failure_registration_banner_icon",      failure_registration_banner_icon},
-            {"success_registration_banner_icon",      succcess_registration_banner_icon}
+            {"success_registration_banner_icon",      succcess_registration_banner_icon},
+            {"success_submit_banner_icon",            success_submit_banner_icon},
+            {"failure_submit_banner_icon",            failure_submit_banner_icon}
     };
 
     Display();
