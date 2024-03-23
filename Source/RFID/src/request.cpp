@@ -148,7 +148,7 @@ Request::post(const String &host_name, const String &path_name, const String &pa
 
 http_response
 Request::put(const String &host_name, const String &path_name, const String &payload, const String &header,
-              const String &header_value) {
+             const String &header_value) {
     http_response _response;
     http.begin(host_name + path_name);
     http.addHeader(header, header_value);

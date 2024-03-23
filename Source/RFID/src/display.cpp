@@ -166,12 +166,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             switch (_taskResults.currentScreenItemIndex) {
                 case 0:
                     qr_code_type = "MES-PACKAGE";
-                    _taskResults.selected_mes_package = "";
+                    // Dont reset selected MES package before
+                    //_taskResults.selected_mes_package = "";
                     Serial.println(F("Waiting for MES package message arrives"));
                     break;
                 case 1:
                     qr_code_type = "MES-PACKAGE-GROUP";
-                    _taskResults.selected_mes_package_group = "";
+                    // Don't reset selected MES package before
+                    //_taskResults.selected_mes_package_group = "";
                     Serial.println(F("Waiting for MES package group message arrives"));
                     break;
                 case 2:
@@ -591,7 +593,7 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             }
             break;
         }
-        case RFID_SCAN_RESULT_SUBMIT_SUCCESS:{
+        case RFID_SCAN_RESULT_SUBMIT_SUCCESS: {
             tft.setFreeFont(&FreeSansBold9pt7b);
             tft.setTextColor(0x12AC);
             tft.drawString("SUBMIT CONFIRMATION", 50, 46);
@@ -758,7 +760,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.drawString("Detected", 30, 379);
                     tft.setFreeFont(&FreeSansBold12pt7b);
                     tft.setTextColor(0x350F);
-                    tft.drawString("0", 218, 375);
 
                     // Reset RFID scan results
                     if (_taskResults.current_scanned_rfid_tag_count != 0) {

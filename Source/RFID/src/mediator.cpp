@@ -145,7 +145,8 @@ void Mediator::execute_task(task_t task) {
             switch (taskArgs.feature) {
                 case QR_CODE_SCANNING: {
                     if (display.qr_code_type == "MES-PACKAGE") {
-                        taskResults.selected_mes_package = "";
+                        // Dont reset selected MES package before
+                        //taskResults.selected_mes_package = "";
 
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
@@ -194,7 +195,8 @@ void Mediator::execute_task(task_t task) {
                             mqtt.reset_saved_data();
                         }
                     } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
-                        taskResults.selected_mes_package_group = "";
+                        // Don't reset selected MES package group before
+                        //taskResults.selected_mes_package_group = "";
 
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
