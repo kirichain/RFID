@@ -8,7 +8,7 @@ FS32::FS32() {
 
 }
 
-bool FS32::save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group) {
+bool FS32::save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group, const String& _is_muted) {
     File file = SPIFFS.open("/device_data.txt", "w");
 
     if (!file) {
@@ -24,12 +24,14 @@ bool FS32::save_settings(const String& _ssid, const String& _password, const Str
     doc["password"] = _password;
     doc["mes_package"] = _mes_package;
     doc["mes_package_group"] = _mes_package_group;
+    doc["is_muted"] = _is_muted;
 
     // Update data
     ssid = _ssid;
     password = _password;
     mes_package = _mes_package;
     mes_package_group = _mes_package_group;
+    is_muted = _is_muted;
 
     Serial.println(F("JSON document created with the following settings:"));
     serializeJsonPretty(doc, Serial); // Print the JSON document in a pretty way to Serial for debugging
@@ -54,6 +56,7 @@ bool FS32::read_saved_settings() {
     password = "";
     mes_package = "";
     mes_package_group = "";
+    is_muted = "";
 
     if (!file) {
         Serial.println(F("Device setting file open failed---------"));
@@ -74,6 +77,7 @@ bool FS32::read_saved_settings() {
         password = doc["password"].as<String>();
         mes_package = doc["mes_package"].as<String>();
         mes_package_group = doc["mes_package_group"].as<String>();
+        is_muted = doc["is_muted"].as<String>();
         // Print values for debugging
         Serial.print(F("SSID: "));
         Serial.println(ssid);
@@ -83,6 +87,8 @@ bool FS32::read_saved_settings() {
         Serial.println(mes_package);
         Serial.print(F("MES Package Group: "));
         Serial.println(mes_package_group);
+        Serial.print(F("Is muted: "));
+        Serial.println(is_muted);
     }
     file.close();
     return true;

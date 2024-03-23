@@ -14,10 +14,11 @@ public:
     String password = "";
     String mes_package = "";
     String mes_package_group = "";
+    String is_muted = "";
 
     FS32();
 
-    bool save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group);
+    bool save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group, const String& _is_muted);
 
     bool read_saved_settings();
 

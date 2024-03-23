@@ -53,8 +53,12 @@ void Mediator::init_services() {
         if (fs32.read_saved_settings()) {
             wifi.is_default_sta_wifi_credential_used = false;
             // Assign saved setting data
-            taskResults.selected_mes_package = fs32.mes_package;
-            taskResults.selected_mes_package_group = fs32.mes_package_group;
+            if (fs32.mes_package != "") {
+                taskResults.selected_mes_package = fs32.mes_package;
+            }
+            if (fs32.mes_package_group != "") {
+                taskResults.selected_mes_package_group = fs32.mes_package_group;
+            }
             // Draw sound icon
             display.iconWidth = 22;
             display.iconHeight = 22;
