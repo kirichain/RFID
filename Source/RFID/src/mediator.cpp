@@ -440,8 +440,8 @@ void Mediator::execute_task(task_t task) {
             static bool is_render_forced = false;
 
             if ((taskArgs.feature != taskResults.currentFeature) or (is_render_forced)) {
-                if (is_render_forced) Serial.println(F("Forced-----------------------"));
-                if (!is_render_forced) Serial.println(F("@@@@@@"));
+//                if (is_render_forced) Serial.println(F("Forced-----------------------"));
+//                if (!is_render_forced) Serial.println(F("@@@@@@"));
                 Serial.print(F("Execute task RENDER_FEATURE :"));
                 Serial.println(feature_as_string(taskArgs.feature));
                 Serial.println(feature_as_string(taskResults.currentFeature));
@@ -482,7 +482,7 @@ void Mediator::execute_task(task_t task) {
                     // To be sure that RFID TAG REGISTER FAILURE screen is rendered correctly
                     if ((taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) &&
                         (!taskResults.is_rfid_registration_submit_successful)) {
-                        Serial.println(F("Set%%%%%%%"));
+//                        Serial.println(F("Set%%%%%%%"));
                         taskResults.is_rfid_registration_submit_successful = true;
                         taskArgs.feature = RFID_REGISTER_TAG_FAILURE;
                         taskResults.currentScreenItemIndex = 3;
@@ -612,17 +612,17 @@ void Mediator::execute_task(task_t task) {
                             }
 
                             // To be sure that RFID_REGISTER_TAG is rendered correctly
-//                            if ((taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) &&
-//                                (taskArgs.feature == RFID_REGISTER_TAG)) {
-//                                clear_navigation_history();
-//                                taskResults.featureNavigationHistorySize = 2;
-//                                taskResults.featureNavigationHistory[2] = RFID_REGISTER_TAG;
-//                                taskArgs.previousFeature = HOME_HANDHELD_2;
-//                            }
+                            if ((taskResults.currentFeature == RFID_REGISTER_TAG_FAILURE) &&
+                                (taskArgs.feature == RFID_REGISTER_TAG)) {
+                                clear_navigation_history();
+                                taskResults.featureNavigationHistorySize = 2;
+                                taskResults.featureNavigationHistory[2] = RFID_REGISTER_TAG;
+                                taskArgs.previousFeature = HOME_HANDHELD_2;
+                            }
 
-                            Serial.println(F("^^^^^^^^^^^^^^^^Current feature and target feature: "));
-                            Serial.println(feature_as_string(taskResults.currentFeature));
-                            Serial.println(feature_as_string(taskArgs.feature));
+//                            Serial.println(F("^^^^^^^^^^^^^^^^Current feature and target feature: "));
+//                            Serial.println(feature_as_string(taskResults.currentFeature));
+//                            Serial.println(feature_as_string(taskArgs.feature));
                             break;
                         case LIST_ITEM:
                             // When item is selected, start to switch to next screen and execute background task
@@ -669,9 +669,9 @@ void Mediator::execute_task(task_t task) {
                             // We just execute the task which is associated with the clicked item.
                             // Render to next feature will be done in the task
                             //execute_task(taskResults.screenTasks[taskResults.currentScreenItemIndex]);
-                            Serial.println(F("++++++++Current feature and target feature: "));
-                            Serial.println(feature_as_string(taskResults.currentFeature));
-                            Serial.println(feature_as_string(taskArgs.feature));
+//                            Serial.println(F("++++++++Current feature and target feature: "));
+//                            Serial.println(feature_as_string(taskResults.currentFeature));
+//                            Serial.println(feature_as_string(taskArgs.feature));
                             is_render_forced = true;
                             break;
                     }

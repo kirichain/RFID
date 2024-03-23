@@ -71,7 +71,7 @@ void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) 
 
             // Check if the buffer is full
             if (buffer_index >= sizeof(buffer)) {
-                Serial.println("Buffer overflow");
+//                Serial.println("Buffer overflow");
                 // Reset buffer index to prevent further reading
                 buffer_index = 0;
             }
@@ -90,7 +90,7 @@ void Rfid::read_multi_scan_response(volatile bool &_isMenuSelectButtonReleased) 
 
     // Print message if no tag is found and timeout didn't occur
     if (is_tag_not_found && !timeout_occurred) {
-        Serial.println("No tag found");
+//        Serial.println("No tag found");
     }
 }
 
@@ -243,7 +243,7 @@ bool Rfid::read_response(unsigned long timeout) {
 }
 
 void Rfid::send_command(uint8_t *data, size_t size) {
-    Serial.println(F("Sending command"));
+//    Serial.println(F("Sending command"));
     Serial2.write(data, size);
     //Serial2.flush(); // Wait for the data to be completely sent
 }
@@ -299,7 +299,7 @@ void Rfid::scan_rfid_tag() {
             //Serial.println();
             break;
         case MULTI_SCAN:
-            Serial.println(F("Start scanning multi RFID tags"));
+//            Serial.println(F("Start scanning multi RFID tags"));
             polling_multi();
             //stop_scanning();
             break;
@@ -337,7 +337,7 @@ bool Rfid::is_duplicate_scan(const String &epc) {
 }
 
 void Rfid::stop_scanning() {
-    Serial.println(F("Stop scanning multi RFID tags"));
+//    Serial.println(F("Stop scanning multi RFID tags"));
     send_command((uint8_t *) STOP_POLLING_MULTI_CMD, sizeof(STOP_POLLING_MULTI_CMD));
     if (read_response(5000)) {
         Serial.println(F("Stopped scanning multi RFID tags"));
