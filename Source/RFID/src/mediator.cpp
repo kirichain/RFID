@@ -29,6 +29,9 @@ Mediator::Mediator() {
 }
 
 void Mediator::init_services() {
+    // To mark startup flag
+    is_startup_completed = false;
+
     // Set buzzer pin
     peripherals.set_digital_output(buzzerPinDefinition);
     buzzer.init(buzzerPinDefinition);
@@ -69,7 +72,6 @@ void Mediator::init_services() {
                 taskResults.isMuted = false;
                 display.put_icon(273, 7, display.menu_icon_names[51]);
             }
-            buzzer.mute(taskResults.isMuted);
         }
     }
     // Get mac address
@@ -159,6 +161,84 @@ void Mediator::execute_task(task_t task) {
             mqtt.connect_to_broker(taskArgs.mqttBrokerIp, taskArgs.mqttBrokerPort, taskArgs.mqttLwtTopic,
                                    wifi.mac_address);
             break;
+        case LOAD_MES_PACKAGE_DATA: {
+            taskResults.selected_mes_package = mqtt.mes_package;
+            taskResults.mes_operation_name = mqtt.mes_operation_name;
+            taskResults.mes_target = mqtt.mes_target;
+            taskResults.mes_img_url = mqtt.mes_img_url;
+            taskResults.ao_no = mqtt.ao_no;
+            taskResults.target_qty = mqtt.target_qty;
+            taskResults.delivery_date = mqtt.delivery_date;
+            taskResults.destination = mqtt.destination;
+            taskResults.style_text = mqtt.style_text;
+            taskResults.buyer_style_text = mqtt.buyer_style_text;
+            taskResults.line_no = mqtt.line_no;
+            taskResults.style_color = mqtt.style_color;
+            taskResults.buyer_po = mqtt.buyer_po;
+            taskResults.module_name = mqtt.module_name;
+
+            // Download MES img from url and display it
+            request.get("http://203.113.151.196:8888", get_resized_mes_img,
+                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
+            // Download registered RFID tags which are associated with this MES package before
+            http_response list_response = request.get(taskArgs.mes_api_host,
+                                                      get_registered_rfid_tag_list,
+                                                      get_registered_rfid_tag_mes_key_query +
+                                                      taskResults.selected_mes_package + "&" +
+                                                      get_registered_rfid_tag_mes_type_query +
+                                                      "MES-PACKAGE", "keyCode",
+                                                      "PkerpVN2024*", false, nullptr, 0);
+            // Play successful sound
+            if (list_response.status_code == HTTP_CODE_OK) {
+                buzzer.successful_sound();
+
+                // Extract all registered tags into the storing list
+                extract_registered_rfid_tags(list_response.payload);
+            } else {
+                buzzer.failure_sound();
+            }
+            break;
+        }
+        case LOAD_MES_PACKAGE_GROUP_DATA: {
+            taskResults.selected_mes_package_group = mqtt.mes_package_group;
+            taskResults.mes_operation_name = mqtt.mes_operation_name;
+            taskResults.mes_target = mqtt.mes_target;
+            taskResults.mes_img_url = mqtt.mes_img_url;
+            taskResults.ao_no = mqtt.ao_no;
+            taskResults.target_qty = mqtt.target_qty;
+            taskResults.delivery_date = mqtt.delivery_date;
+            taskResults.destination = mqtt.destination;
+            taskResults.style_text = mqtt.style_text;
+            taskResults.buyer_style_text = mqtt.buyer_style_text;
+            taskResults.line_no = mqtt.line_no;
+            taskResults.style_color = mqtt.style_color;
+            taskResults.buyer_po = mqtt.buyer_po;
+            taskResults.module_name = mqtt.module_name;
+
+            // Download MES img from url and display it
+            request.get(resized_image_server_url, get_resized_mes_img,
+                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
+                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
+            // Download registered RFID tags which are associated with this MES package before
+            http_response list_response = request.get(taskArgs.mes_api_host,
+                                                      get_registered_rfid_tag_list,
+                                                      get_registered_rfid_tag_mes_key_query +
+                                                      taskResults.selected_mes_package_group + "&" +
+                                                      get_registered_rfid_tag_mes_type_query +
+                                                      "MES-PACKAGEGROUP", "keyCode",
+                                                      "PkerpVN2024*", false, nullptr, 0);
+            // Play successful sound
+            if (list_response.status_code == HTTP_CODE_OK) {
+                buzzer.successful_sound();
+
+                // Extract all registered tags into the storing list
+                extract_registered_rfid_tags(list_response.payload);
+            } else {
+                buzzer.failure_sound();
+            }
+            break;
+        }
         case HANDLE_MQTT_MESSAGE:
             //Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
             switch (taskArgs.feature) {
@@ -170,54 +250,21 @@ void Mediator::execute_task(task_t task) {
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
                         if (mqtt.is_mes_package_selected) {
-                            taskResults.selected_mes_package = mqtt.mes_package;
-                            taskResults.mes_operation_name = mqtt.mes_operation_name;
-                            taskResults.mes_target = mqtt.mes_target;
-                            taskResults.mes_img_url = mqtt.mes_img_url;
-                            taskResults.ao_no = mqtt.ao_no;
-                            taskResults.target_qty = mqtt.target_qty;
-                            taskResults.delivery_date = mqtt.delivery_date;
-                            taskResults.destination = mqtt.destination;
-                            taskResults.style_text = mqtt.style_text;
-                            taskResults.buyer_style_text = mqtt.buyer_style_text;
-                            taskResults.line_no = mqtt.line_no;
-                            taskResults.style_color = mqtt.style_color;
-                            taskResults.buyer_po = mqtt.buyer_po;
-                            taskResults.module_name = mqtt.module_name;
-
-                            // Download MES img from url and display it
-                            request.get("http://203.113.151.196:8888", get_resized_mes_img,
-                                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
-                                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
-                            // Download registered RFID tags which are associated with this MES package before
-                            http_response list_response = request.get(taskArgs.mes_api_host,
-                                                                      get_registered_rfid_tag_list,
-                                                                      get_registered_rfid_tag_mes_key_query +
-                                                                      taskResults.selected_mes_package + "&" +
-                                                                      get_registered_rfid_tag_mes_type_query +
-                                                                      "MES-PACKAGE", "keyCode",
-                                                                      "PkerpVN2024*", false, nullptr, 0);
-                            // Play successful sound
-                            if (list_response.status_code == HTTP_CODE_OK) {
-                                buzzer.successful_sound();
-
-                                // Extract all registered tags into the storing list
-                                extract_registered_rfid_tags(list_response.payload);
-                            } else {
-                                buzzer.failure_sound();
-                            }
+                            execute_task(LOAD_MES_PACKAGE_DATA);
                             mqtt.is_mes_package_selected = false;
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
-                            mqtt.reset_saved_data();
                             // Save selected MES package to SPIFFS
                             String is_muted = "";
                             if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
                             fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
                                                taskResults.selected_mes_package,
-                                               taskResults.selected_mes_package_group, is_muted);
+                                               taskResults.selected_mes_package_group, is_muted,
+                                               mqtt.mes_package_mqtt_message, mqtt.mes_package_group_mqtt_message);
+                            mqtt.mes_package_mqtt_message = "";
+                            mqtt.reset_saved_data();
                         }
                     } else if (display.qr_code_type == "MES-PACKAGE-GROUP") {
                         // Don't reset selected MES package group before
@@ -226,54 +273,21 @@ void Mediator::execute_task(task_t task) {
                         // Wait until the message with according event arrives
                         mqtt.wait_for_mqtt_event(MES_PACKAGE_GROUP_SELECTED);
                         if (mqtt.is_mes_package_group_selected) {
-                            taskResults.selected_mes_package_group = mqtt.mes_package_group;
-                            taskResults.mes_operation_name = mqtt.mes_operation_name;
-                            taskResults.mes_target = mqtt.mes_target;
-                            taskResults.mes_img_url = mqtt.mes_img_url;
-                            taskResults.ao_no = mqtt.ao_no;
-                            taskResults.target_qty = mqtt.target_qty;
-                            taskResults.delivery_date = mqtt.delivery_date;
-                            taskResults.destination = mqtt.destination;
-                            taskResults.style_text = mqtt.style_text;
-                            taskResults.buyer_style_text = mqtt.buyer_style_text;
-                            taskResults.line_no = mqtt.line_no;
-                            taskResults.style_color = mqtt.style_color;
-                            taskResults.buyer_po = mqtt.buyer_po;
-                            taskResults.module_name = mqtt.module_name;
-
-                            // Download MES img from url and display it
-                            request.get(resized_image_server_url, get_resized_mes_img,
-                                        get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
-                                        taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
-                            // Download registered RFID tags which are associated with this MES package before
-                            http_response list_response = request.get(taskArgs.mes_api_host,
-                                                                      get_registered_rfid_tag_list,
-                                                                      get_registered_rfid_tag_mes_key_query +
-                                                                      taskResults.selected_mes_package_group + "&" +
-                                                                      get_registered_rfid_tag_mes_type_query +
-                                                                      "MES-PACKAGEGROUP", "keyCode",
-                                                                      "PkerpVN2024*", false, nullptr, 0);
-                            // Play successful sound
-                            if (list_response.status_code == HTTP_CODE_OK) {
-                                buzzer.successful_sound();
-
-                                // Extract all registered tags into the storing list
-                                extract_registered_rfid_tags(list_response.payload);
-                            } else {
-                                buzzer.failure_sound();
-                            }
+                            execute_task(LOAD_MES_PACKAGE_GROUP_DATA);
                             mqtt.is_mes_package_group_selected = false;
                             // Back to home
                             taskResults.currentFeature = NO_FEATURE;
                             taskArgs.feature = HOME_HANDHELD_2;
                             display.qr_code_type = "";
-                            mqtt.reset_saved_data();
                             // Save selected MES package to SPIFFS
                             String is_muted = "";
                             if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
                             fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
                                                taskResults.selected_mes_package,
-                                               taskResults.selected_mes_package_group, is_muted);
+                                               taskResults.selected_mes_package_group, is_muted,
+                                               mqtt.mes_package_mqtt_message, mqtt.mes_package_group_mqtt_message);
+                            mqtt.mes_package_group_mqtt_message = "";
+                            mqtt.reset_saved_data();
                         }
                     }
                     break;
@@ -320,7 +334,9 @@ void Mediator::execute_task(task_t task) {
                             String is_muted = "";
                             if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
                             if (!fs32.save_settings(ssid, password, taskResults.selected_mes_package,
-                                                    taskResults.selected_mes_package_group, is_muted)) {
+                                                    taskResults.selected_mes_package_group, is_muted,
+                                                    mqtt.mes_package_mqtt_message,
+                                                    mqtt.mes_package_group_mqtt_message)) {
                                 Serial.println(F("Failed to save Wi-Fi settings"));
                             } else {
                                 Serial.println(F("Wi-Fi settings saved successfully"));
@@ -444,6 +460,22 @@ void Mediator::execute_task(task_t task) {
             if (wifi.init_sta_mode()) {
                 Serial.println(F("Init sta wifi successfully"));
                 execute_task(GET_MQTT_CONFIG_FROM_SERVER);
+
+                // On startup, load saved MES package/package group data
+                if (!is_startup_completed) {
+                    if (fs32.mes_package_mqtt_message != "") {
+                        mqtt.extract_mes_package_data(fs32.mes_package_mqtt_message);
+                        execute_task(LOAD_MES_PACKAGE_DATA);
+                    }
+
+                    if (fs32.mes_package_group_mqtt_message != "") {
+                        mqtt.extract_mes_package_group_data(fs32.mes_package_group_mqtt_message);
+                        execute_task(LOAD_MES_PACKAGE_GROUP_DATA);
+                    }
+
+                    is_startup_completed = true;
+                }
+
                 buzzer.successful_sound();
             } else {
                 buzzer.failure_sound();
@@ -512,7 +544,8 @@ void Mediator::execute_task(task_t task) {
                     if (taskResults.isMuted) is_muted = "yes"; else is_muted = "no";
                     fs32.save_settings(wifi.currentStaWifiSSID, wifi.currentStaWifiPassword,
                                        taskResults.selected_mes_package,
-                                       taskResults.selected_mes_package_group, is_muted);
+                                       taskResults.selected_mes_package_group, is_muted, mqtt.mes_package_mqtt_message,
+                                       mqtt.mes_package_group_mqtt_message);
                 }
 
                 if (display.is_back_to_home) {

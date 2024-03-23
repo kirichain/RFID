@@ -151,54 +151,17 @@ void MQTT::handle_incoming_message(char *topic, char *payload, AsyncMqttClientMe
         if ((expected_event == MES_PACKAGE_SELECTED) and (_type == "MES-PACKAGE")) {
             Serial.println(F("MES package message has arrived"));
             is_mes_package_selected = true;
+            mes_package_mqtt_message = raw_last_payload;
 
-            // Extract MES package, operation name, target and img url
-            mes_package = extract_value_from_json_string(raw_last_payload, "mesKey");
-            mes_operation_name = extract_value_from_json_string(raw_last_payload, "opName");
-            mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
-            mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
-
-            ao_no = extract_value_from_json_string(raw_last_payload, "aono");
-            target_qty = extract_value_from_json_string(raw_last_payload, "targetQty");
-            delivery_date = extract_value_from_json_string(raw_last_payload, "deliveryDate");
-            destination = extract_value_from_json_string(raw_last_payload, "destination");
-            style_text = extract_value_from_json_string(raw_last_payload, "styleText");
-            buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
-            line_no = extract_value_from_json_string(raw_last_payload, "lineNo");
-            style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
-            buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
-            module_name = extract_value_from_json_string(raw_last_payload, "moduleName");
-
-            // Print the extracted values
-            Serial.print(F("Extracted MES package: "));
-            Serial.println(mes_package);
-            Serial.print(F("Extracted MES operation name: "));
-            Serial.println(mes_operation_name);
-            Serial.print(F("Extracted MES img url: "));
-            Serial.println(mes_img_url);
-            Serial.print(F("Extracted MES target: "));
-            Serial.println(mes_target);
-            Serial.print(F("Extracted MES module name: "));
-            Serial.println(module_name);
+            extract_mes_package_data(raw_last_payload);
         }
         if ((expected_event == MES_PACKAGE_GROUP_SELECTED) and (_type == "MES-PACKAGEGROUP")) {
             Serial.println(F("MES package group message has arrived"));
 
             is_mes_package_group_selected = true;
+            mes_package_group_mqtt_message = raw_last_payload;
 
-            // Extract MES package, operation name, target and img url
-            mes_package_group = extract_value_from_json_string(raw_last_payload, "packageGroup");
-            mes_img_url = extract_value_from_json_string(raw_last_payload, "imageUrl");
-
-            ao_no = extract_value_from_json_string(raw_last_payload, "aono");
-            style_text = extract_value_from_json_string(raw_last_payload, "style");
-            buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyer");
-
-            // Print the extracted values
-            Serial.print(F("Extracted MES package group: "));
-            Serial.println(mes_package_group);
-            Serial.print(F("Extracted MES img url: "));
-            Serial.println(mes_img_url);
+            extract_mes_package_group_data(raw_last_payload);
         }
 
         expected_event = NONE;
@@ -239,6 +202,8 @@ void MQTT::reset_saved_data() {
     buyer_po = "";
     module_name = "";
     mes_target = 0;
+//    mes_package_mqtt_message = "";
+//    mes_package_group_mqtt_message = "";
 }
 
 void MQTT::disconnect() {
@@ -248,4 +213,51 @@ void MQTT::disconnect() {
         reset_saved_data();
         mqttClient.disconnect(true);
     }
+}
+
+void MQTT::extract_mes_package_data(const String &raw_last_payload) {
+// Extract MES package, operation name, target and img url
+    mes_package = extract_value_from_json_string(raw_last_payload, "mesKey");
+    mes_operation_name = extract_value_from_json_string(raw_last_payload, "opName");
+    mes_img_url = extract_value_from_json_string(raw_last_payload, "urlImage");
+    mes_target = extract_value_from_json_string(raw_last_payload, "mxTarget").toInt();
+
+    ao_no = extract_value_from_json_string(raw_last_payload, "aono");
+    target_qty = extract_value_from_json_string(raw_last_payload, "targetQty");
+    delivery_date = extract_value_from_json_string(raw_last_payload, "deliveryDate");
+    destination = extract_value_from_json_string(raw_last_payload, "destination");
+    style_text = extract_value_from_json_string(raw_last_payload, "styleText");
+    buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyerStyleText");
+    line_no = extract_value_from_json_string(raw_last_payload, "lineNo");
+    style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
+    buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
+    module_name = extract_value_from_json_string(raw_last_payload, "moduleName");
+
+    // Print the extracted values
+    Serial.print(F("Extracted MES package: "));
+    Serial.println(mes_package);
+    Serial.print(F("Extracted MES operation name: "));
+    Serial.println(mes_operation_name);
+    Serial.print(F("Extracted MES img url: "));
+    Serial.println(mes_img_url);
+    Serial.print(F("Extracted MES target: "));
+    Serial.println(mes_target);
+    Serial.print(F("Extracted MES module name: "));
+    Serial.println(module_name);
+}
+
+void MQTT::extract_mes_package_group_data(const String &raw_last_payload) {
+    // Extract MES package, operation name, target and img url
+    mes_package_group = extract_value_from_json_string(raw_last_payload, "packageGroup");
+    mes_img_url = extract_value_from_json_string(raw_last_payload, "imageUrl");
+
+    ao_no = extract_value_from_json_string(raw_last_payload, "aono");
+    style_text = extract_value_from_json_string(raw_last_payload, "style");
+    buyer_style_text = extract_value_from_json_string(raw_last_payload, "buyer");
+
+    // Print the extracted values
+    Serial.print(F("Extracted MES package group: "));
+    Serial.println(mes_package_group);
+    Serial.print(F("Extracted MES img url: "));
+    Serial.println(mes_img_url);
 }

@@ -3,5 +3,7 @@
 	"password":"sfs#office!@",
 	"mes_package":"",
 	"mes_package_group":"",
-	"is_muted":"yes"
+	"is_muted":"yes",
+	"mes_package_mqtt_message":"",
+	"mes_package_group_mqtt_message":""
 }

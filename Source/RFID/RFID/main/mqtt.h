@@ -33,6 +33,8 @@ public:
     String style_color;
     String buyer_po;
     String module_name;
+    String mes_package_mqtt_message;
+    String mes_package_group_mqtt_message;
 
     int mes_target;
 
@@ -79,6 +81,10 @@ public:
     void reset_saved_data();
 
     void disconnect();
+
+    void extract_mes_package_data(const String &raw_last_payload);
+
+    void extract_mes_package_group_data(const String &raw_last_payload);
 };
 
 #endif //RFID_MQTT_H

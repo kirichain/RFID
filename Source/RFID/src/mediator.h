@@ -34,7 +34,7 @@ private:
             "RESET_SCANNED_RFID_TAG_COUNT", "SUBMIT_SCANNED_RFID_TAG", "INSERT_DATA_ROW", "UPDATE_DATA_ROW",
             "DELETE_DATA_ROW", "SAVE_DATA_COLLECTION", "DELETE_DATA_COLLECTION", "LOAD_DATA_COLLECTION",
             "READ_PERIPHERAL_INPUT", "SEND_PERIPHERAL_OUTPUT", "START_CONVEYOR", "STOP_CONVEYOR", "SUBMIT_CHOSEN_ITEM",
-            "TOGGLE_SOUND", "NO_TASK"
+            "TOGGLE_SOUND", "LOAD_MES_PACKAGE_DATA", "LOAD_MES_PACKAGE_GROUP_DATA", "NO_TASK"
     };
     const char *feature_names[NUM_FEATURES] = {
             "BOOT", "LOADING", "QR_CODE_SCANNING", "HOME_HANDHELD_1", "HOME_HANDHELD_2", "HOME_TERMINAL",
@@ -51,6 +51,7 @@ private:
 public:
     volatile bool isTaskExecutable;
     volatile bool isTaskCompleted;
+    bool is_startup_completed;
 
     task_args taskArgs{};
     task_results taskResults{};

@@ -15,10 +15,14 @@ public:
     String mes_package = "";
     String mes_package_group = "";
     String is_muted = "";
+    String mes_package_mqtt_message = "";
+    String mes_package_group_mqtt_message = "";
 
     FS32();
 
-    bool save_settings(const String& _ssid, const String& _password, const String& _mes_package, const String& _mes_package_group, const String& _is_muted);
+    bool save_settings(const String &_ssid, const String &_password, const String &_mes_package,
+                       const String &_mes_package_group, const String &_is_muted,
+                       const String &_mes_package_mqtt_message, const String &_mes_package_group_mqtt_message);
 
     bool read_saved_settings();
 
