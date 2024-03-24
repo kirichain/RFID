@@ -11,7 +11,7 @@ FS32::FS32() {
 bool FS32::save_settings(const String &_ssid, const String &_password, const String &_mes_package,
                          const String &_mes_package_group, const String &_is_muted,
                          const String &_mes_package_mqtt_message, const String &_mes_package_group_mqtt_message) {
-    File file = SPIFFS.open("/device_data.txt", "w");
+    File file = SPIFFS.open(filename, "w");
 
     if (!file) {
         Serial.println(F("Failed to open device_data.txt for writing"));
@@ -55,8 +55,9 @@ bool FS32::save_settings(const String &_ssid, const String &_password, const Str
     return true;
 }
 
-bool FS32::read_saved_settings() {
-    File file = SPIFFS.open("/device_data.txt", "r+");
+bool FS32::read_saved_settings(const String& _filename) {
+    filename = _filename;
+    File file = SPIFFS.open(_filename, "r+");
 
     ssid = "";
     password = "";

@@ -53,7 +53,7 @@ void Mediator::init_services() {
     rfid.stop_scanning();
     // Get saved Wi-Fi setting from SPIFFS and the last MES Package
     if (fs32.init_spiffs()) {
-        if (fs32.read_saved_settings()) {
+        if (fs32.read_saved_settings(fs_device_data_file)) {
             wifi.is_default_sta_wifi_credential_used = false;
             // Assign saved setting data
             if (fs32.mes_package != "") {
@@ -178,7 +178,7 @@ void Mediator::execute_task(task_t task) {
             taskResults.module_name = mqtt.module_name;
 
             // Download MES img from url and display it
-            request.get("http://203.113.151.196:8888", get_resized_mes_img,
+            request.get(resized_image_server_url, get_resized_mes_img,
                         get_resized_mes_img_query + taskResults.mes_img_url, "", "", true,
                         taskResults.mes_img_buffer, taskResults.mes_img_buffer_size);
             // Download registered RFID tags which are associated with this MES package before
@@ -187,8 +187,8 @@ void Mediator::execute_task(task_t task) {
                                                       get_registered_rfid_tag_mes_key_query +
                                                       taskResults.selected_mes_package + "&" +
                                                       get_registered_rfid_tag_mes_type_query +
-                                                      "MES-PACKAGE", "keyCode",
-                                                      "PkerpVN2024*", false, nullptr, 0);
+                                                      "MES-PACKAGE", header_name_1,
+                                                      header_value_1, false, nullptr, 0);
             // Play successful sound
             if (list_response.status_code == HTTP_CODE_OK) {
                 buzzer.successful_sound();
@@ -226,8 +226,8 @@ void Mediator::execute_task(task_t task) {
                                                       get_registered_rfid_tag_mes_key_query +
                                                       taskResults.selected_mes_package_group + "&" +
                                                       get_registered_rfid_tag_mes_type_query +
-                                                      "MES-PACKAGEGROUP", "keyCode",
-                                                      "PkerpVN2024*", false, nullptr, 0);
+                                                      "MES-PACKAGEGROUP", header_name_1,
+                                                      header_value_1, false, nullptr, 0);
             // Play successful sound
             if (list_response.status_code == HTTP_CODE_OK) {
                 buzzer.successful_sound();

@@ -264,8 +264,6 @@ public:
 
     void render_feature(feature_t _feature, task_results &_taskResults);
 
-    static void blink_screen(bool &isTaskCompleted);
-
     void reset_display_setting();
 
     void update_screen_item(byte _index, screen_item_position _item_position);

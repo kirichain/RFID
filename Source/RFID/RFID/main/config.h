@@ -18,6 +18,8 @@
 #define base_api_server_url "http://mespk2.pungkookvn.com:8888"
 #define tpm_server_url "http://tpm.pungkookvn.com"
 #define resized_image_server_url "http://203.113.151.196:8888"
+#define header_name_1 "keyCode"
+#define header_value_1 "PkerpVN2024*"
 
 // Defined API Endpoints & Queries
 #define get_mqtt_config "/RFIotDevice/GetMqttConfig"
@@ -40,22 +42,7 @@
 #define mqtt_mes_selection_topic "rfid/mes/"
 
 // Defined FS Information
-//#define fs_device_data_file "device_data.txt"
-//#define fs_message_queue_file "message_queue.txt"
-//#define fs_user_data_file "user_data.txt"
-//#define fs_warehouse_file "warehouse_data.txt"
-//#define fs_package_file "package_data.txt"
-
-// Defined SD Card Information
-//#define sd_card_csv_import_file "import.csv"
-//#define sd_card_import_file "import.txt"
-//#define sd_card_csv_export_file "export.csv"
-//#define sd_card_export_file "export.txt"
-
-// Defined Display Configuration
-//#define display_size 3.5
-//#define display_size 7
-//#define display_size 2.8
+#define fs_device_data_file "/device_data.txt"
 
 // Defined Navigation Button Pins
 #define leftUpNavButtonPinDefinition 4

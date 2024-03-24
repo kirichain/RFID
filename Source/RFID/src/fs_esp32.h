@@ -17,6 +17,7 @@ public:
     String is_muted = "";
     String mes_package_mqtt_message = "";
     String mes_package_group_mqtt_message = "";
+    String filename = "";
 
     FS32();
 
@@ -24,7 +25,7 @@ public:
                        const String &_mes_package_group, const String &_is_muted,
                        const String &_mes_package_mqtt_message, const String &_mes_package_group_mqtt_message);
 
-    bool read_saved_settings();
+    bool read_saved_settings(const String& _filename);
 
     static bool init_spiffs();
 

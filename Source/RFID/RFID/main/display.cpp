@@ -1026,21 +1026,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
     }
 }
 
-void Display::blink_screen(bool &isTaskCompleted) {
-    static int blink_count = 0;
-    if (blink_count <= 10) {
-        Serial.print(F("Execute time: "));
-        Serial.println(blink_count);
-        tft.fillScreen(random(TFT_WHITE));
-        delay(500);
-        tft.fillScreen(TFT_BLACK);
-        delay(500);
-        blink_count++;
-    } else {
-        isTaskCompleted = true;
-    }
-}
-
 void Display::reset_display_setting() {
     tft.setTextFont(2);
     tft.setTextSize(1);
