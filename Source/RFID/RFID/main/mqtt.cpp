@@ -202,6 +202,7 @@ void MQTT::reset_saved_data() {
     buyer_po = "";
     module_name = "";
     mes_target = 0;
+    server_matched_mes_scanned_rfid_tag_count = "";
 //    mes_package_mqtt_message = "";
 //    mes_package_group_mqtt_message = "";
 }
@@ -232,6 +233,7 @@ void MQTT::extract_mes_package_data(const String &raw_last_payload) {
     style_color = extract_value_from_json_string(raw_last_payload, "styleColorWays");
     buyer_po = extract_value_from_json_string(raw_last_payload, "buyerPO");
     module_name = extract_value_from_json_string(raw_last_payload, "moduleName");
+    server_matched_mes_scanned_rfid_tag_count = extract_value_from_json_string(raw_last_payload, "counted");
 
     // Print the extracted values
     Serial.print(F("Extracted MES package: "));
@@ -244,6 +246,8 @@ void MQTT::extract_mes_package_data(const String &raw_last_payload) {
     Serial.println(mes_target);
     Serial.print(F("Extracted MES module name: "));
     Serial.println(module_name);
+    Serial.print(F("RFID Tag Count from server: "));
+    Serial.println(server_matched_mes_scanned_rfid_tag_count);
 }
 
 void MQTT::extract_mes_package_group_data(const String &raw_last_payload) {

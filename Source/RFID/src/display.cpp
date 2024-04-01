@@ -186,6 +186,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     _taskResults.mac_address +
                     "\"}");
             qrcode.create(qr_code_type_string + qr_code_type + mac_addr + _taskResults.mac_address + "\"}");
+            // Reset current screen features
+            memset(current_screen_features, NO_FEATURE, 10);
             break;
         }
         case HOME_HANDHELD_2: {

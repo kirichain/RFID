@@ -179,6 +179,8 @@ void Mediator::execute_task(task_t task) {
             taskResults.style_color = mqtt.style_color;
             taskResults.buyer_po = mqtt.buyer_po;
             taskResults.module_name = mqtt.module_name;
+            taskResults.current_matched_mes_scanned_rfid_tag_count = mqtt.server_matched_mes_scanned_rfid_tag_count.toInt();
+
 
             // Download MES img from url and display it
             request.get(resized_image_server_url, get_resized_mes_img,
@@ -245,6 +247,23 @@ void Mediator::execute_task(task_t task) {
         case HANDLE_MQTT_MESSAGE:
             //Serial.println(F("Execute task HANDLE_MQTT_MESSAGE"));
             switch (taskArgs.feature) {
+                case HOME_HANDHELD_2:
+                    // Wait until the message with according event arrives
+                    mqtt.wait_for_mqtt_event(MES_PACKAGE_SELECTED);
+                    if (mqtt.is_mes_package_selected) {
+                        mqtt.is_mes_package_selected = false;
+                        // Update new value from server
+                        taskResults.current_matched_mes_scanned_rfid_tag_count = mqtt.server_matched_mes_scanned_rfid_tag_count.toInt();
+                        tft.fillRect(245, 105, 60, 15, 0x1B2E);
+                        tft.setTextColor(0x573F);
+                        tft.setTextFont(2);
+                        tft.setTextSize(1);
+                        tft.drawString(String(taskResults.current_matched_mes_scanned_rfid_tag_count) + "/" +
+                                       (String(taskResults.registered_rfid_tags_from_server_count)), 245, 105);
+                        display.reset_display_setting();
+                    }
+                    break;
+
                 case QR_CODE_SCANNING: {
                     if (display.qr_code_type == "MES-PACKAGE") {
                         // Dont reset selected MES package before
