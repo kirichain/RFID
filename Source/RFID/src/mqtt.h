@@ -9,6 +9,7 @@
 #include "Arduino.h"
 #include "structs.h"
 #include "AsyncMqttClient.h"
+#include "mediator.h"
 
 class MQTT {
     static MQTT *instance;
@@ -35,6 +36,7 @@ public:
     String module_name;
     String mes_package_mqtt_message;
     String mes_package_group_mqtt_message;
+    String server_matched_mes_scanned_rfid_tag_count;
 
     int mes_target;
 

@@ -210,7 +210,10 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.drawString("Server connected", 58, 10);
                 tft.setTextColor(0x573F);
                 tft.drawString("Connected", 185, 85);
-                tft.drawString(String(_taskResults.mes_target), 185, 105);
+                tft.drawString(String(_taskResults.mes_target), 150, 105);
+                tft.drawString(String(_taskResults.current_matched_mes_scanned_rfid_tag_count)
+                                + "/" + (String(_taskResults.registered_rfid_tags_from_server_count)), 
+                                245, 105);
                 tft.setTextColor(0xa554);
                 tft.drawString("Op Name: ", 20, 131);
                 tft.setTextColor(0x573F);
@@ -223,7 +226,6 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.setTextColor(TFT_WHITE);
                 tft.drawString("Server not connected", 58, 10);
                 tft.drawString("Not connected", 185, 85);
-                tft.drawString("[ Target ]", 185, 105);
                 tft.drawString("[ Op Name ]", 20, 131);
                 tft.drawString("[ MES Package ]", 20, 153);
             }
@@ -375,10 +377,20 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
             tft.drawString(_taskResults.module_name, 190, 197);
             tft.setTextFont(2);
             tft.setTextColor(0xa554);
-            tft.drawString("MES package target: ", 100, 217);
-            tft.setFreeFont(&FreeSans9pt7b);
+            tft.drawString("Target: ", 100, 217);
+            // tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextFont(2);
             tft.setTextColor(TFT_WHITE);
-            tft.drawString(String(_taskResults.mes_target), 230, 217);
+            tft.drawString(String(_taskResults.mes_target), 145, 217);
+
+            tft.setTextFont(2);
+            tft.setTextColor(0xa554);
+            tft.drawString("Registered: ", 195, 217);
+            // tft.setFreeFont(&FreeSans9pt7b);
+            tft.setTextFont(2);
+            tft.setTextColor(TFT_WHITE);
+            tft.drawString(String(_taskResults.registered_rfid_tags_from_server_count), 265, 217);
+
             tft.setTextFont(2);
             tft.setTextColor(0xa554);
             tft.drawString("Op name: ", 20, 243);
@@ -485,24 +497,35 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.module_name, 190, 128);
+
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
-                    tft.drawString("MES package target: ", 102, 148);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.drawString("Target: ", 100, 148);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString(String(_taskResults.mes_target), 230, 148);
+                    tft.drawString(String(_taskResults.mes_target), 145, 148);
+
+                    tft.setTextFont(2);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Registered: ", 197, 148);
+                    tft.setTextFont(2);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(String(_taskResults.registered_rfid_tags_from_server_count), 267, 148);
+
                     tft.setFreeFont(&FreeSans9pt7b);
                     tft.fillRect(10, 183, 300, 4, 0x126b);
 
                     // Submitted status
                     tft.fillRect(10, 205, 300, 205, 0xdf7e);
-                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.setFreeFont(&FreeSans9pt7b);
                     tft.setTextColor(0x8c51);
                     tft.drawString("Submitted status", 22, 224);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.setTextColor(TFT_WHITE);
+                    tft.setTextFont(2);
+                    tft.setTextSize(1);
                     tft.fillRect(22, 251, 276, 50, 0x1b2e);
-                    tft.drawString("Submitted/target", 42, 267);
+                    tft.drawString("Counted/Registered", 42, 267);
                     tft.setTextColor(0xe751);
                     tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.drawString(
@@ -510,12 +533,14 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                             String(_taskResults.registered_rfid_tags_from_server_count),
                             223, 267);
                     // Current scan status
-                    tft.setFreeFont(&FreeSansBold9pt7b);
+                    tft.setFreeFont(&FreeSans9pt7b);
                     tft.setTextColor(0x8c51);
                     tft.drawString("Quantity scanned", 22, 315);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.setFreeFont(&FreeSansBold9pt7b);
                     tft.drawRect(22, 342, 276, 50, 0x1b2e);
                     tft.setTextColor(0x8c51);
+                    tft.setTextFont(2);
+                    tft.setTextSize(1);
                     tft.drawString("Quantity", 42, 357);
                     tft.setFreeFont(&FreeSansBold12pt7b);
                     tft.setTextColor(0x1b2e);
@@ -727,12 +752,21 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                     tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
                     tft.drawString(_taskResults.module_name, 190, 197);
+
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
-                    tft.drawString("MES package target: ", 100, 217);
-                    tft.setFreeFont(&FreeSans9pt7b);
+                    tft.drawString("Target: ", 100, 217);
+                    tft.setTextFont(2);
                     tft.setTextColor(TFT_WHITE);
-                    tft.drawString(String(_taskResults.mes_target), 230, 217);
+                    tft.drawString(String(_taskResults.mes_target), 145, 217);
+
+                    tft.setTextFont(2);
+                    tft.setTextColor(0xa554);
+                    tft.drawString("Registered: ", 197, 217);
+                    tft.setTextFont(2);
+                    tft.setTextColor(TFT_WHITE);
+                    tft.drawString(String(_taskResults.registered_rfid_tags_from_server_count), 267, 217);
+
                     tft.setTextFont(2);
                     tft.setTextColor(0xa554);
                     tft.drawString("Op name: ", 20, 243);

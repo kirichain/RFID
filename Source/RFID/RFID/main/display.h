@@ -82,45 +82,44 @@ void GIFDraw(GIFDRAW *pDraw);
 
 class Display {
 public:
-    feature_layout_t feature_layout;
-    feature_item_type_t current_feature_item_type;
-    feature_t current_screen_features[10];
+    // Constants
+    const byte HEADER_HEIGHT = 36;
+    const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
+    static const byte numIcons = 62;
 
-    task_t current_screen_tasks[10];
-    task_t current_screen_background_tasks[10];
+    // Colors
+    uint32_t headerColor = 0x3B2D;
+    uint32_t backgroundColor = 0x84B2;
+    uint16_t screen_selector_border_color = backgroundColor;
 
-    screen_selector current_screen_selector;
-    screen_item_position screen_items[10];
-
+    // Booleans
     bool is_background_task_required = false;
     bool is_background_task_completed = false;
     bool is_loading_animation_displayed = false;
     bool is_back_to_home = false;
     bool is_viewport_cleared = true;
 
+    // Integers
     int SCREEN_WIDTH = 320;
     int SCREEN_HEIGHT = 480;
-
+    int iconWidth = 64;
+    int iconHeight = 64;
     byte screen_item_count;
 
+    // Strings
+    String qr_code_type = "";
     String current_screen_list_items[8] = {""};
 
-    // For QR code
-    String qr_code_type = "";
+    // Arrays
+    feature_t current_screen_features[10];
+    task_t current_screen_tasks[10];
+    task_t current_screen_background_tasks[10];
+    screen_item_position screen_items[10];
 
-    const byte HEADER_HEIGHT = 36;
-    const byte NAV_BAR_HEIGHT = HEADER_HEIGHT;
-    const byte VIEWPORT_HEIGHT = HEADER_HEIGHT - NAV_BAR_HEIGHT;
-
-    // Define colors for different UI elements
-    uint32_t headerColor = 0x3B2D;
-    uint32_t backgroundColor = 0x84B2;
-    uint16_t screen_selector_border_color = backgroundColor;
-
-    // Constants for the grid layout
-    int iconWidth = 64; // Width of the icon
-    int iconHeight = 64; // Height of the icon
-    static const byte numIcons = 62; //  Number of icons
+    // Structs and Enums
+    feature_layout_t feature_layout;
+    feature_item_type_t current_feature_item_type;
+    screen_selector current_screen_selector;
 
     // Define an array of menu icon names corresponding to the header files
     const char *menu_icon_names[numIcons] = {

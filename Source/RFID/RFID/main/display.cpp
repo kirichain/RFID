@@ -210,7 +210,8 @@ void Display::render_feature(feature_t _feature, task_results &_taskResults) {
                 tft.drawString("Server connected", 58, 10);
                 tft.setTextColor(0x573F);
                 tft.drawString("Connected", 185, 85);
-                tft.drawString(String(_taskResults.mes_target), 185, 105);
+                tft.drawString(String(_taskResults.mes_target), 150, 105);
+                tft.drawString(String(_taskResults.current_matched_mes_scanned_rfid_tag_count), 240, 105);
                 tft.setTextColor(0xa554);
                 tft.drawString("Op Name: ", 20, 131);
                 tft.setTextColor(0x573F);

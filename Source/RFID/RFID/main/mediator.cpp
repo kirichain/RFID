@@ -24,6 +24,9 @@ Mediator::Mediator() {
     taskResults.currentScreenItemIndex = 0;
     taskResults.featureNavigationHistory[++taskResults.featureNavigationHistorySize] = HOME_HANDHELD_2;
 
+    taskResults.is_rfid_scan_result_submit_successful = false;
+    taskResults.current_matched_mes_scanned_rfid_tag_count = false;
+
     Serial.println("Mediator initiated");
     //dataRow.timestamp = NULL;
 }
@@ -674,7 +677,13 @@ void Mediator::execute_task(task_t task) {
                             } else {
                                 // Reset navigation history if we render home
                                 clear_navigation_history();
-                                execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                                if (!taskResults.is_rfid_scan_result_submit_successful) {
+                                    execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                                }
+                                if ((!taskResults.is_rfid_registration_submit_successful) &&
+                                    (!taskResults.is_rfid_scan_result_submit_successful)) {
+                                    execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                                }
                             }
 
                             // To be sure that RFID_SCAN_RESULT is rendered correctly
@@ -758,7 +767,13 @@ void Mediator::execute_task(task_t task) {
 
                         if (taskArgs.feature == HOME_HANDHELD_2) {
                             clear_navigation_history();
-                            execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                            if (!taskResults.is_rfid_scan_result_submit_successful) {
+                                execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                            }
+                            if ((!taskResults.is_rfid_registration_submit_successful) &&
+                                (!taskResults.is_rfid_scan_result_submit_successful)) {
+                                execute_task(RESET_SCANNED_RFID_TAG_COUNT);
+                            }
                             display.is_viewport_cleared = true;
                         }
                         // Turn off AP Wi-Fi if we are in SETTING_WIFI feature
@@ -886,7 +901,7 @@ void Mediator::execute_task(task_t task) {
             }
             break;
         case REGISTER_RFID_TAG: {
-            taskResults.is_rfid_registration_submit_successful = true;
+            taskResults.is_rfid_registration_submit_successful = false;
             Serial.println(F("Execute task REGISTER_RFID_TAG"));
             String registration_payload = R"({"mesKey": ")" + taskResults.selected_mes_package + R"(","tagIds": [)";
             if (rfid.scanned_tag_count == 0) {
@@ -920,6 +935,7 @@ void Mediator::execute_task(task_t task) {
 
                     // Extract all registered tags into the storing list
                     extract_registered_rfid_tags(list_response.payload);
+                    taskResults.is_rfid_registration_submit_successful = true;
                 } else {
                     buzzer.failure_sound();
                     taskResults.is_rfid_registration_submit_successful = false;
@@ -951,7 +967,7 @@ void Mediator::execute_task(task_t task) {
             break;
         }
         case SUBMIT_SCANNED_RFID_TAG: {
-            taskResults.is_rfid_scan_result_submit_successful = true;
+            taskResults.is_rfid_scan_result_submit_successful = false;
             Serial.println(F("Execute task SUBMIT_SCANNED_RFID_TAG"));
             String scan_result_submit_payload =
                     R"({"mesKey": ")" + taskResults.selected_mes_package + R"(","tagIds": [)";
@@ -976,6 +992,7 @@ void Mediator::execute_task(task_t task) {
                 if (scan_submit_response.status_code == HTTP_CODE_OK) {
                     buzzer.successful_sound();
                     Serial.println(F("Scan result submit is successful"));
+                    taskResults.is_rfid_scan_result_submit_successful = true;
                 } else {
                     Serial.println(F("Scan result submit is unsuccessful"));
                     buzzer.failure_sound();
